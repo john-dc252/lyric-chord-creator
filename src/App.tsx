@@ -1,33 +1,28 @@
-import { Title } from '@solidjs/meta';
-import { Loading } from 'solid-js';
+import {Title} from '@solidjs/meta';
+import {Loading} from 'solid-js';
 import '@unocss/reset/tailwind.css';
 import 'virtual:uno.css';
-import { paths, Router } from './router';
+import {Router} from './router';
+import {useRegisterSW} from "virtual:pwa-register/solid";
 import './App.css';
 
-// The app root: the router and the site-wide layout live here. Pages are
-// the modules under src/routes.
 export default function App() {
+  useRegisterSW({
+    onRegisteredSW() {
+      console.log('@Lyric-Chord Creator - Service Worker Registered');
+    },
+
+    onRegisterError(error) {
+      console.error('@Lyric-Chord Creator - Service worker registration error', error);
+    },
+  });
+
   return (
     <Router>
       {(props) => (
         <>
-          <Title>Solid App</Title>
-          <nav class="bg-slate-800 p-4">
-            <a
-              class="mx-0.5 inline-block rounded-lg px-3 py-1.5 font-semibold text-sky-300 no-underline transition-colors hover:bg-white/10 hover:text-sky-100 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-sky-600"
-              href={paths()}
-            >
-              Home
-            </a>
-            <a
-              class="mx-0.5 inline-block rounded-lg px-3 py-1.5 font-semibold text-sky-300 no-underline transition-colors hover:bg-white/10 hover:text-sky-100 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-sky-600"
-              href={paths.users(1)}
-            >
-              Users
-            </a>
-          </nav>
-          <Loading fallback={<main class="px-4 py-12">Loading…</main>}>
+          <Title>Lyric-Chord Creator</Title>
+          <Loading fallback={<main class="p-8 text-center text-slate-500">Loading…</main>}>
             {props.children}
           </Loading>
         </>

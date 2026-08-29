@@ -1,24 +1,22 @@
 import type { ParentProps } from 'solid-js';
 import { HydrationScript } from '@solidjs/web';
+import {pwaInfo} from 'virtual:pwa-info';
 
-// The document shell — the new index.html: picked up by the src/Document.*
-// convention, it wraps the app in the plugin's generated entries and must
-// render the full <html>. Head tags go here. It is compiled only into the
-// prerendered static shell and ships zero client-side JS: in client mode
-// <HydrationScript /> is stripped from the shell, and it activates when the
-// app flips to SSR (`ssr: true` in vite.config.ts) — no document changes
-// needed. Delete this file to fall back to the plugin's built-in shell.
 export default function Document(props: ParentProps) {
   return (
     <html lang="en">
       <head>
         <meta charset="utf-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
-        <link rel="icon" href="/favicon.ico" />
-        <title>Solid App</title>
+        <link rel="icon" type="image/svg+xml" href={`${import.meta.env.BASE_URL}favicon.svg`} />
+        <link rel="alternate icon" href={`${import.meta.env.BASE_URL}favicon.ico`} />
+        {pwaInfo && (<link rel="manifest" href={pwaInfo?.webManifest.href}/>)}
+        <title>Lyric-Chord Creator</title>
         <HydrationScript />
       </head>
-      <body class="text-center font-sans">{props.children}</body>
+      <body class="font-sans antialiased min-h-screen bg-slate-100 dark:bg-slate-950 text-slate-900 dark:text-slate-100">
+        {props.children}
+      </body>
     </html>
   );
 }

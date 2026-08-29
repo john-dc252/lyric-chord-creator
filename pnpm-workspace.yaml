@@ -1,0 +1,8 @@
+minimumReleaseAgeExclude:
+  - '@solidjs/diagnostics@2.0.0-rc.4'
+  - '@solidjs/router@2.0.0-next.19'
+  - '@solidjs/signals@2.0.0-rc.4'
+  - '@solidjs/vite-plugin@3.0.0-next.35'
+  - '@solidjs/web@2.0.0-rc.4'
+  - eslint-plugin-solid@0.17.0
+  - solid-js@2.0.0-rc.4

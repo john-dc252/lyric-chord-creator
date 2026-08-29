@@ -1,29 +1,214 @@
 import { Title } from '@solidjs/meta';
-import Counter from '../components/Counter';
-import logo from '../logo.svg';
+import { createEffect, createSignal, Show } from 'solid-js';
+import ChordGuidePreview from '../components/ChordGuidePreview';
+import Header from '../components/Header';
+import TemplateEditor from '../components/TemplateEditor';
+import { DEFAULT_PAPER_SIZE, type PaperSizeConfig } from '../lib/paperSize';
+import { DEFAULT_TEMPLATE, extractSongTitle } from '../lib/template-processor';
+
+type BooleanString = 'true' | 'false';
+
+const STORAGE_KEY_TEMPLATE = 'scgt_current_template';
+const STORAGE_KEY_PAPER = 'scgt_paper_config';
+
+function getInitialTemplate(): string {
+  if (typeof window !== 'undefined') {
+    try {
+      const savedTemplate = localStorage.getItem(STORAGE_KEY_TEMPLATE);
+      if (savedTemplate && savedTemplate.trim().length > 0) {
+        return savedTemplate;
+      }
+    } catch (e) {
+      console.error('Failed to load saved state from localStorage:', e);
+    }
+  }
+  return DEFAULT_TEMPLATE;
+}
+
+function getInitialPaperConfig(): PaperSizeConfig {
+  if (typeof window !== 'undefined') {
+    try {
+      const savedPaper = localStorage.getItem(STORAGE_KEY_PAPER);
+      if (savedPaper) {
+        return JSON.parse(savedPaper);
+      }
+    } catch (e) {
+      console.error('Failed to load saved state from localStorage:', e);
+    }
+  }
+  return DEFAULT_PAPER_SIZE;
+}
 
 export default function Home() {
+  const [template, setTemplate] = createSignal<string>(getInitialTemplate(), {
+    name: 'editor_template',
+  });
+
+  const [paperConfig, setPaperConfig] = createSignal<PaperSizeConfig>(getInitialPaperConfig(), {
+    name: 'app_paper_config',
+  });
+
+  // Mobile active tab: 'editor' | 'preview'
+  const [activeTab, setActiveTab] = createSignal<'editor' | 'preview'>('editor', {
+    name: 'mobile_active_tab',
+  });
+
+  // Toast notification state
+  const [toastMessage, setToastMessage] = createSignal<string | null>(null, {
+    name: 'toast_message',
+  });
+
+  const showToast = (msg: string) => {
+    setToastMessage(msg);
+    setTimeout(() => {
+      setToastMessage(null);
+    }, 3000);
+  };
+
+  // Persist template changes using Solid 2.0 two-argument createEffect(compute, apply)
+  createEffect(
+    () => template(),
+    (val) => {
+      try {
+        localStorage.setItem(STORAGE_KEY_TEMPLATE, val);
+      } catch (e) {
+        console.error('Failed to persist template:', e);
+      }
+    },
+  );
+
+  // Persist paper config changes
+  createEffect(
+    () => paperConfig(),
+    (cfg) => {
+      try {
+        localStorage.setItem(STORAGE_KEY_PAPER, JSON.stringify(cfg));
+      } catch (e) {
+        console.error('Failed to persist paper config:', e);
+      }
+    },
+  );
+
+  const handleTemplateInput = (val: string) => {
+    setTemplate(val);
+  };
+
+  const handleFileImport = (content: string, filename: string) => {
+    setTemplate(content);
+    showToast(`Loaded "${filename}" successfully!`);
+  };
+
+  const handleResetToDefault = () => {
+    if (confirm('Reset template back to default sample? Any unsaved edits will be lost.')) {
+      setTemplate(DEFAULT_TEMPLATE);
+      showToast('Reset to default sample template.');
+    }
+  };
+
   return (
-    <main class="px-4 py-12">
-      <Title>Home - Solid App</Title>
-      <img
-        src={logo}
-        class="logo-spin pointer-events-none mx-auto h-[24vmin]"
-        alt="Solid logo"
+    <div class="h-screen flex flex-col bg-slate-100 dark:bg-slate-950 text-slate-900 dark:text-slate-100 overflow-hidden font-sans antialiased transition-colors">
+      <Title>{extractSongTitle(template())} - Lyric-Chord Creator</Title>
+
+      {/* Main Top Header */}
+      <Header
+        template={template()}
+        paperConfig={paperConfig()}
+        onImportTemplate={handleFileImport}
+        onResetToDefault={handleResetToDefault}
       />
-      <h1 class="my-4 text-4xl font-bold">Hello Solid!</h1>
-      <Counter />
-      <p class="my-4">
-        Edit <code>src/routes/index.tsx</code> and save to reload.
-      </p>
-      <a
-        class="font-semibold text-sky-700 underline decoration-sky-400 decoration-2 underline-offset-4 transition-colors hover:text-sky-900 focus-visible:rounded-sm focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-sky-600"
-        href="https://v2.solidjs.com/"
-        target="_blank"
-        rel="noopener noreferrer"
-      >
-        Learn Solid
-      </a>
-    </main>
+
+      {/* Mobile Tab Switcher (< lg screens) */}
+      <div class="lg:hidden flex items-center justify-center p-2 bg-slate-200/80 dark:bg-slate-900/80 border-b border-slate-300 dark:border-slate-800 shrink-0">
+        <div
+          class="inline-flex rounded-lg bg-slate-300/80 dark:bg-slate-800 p-1 shadow-sm"
+          role="tablist"
+          aria-label="Workspace views"
+        >
+          <button
+            type="button"
+            id="editor-tab"
+            role="tab"
+            aria-selected={(activeTab() === 'editor').toString() as BooleanString}
+            aria-controls="editor-panel"
+            tabindex={activeTab() === 'editor' ? 0 : -1}
+            onClick={() => setActiveTab('editor')}
+            class={[
+              'flex items-center gap-1.5 px-4 py-1.5 rounded-md text-xs font-semibold transition-all',
+              activeTab() === 'editor'
+                ? 'bg-white dark:bg-slate-700 text-slate-900 dark:text-white shadow-sm'
+                : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white',
+            ]}
+          >
+            <span>📝</span>
+            <span>Editor</span>
+          </button>
+          <button
+            type="button"
+            id="preview-tab"
+            role="tab"
+            aria-selected={(activeTab() === 'preview').toString() as BooleanString}
+            aria-controls="preview-panel"
+            tabindex={activeTab() === 'preview' ? 0 : -1}
+            onClick={() => setActiveTab('preview')}
+            class={[
+              'flex items-center gap-1.5 px-4 py-1.5 rounded-md text-xs font-semibold transition-all',
+              activeTab() === 'preview'
+                ? 'bg-white dark:bg-slate-700 text-slate-900 dark:text-white shadow-sm'
+                : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white',
+            ]}
+          >
+            <span>👁️</span>
+            <span>Preview</span>
+          </button>
+        </div>
+      </div>
+
+      {/* Workspace Area: Side-by-side on desktop (lg+), Tabbed on mobile */}
+      <main class="flex-1 min-h-0 p-2 sm:p-3 lg:p-4 grid grid-cols-1 lg:grid-cols-2 gap-3 lg:gap-4 overflow-hidden">
+        {/* Editor Pane (Always visible on desktop; toggleable on mobile) */}
+        <div
+          id="editor-panel"
+          role="tabpanel"
+          aria-labelledby="editor-tab"
+          tabindex={0}
+          class={[
+            'h-full min-h-0 focus:outline-none',
+            activeTab() === 'editor' ? 'flex flex-col' : 'hidden lg:flex lg:flex-col',
+          ]}
+        >
+          <TemplateEditor
+            value={template()}
+            onInput={handleTemplateInput}
+            onFileDrop={handleFileImport}
+          />
+        </div>
+
+        {/* Preview Pane (Always visible on desktop; toggleable on mobile) */}
+        <div
+          id="preview-panel"
+          role="tabpanel"
+          aria-labelledby="preview-tab"
+          tabindex={0}
+          class={[
+            'h-full min-h-0 focus:outline-none',
+            activeTab() === 'preview' ? 'flex flex-col' : 'hidden lg:flex lg:flex-col',
+          ]}
+        >
+          <ChordGuidePreview
+            template={template()}
+            paperConfig={paperConfig()}
+            onPaperConfigChange={setPaperConfig}
+          />
+        </div>
+      </main>
+
+      {/* Toast Notification */}
+      <Show when={toastMessage()}>
+        <div class="fixed bottom-4 right-4 z-50 flex items-center gap-2 bg-slate-900 text-white dark:bg-white dark:text-slate-900 px-4 py-2.5 rounded-lg shadow-xl text-xs font-semibold border border-slate-700 dark:border-slate-200 animate-fade-in">
+          <span>✨</span>
+          <span>{toastMessage()}</span>
+        </div>
+      </Show>
+    </div>
   );
 }

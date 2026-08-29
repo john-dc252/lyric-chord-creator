@@ -1,0 +1,57 @@
+html,
+body *:not(script) {
+    box-sizing: border-box;
+}
+
+body {
+    background: #333;
+    font-family: "monospace", monospace, "Courier New", Courier;
+    font-size: 10pt;
+    margin: 0;
+    padding: 0;
+}
+
+.page {
+    background: #fff;
+    column-fill: auto;
+    column-count: 2;
+    column-gap: 0.2in;
+    break-after: page;
+}
+
+.column-break {
+    break-after: column;
+}
+
+.title {
+    font-weight: bold;
+    text-decoration: underline;
+}
+
+.artist {
+    font-weight: bold;
+}
+
+.section-label {
+    line-height: 1.5rem;
+    break-after: avoid;
+    font-weight: bold;
+}
+
+.line {
+    position: relative;
+    line-height: 3rem;
+    break-inside: avoid-page;
+}
+
+.chord {
+    font-weight: bold;
+    position: absolute;
+    line-height: 1em;
+}
+
+.chord.sequence {
+    position: relative;
+    transform: none;
+    font-weight: bold;
+}

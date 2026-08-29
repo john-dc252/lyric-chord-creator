@@ -5,5 +5,8 @@ export default defineConfig({
   jsPlugins: ["eslint-plugin-solid"],
   ignorePatterns: ["**/*.gen.ts", "dist"],
   settings: solidV2.settings,
-  rules: solidV2.rules,
+  rules: {
+    ...solidV2.rules,
+    "solid/no-innerhtml": "off",
+  },
 });

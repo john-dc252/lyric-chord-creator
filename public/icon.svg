@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" fill="none">
+  <defs>
+    <linearGradient id="pwa-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0284c7"/>
+      <stop offset="100%" stop-color="#0369a1"/>
+    </linearGradient>
+    <filter id="pwa-shadow" x="-10%" y="-10%" width="120%" height="120%">
+      <feDropShadow dx="0" dy="8" stdDeviation="12" flood-opacity="0.2"/>
+    </filter>
+  </defs>
+  <rect width="512" height="512" rx="112" fill="url(#pwa-grad)"/>
+  <!-- Musical Beamed Notes & Chord Guide Emblem -->
+  <g filter="url(#pwa-shadow)">
+    <path d="M192 336V136L352 104V304" stroke="#ffffff" stroke-width="36" stroke-linecap="round" stroke-linejoin="round"/>
+    <path d="M192 200L352 168" stroke="#ffffff" stroke-width="36" stroke-linecap="round"/>
+    <circle cx="152" cy="336" r="44" fill="#ffffff"/>
+    <circle cx="312" cy="304" r="44" fill="#ffffff"/>
+  </g>
+</svg>

@@ -1,0 +1,95 @@
+@title: I Know
+@artist: Liveloud
+@empty_line
+
+[Intro x2]
+@chord_sequence: E   A   C#m   A - B
+@empty_line
+
+[Verse 1]
+@empty_line
+{E}I {Esus4}know You’ve given all I need  {A}
+I know Your blessings never {C#m}end
+I know that Your love is for{A}e---{B}ver
+
+[Verse 2]
+@empty_line
+{E}I know that You are all I have  {A}
+The only reason that I {C#m}live
+The only reason that I f{A}ollow... o{B}hooh.
+
+[Pre-Chorus]
+@empty_line
+{C#m}You capture{A}d me today, Je{B}sus
+{C#m}You complete{A}d all my days,{B} ohooh.
+
+@column_break
+
+[Chorus x2]
+@empty_line
+{E}It’s You that I am living for {A}
+For You Lord I will worship {C#m}more
+I will raise my hands and wors{A}hip, wo{B}rship You
+
+[Intro]
+[Verse 1]
+[Verse 2]
+[Chorus x2]
+[Intro]
+
+[Bridge x2]
+@empty_line
+{C#m}I am thank{A}ful for Your kindne{E}ss Lord  {B}
+{C#m}I am thank{A}ful for You are bount{E}iful  {B}
+
+[Pre-Chorus]
+[Chorus x2]
+[Intro x2]
+
+@page_break
+
+@title: I Know
+@artist: Liveloud
+@empty_line
+
+[Intro x2]
+@chord_sequence: E   A   C#m   A - B
+@empty_line
+
+[Verse 1]
+@empty_line
+{E}I {Esus4}know You’ve given all I need  {A}
+I know Your blessings never {C#m}end
+I know that Your love is for{A}e---{B}ver
+
+[Verse 2]
+@empty_line
+{E}I know that You are all I have  {A}
+The only reason that I {C#m}live
+The only reason that I f{A}ollow... o{B}hooh.
+
+[Pre-Chorus]
+@empty_line
+{C#m}You capture{A}d me today, Je{B}sus
+{C#m}You complete{A}d all my days,{B} ohooh.
+
+[Chorus x2]
+@empty_line
+{E}It’s You that I am living for {A}
+For You Lord I will worship {C#m}more
+I will raise my hands and wors{A}hip, wo{B}rship You
+
+[Intro]
+[Verse 1]
+[Verse 2]
+[Chorus x2]
+[Intro]
+
+[Bridge x2]
+@empty_line
+{C#m}I am thank{A}ful for Your kindne{E}ss Lord  {B}
+{C#m}I am thank{A}ful for You are bount{E}iful  {B}
+
+[Pre-Chorus]
+[Chorus x2]
+[Intro x2]

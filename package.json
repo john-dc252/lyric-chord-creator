@@ -1,6 +1,6 @@
 {
   "name": "example-with-unocss",
-  "version": "0.0.0",
+  "version": "0.1.0",
   "description": "",
   "type": "module",
   "scripts": {
@@ -26,12 +26,14 @@
     "typescript": "^5.9.2",
     "unocss": "^66.5.2",
     "vite": "^8.1.5",
+    "vite-plugin-pwa": "^1.3.0",
     "vitest": "^4.0.0"
   },
   "dependencies": {
     "@solidjs/meta": "^1.0.0-next.2",
     "@solidjs/router": "^2.0.0-next.19",
     "@solidjs/web": "^2.0.0-rc.4",
-    "solid-js": "^2.0.0-rc.4"
+    "solid-js": "^2.0.0-rc.4",
+    "workbox-window": "^7.4.1"
   }
 }

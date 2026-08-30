@@ -4,6 +4,15 @@
 
 It uses a clean, intuitive plaintext template syntax that automatically formats lyrics and chord placements into responsive, print-ready pages that fit standard paper sizes without breaking chord-to-lyric alignment.
 
+<p align="center">
+  <img src="public/lyric-chord-creator-screenshot.png" alt="Lyric-Chord Creator Desktop View" width="100%" />
+</p>
+
+<p align="center">
+  <img src="public/lyric-chord-creator-screenshot-mobile.png" alt="Mobile Editor View" width="48%" />
+  <img src="public/lyric-chord-creator-screenshot-previewer-mobile.png" alt="Mobile Preview View" width="48%" />
+</p>
+
 ---
 
 ## ✨ Features

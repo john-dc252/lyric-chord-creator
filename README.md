@@ -1,55 +1,151 @@
-## Solid `with-unocss` template
+# Lyric-Chord Creator
 
-This is `basic` plus [UnoCSS](https://unocss.dev) — same routes, same demo, same tests; the pages are restyled with utility classes and `src/App.css` shrinks to the one thing utilities don't cover (the logo's keyframes). The diff against `basic` is the documentation of what UnoCSS changes.
+**Lyric-Chord Creator** is a modern, lightweight, and offline-capable web utility built with **SolidJS 2.x** for creating, editing, and printing multi-column lyric-chord sheets.
 
-**Deployment contract** (inherited from `basic`): zero server dependencies — `vite build` emits a purely static site; deploy `dist/client` anywhere.
+It uses a clean, intuitive plaintext template syntax that automatically formats lyrics and chord placements into responsive, print-ready pages that fit standard paper sizes without breaking chord-to-lyric alignment.
 
-## How UnoCSS fits this stack
+---
 
-- The `UnoCSS()` Vite plugin (registered in `vite.config.ts`) scans your source files for class names and generates exactly that CSS, served as the `virtual:uno.css` module — imported by `src/App.tsx` alongside `@unocss/reset/tailwind.css` for the element reset. Both flow into the prerendered document shell exactly like any app CSS; nothing about the turnkey setup changes.
-- The wind4 preset provides Tailwind-compatible utilities (see the restyled pages under `src/routes`); custom keyframes still live in plain CSS (`src/App.css`).
-- Configuration lives inline in `vite.config.ts` and can move to `uno.config.ts` as it grows (presets, shortcuts, custom rules).
-- If a class name doesn't apply, it usually wasn't seen by the scanner: class names must appear as complete strings in source (no runtime string-building).
+## ✨ Features
 
-Everything else — file-system routing, data loading, testing, the one-boolean `ssr: true` flip — is `basic`; see its README.
+- **Intuitive Template Syntax**: Place chords directly in line with lyrics (e.g. `{G}`, `{C/E}`, `{Am7}`) or write stand-alone chord sequences (`@chord_sequence: G - D - Em - C`).
+- **Automatic Alignment & Column Balancing**: Formatted into an auto-flowing 2-column layout designed to fit standard physical sheets with minimal manual adjustments.
+- **Multiple Songs per Template**: Author entire setlists or multi-song songbooks in a single document using `@page_break` and individual `@title:` and `@artist:` headers.
+- **Live Scaled Preview**:
+  - Real-time rendering as you type.
+  - Zoom controls: **Fit to Screen**, **75%**, and **100%**.
+  - Paper size selector: **Letter**, **A4**, **Legal**, and custom dimensions.
+- **Advanced CodeMirror 6 Editor**:
+  - **Vim Mode**: Full modal editing (Normal, Insert, Visual, Replace, and Command modes) powered by `@replit/codemirror-vim`.
+  - **Toggleable Relative Line Numbers**: Hybrid numbering display (absolute line number on current line, relative distance on surrounding lines) with `:set rnu` / `:set nornu` support.
+  - **Real-Time Syntax Highlighting**: Color-coded tokens for directives, sections, chords, and lyrics.
+  - **Soft Word Wrapping**: Toggleable wrap mode with persistent preferences.
+  - **Drag & Drop File Support**: Drop `*.lcct.txt`, `*.scgt.txt`, or `*.txt` files directly into the editor.
+- **Print & PDF Export**: One-click printing via isolated print iframe with clean print styles.
+- **Dark & Light Modes**: Seamless theme switching with persistent local storage.
+- **PWA & Offline Capable**: Fully functional offline via service worker and Web App Manifest.
 
-## Usage
+---
 
-Those templates dependencies are maintained via [pnpm](https://pnpm.io) via `pnpm up -Lri`.
+## 📝 Syntax Reference
 
-This is the reason you see a `pnpm-lock.yaml`. That being said, any package manager will work. This file can be safely be removed once you clone a template.
-
-```bash
-$ npm install # or pnpm install or yarn install
+### Document & Song Metadata
+```txt
+@title: Amazing Grace
+@artist: John Newton
 ```
 
-### Learn more on the [Solid Website](https://solidjs.com) and come chat with us on our [Discord](https://discord.com/invite/solidjs)
+### Layout Controls
+- `@column_break`: Forces content following this tag to break into the next column.
+- `@page_break`: Forces a page break to begin a new physical page (ideal for multiple songs).
+- `@empty_line`: Inserts a blank vertical spacing line in the column.
 
-## Available Scripts
+### Section Labels
+Wrap section headings in square brackets:
+```txt
+[Intro]
+[Verse 1]
+[Chorus]
+[Bridge]
+[Outro]
+```
 
-In the project directory, you can run:
+### In-Line Chords
+Embed chords inside curly braces right above the intended word or syllable:
+```txt
+A{G}mazing grace, how {C}sweet the {G}sound
+That saved a {D/F#}wretch like {G}me
+```
 
-### `npm run dev` or `npm start`
+### Standalone Chord Sequences
+Annotate instrumental intros, interludes, or progressions:
+```txt
+@chord_sequence: G - Em - C - D
+```
 
-Runs the app in the development mode.<br>
-Open [http://localhost:3000](http://localhost:3000) to view it in the browser.
+---
 
-The page will reload if you make edits.<br>
+## 🎹 Vim Mode & Keybindings
 
-### `npm run build`
+Toggle Vim Mode directly via the **`Vim: ON / OFF`** button in the editor toolbar or persist your preferred workflow:
 
-Builds the static production site to `dist/client`, routes code-split, CSS pruned to the classes actually used.
+- **Mode Switching**:
+  - `i`, `I`, `a`, `A`, `o`, `O` &rarr; Enter **Insert** mode
+  - `v` / `V` &rarr; Enter **Visual** / **Visual Line** mode
+  - `R` &rarr; Enter **Replace** mode
+  - `Esc` or `Ctrl+[` &rarr; Return to **Normal** mode
+- **Relative Line Numbers**:
+  - Toggle via toolbar button or Ex commands: `:set rnu` / `:set nornu`
+- **Motions & Operators**:
+  - `h`, `j`, `k`, `l`, `w`, `b`, `e`, `0`, `$`, `^`, `gg`, `G`
+  - Counts: `5j`, `10k`, `3dd`, `d5j`, `ciw`
+  - `yy` (yank line), `p` / `P` (paste), `u` (undo), `Ctrl+r` (redo)
+  - `/search` and `?search` with `n` / `N` navigation
 
-### `npm run serve`
+---
 
-Serves the production build locally.
+## 🛠️ Tech Stack
 
-### `npm test`
+- **Framework**: [SolidJS 2.x](https://solidjs.com) (fine-grained reactive signals and JSX)
+- **Editor**: [CodeMirror 6](https://codemirror.net/) with [@replit/codemirror-vim](https://github.com/replit/codemirror-vim)
+- **Styling**: [UnoCSS](https://unocss.dev) with `@unocss/preset-wind4`
+- **Build Tool**: [Vite](https://vitejs.dev)
+- **PWA**: [vite-plugin-pwa](https://vite-pwa-org.netlify.app/)
+- **Linter & Test**: [oxlint](https://oxc.rs) & [Vitest](https://vitest.dev)
 
-Runs the test suite.
+---
 
-## Deployment
+## 🚀 Getting Started
 
-Deploy the `dist/client` folder to any static host provider (netlify, surge, now, etc.)
+### Development
 
-## This project was created with the [Solid CLI](https://github.com/solidjs-community/solid-cli)
+#### Prerequisites
+- Node.js (>= 18)
+- [pnpm](https://pnpm.io) (recommended) or npm / yarn
+
+#### Project Setup
+```bash
+git clone https://github.com/jdelacruz/lyric-chord-creator.git
+cd lyric-chord-creator
+pnpm install
+```
+
+#### Running the App in dev mode
+```bash
+pnpm dev
+```
+Open [http://localhost:3000/apps/lyric-chord-creator](http://localhost:3000/apps/lyric-chord-creator) in your browser.
+
+### Build & Production
+```bash
+pnpm build
+pnpm serve
+```
+The static production assets will be generated in `dist/client`.
+
+### Linting
+```bash
+pnpm lint
+```
+
+---
+
+## 🤖 LLM Use Disclosure
+
+While I developed the template syntax, processor, and CSS-based chord anchoring mechanism entirely on my own, the web app implementation was built primarily with AI assistance (`Antigravity CLI` with `Gemini 7.3`), with manual guidance and customizations. This document was also generated with LLM assistance.
+
+(Yeah, I know, it isn't all that difficult to come up with the template syntax thing and the CSS-based chord anchoring mechanism.)
+
+The original project where the template syntax and processor were developed:
+
+- [printable-song-chord-guide](https://github.com/john-dc252/printable-song-chord-guide)
+
+Some revisions and additional syntax:
+
+- [my static webapps project](https://github.com/john-dc252/john-dc252.github.io) (Contains other stuff. Look for "song chords utility" in the commit history. I got tired of copying and pasting from the original project, so I just continued here)
+
+---
+
+## 📄 License
+
+MIT

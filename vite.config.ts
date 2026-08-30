@@ -93,6 +93,11 @@ export default defineConfig({
         // Caches all generated JS chunks including virtual route files
         globPatterns: ['**/*.{js,css,html,ico,png,svg}'],
 
+        // Explicitly precache turnkey index.html to satisfy navigateFallback
+        additionalManifestEntries: [
+          { url: 'index.html', revision: null },
+        ],
+
         // Prevents the service worker from failing on larger route chunks
         maximumFileSizeToCacheInBytes: 3000000,
         navigateFallback: 'index.html',

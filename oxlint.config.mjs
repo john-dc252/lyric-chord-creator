@@ -8,5 +8,6 @@ export default defineConfig({
   rules: {
     ...solidV2.rules,
     "solid/no-innerhtml": "off",
+    "solid/imports": "off",
   },
 });

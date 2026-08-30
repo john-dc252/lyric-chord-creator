@@ -62,17 +62,8 @@ class LineNumberMarker extends GutterMarker {
 
   toDOM() {
     const el = document.createElement('div');
-    el.className = `cm-gutterElement ${
-      this.isCurrent
-        ? 'cm-active-line-num font-bold text-sky-600 dark:text-sky-400'
-        : 'text-slate-400 dark:text-slate-600'
-    }`;
+    el.className = `cm-gutterElement ${this.isCurrent ? 'cm-activeLineGutter' : ''}`;
     el.textContent = this.text;
-    el.style.textAlign = 'right';
-    el.style.paddingRight = '8px';
-    el.style.fontSize = '12px';
-    el.style.fontFamily = 'inherit';
-    el.style.lineHeight = '22px';
     return el;
   }
 
@@ -90,7 +81,7 @@ class LineNumberMarker extends GutterMarker {
  */
 export function createLineNumbersGutter(isRelative: boolean): Extension {
   return gutter({
-    class: 'cm-lineNumbers select-none bg-slate-50 dark:bg-slate-950/60 border-r border-slate-200 dark:border-slate-800/80',
+    class: 'cm-lineNumbers select-none',
     lineMarker(view, line) {
       const lineNo = view.state.doc.lineAt(line.from).number;
       if (!isRelative) {
@@ -141,19 +132,30 @@ export function createEditorTheme(isDark: boolean): Extension {
       },
       '.cm-activeLine': {
         backgroundColor: isDark
-          ? 'rgba(30, 41, 59, 0.6)'
-          : 'rgba(240, 249, 255, 0.7)',
+          ? 'rgba(30, 41, 59, 0.5)'
+          : 'rgba(240, 249, 255, 0.8)',
+      },
+      '.cm-gutters': {
+        backgroundColor: isDark ? '#090d16 !important' : '#f8fafc !important',
+        color: isDark ? '#64748b !important' : '#94a3b8 !important',
+        borderRight: isDark ? '1px solid #1e293b !important' : '1px solid #e2e8f0 !important',
+        minWidth: '40px',
+      },
+      '.cm-gutterElement': {
+        color: isDark ? '#64748b !important' : '#94a3b8 !important',
+        padding: '0 8px 0 6px !important',
+        minWidth: '32px',
+        textAlign: 'right',
+        fontSize: '12px',
+        lineHeight: '22px',
+        fontFamily: 'inherit',
       },
       '.cm-activeLineGutter': {
         backgroundColor: isDark
-          ? 'rgba(30, 41, 59, 0.8)'
-          : 'rgba(224, 242, 254, 0.8)',
-      },
-      '.cm-gutters': {
-        backgroundColor: isDark ? 'rgba(2, 6, 23, 0.7)' : 'rgba(248, 250, 252, 0.9)',
-        color: isDark ? '#64748b' : '#94a3b8',
-        borderRight: isDark ? '1px solid rgba(30, 41, 59, 0.8)' : '1px solid rgba(226, 232, 240, 0.9)',
-        minWidth: '40px',
+          ? 'rgba(30, 41, 59, 0.9) !important'
+          : 'rgba(224, 242, 254, 0.9) !important',
+        color: isDark ? '#38bdf8 !important' : '#0284c7 !important',
+        fontWeight: 'bold',
       },
       '.cm-scroller': {
         fontFamily: 'inherit',
@@ -161,12 +163,17 @@ export function createEditorTheme(isDark: boolean): Extension {
         overflow: 'auto',
       },
       '.cm-vim-panel': {
-        padding: '2px 8px',
+        padding: '3px 8px',
         backgroundColor: isDark ? '#020617' : '#f8fafc',
         color: isDark ? '#94a3b8' : '#475569',
         fontSize: '11px',
         fontFamily: 'inherit',
         borderTop: isDark ? '1px solid #1e293b' : '1px solid #e2e8f0',
+      },
+      '.cm-vim-panel input': {
+        color: isDark ? '#f1f5f9' : '#0f172a',
+        backgroundColor: 'transparent',
+        fontFamily: 'inherit',
       },
       '.cm-fat-cursor': {
         backgroundColor: isDark ? '#38bdf8 !important' : '#0284c7 !important',

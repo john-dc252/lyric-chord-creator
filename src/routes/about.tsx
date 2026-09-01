@@ -1,9 +1,9 @@
 import { Title } from '@solidjs/meta';
 import { createSignal, For } from 'solid-js';
-import Header from '../components/Header';
 import { TemplateSyntaxHighlighter } from '../components/TemplateSyntaxHighlighter';
 import { DEFAULT_PAPER_SIZE } from '../lib/paperSize';
 import { ChordGuidePages, DEFAULT_TEMPLATE } from '../lib/template-processor';
+import { setActiveTemplateId } from '../lib/templates-store';
 
 interface ExampleSnippet {
   title: string;
@@ -111,30 +111,18 @@ export default function About() {
 
   const loadExampleIntoEditor = (code: string) => {
     try {
+      setActiveTemplateId(null);
       localStorage.setItem('scgt_current_template', code);
-      window.location.href = '/';
+      window.location.href = '#/';
     } catch (e) {
       console.error('Failed to store example:', e);
-      window.location.href = '/';
+      window.location.href = '#/';
     }
   };
 
   return (
-    <div class="min-h-screen flex flex-col bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 transition-colors">
+    <div class="h-full flex flex-col overflow-y-auto bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 transition-colors">
       <Title>About - Lyric-Chord Creator</Title>
-
-      <Header
-        template={DEFAULT_TEMPLATE}
-        paperConfig={paperConfig}
-        onImportTemplate={(content) => {
-          try {
-            localStorage.setItem('scgt_current_template', content);
-            window.location.href = '/';
-          } catch (e) {
-            console.error('Failed to import:', e);
-          }
-        }}
-      />
 
       <main class="flex-1 max-w-5xl mx-auto w-full px-4 sm:px-6 py-8">
         {/* App Description & Overview Section */}

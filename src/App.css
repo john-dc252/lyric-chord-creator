@@ -8,3 +8,78 @@
     transform: rotate(360deg);
   }
 }
+
+/* Snappy File Menu & Popup animations */
+.menu-popover {
+  animation: menu-appear 80ms cubic-bezier(0, 0, 0.2, 1);
+  transform-origin: top left;
+}
+
+@keyframes menu-appear {
+  0% {
+    opacity: 0;
+    transform: translateY(-2px) scale(0.98);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+/* Global styles for rendered Chord Guide sheet previews (e.g. Gallery & About pages) */
+.guide-sheet-container .page {
+  background: #ffffff;
+  color: #000000;
+  padding: 1.5rem 1.75rem;
+  margin: 0.25rem auto;
+  border-radius: 8px;
+  border: 1px solid rgba(0, 0, 0, 0.06);
+  box-shadow: 0 4px 12px -2px rgba(0, 0, 0, 0.12), 0 2px 4px -2px rgba(0, 0, 0, 0.08);
+  column-count: 2;
+  column-fill: auto;
+  column-gap: 1.5rem;
+  width: 100%;
+  box-sizing: border-box;
+  font-family: "monospace", monospace, "Courier New", Courier;
+  font-size: 11px;
+}
+
+.guide-sheet-container .column-break {
+  break-after: column;
+}
+
+.guide-sheet-container .title {
+  font-weight: bold;
+  text-decoration: underline;
+}
+
+.guide-sheet-container .artist {
+  font-weight: bold;
+}
+
+.guide-sheet-container .section-label {
+  line-height: 1.5rem;
+  break-after: avoid;
+  font-weight: bold;
+}
+
+.guide-sheet-container .line {
+  position: relative;
+  line-height: 2.8rem;
+  break-inside: avoid-page;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.guide-sheet-container .chord {
+  font-weight: bold;
+  position: absolute;
+  line-height: 1em;
+  color: #000;
+}
+
+.guide-sheet-container .chord.sequence {
+  position: relative;
+  transform: none;
+  font-weight: bold;
+}

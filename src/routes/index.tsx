@@ -1,10 +1,11 @@
 import { Title } from '@solidjs/meta';
-import { createEffect, createSignal, Show } from 'solid-js';
+import { createEffect, createMemo, createSignal, onSettled, Show } from 'solid-js';
 import ChordGuidePreview from '../components/ChordGuidePreview';
 import Header from '../components/Header';
 import TemplateEditor from '../components/TemplateEditor';
 import { DEFAULT_PAPER_SIZE, type PaperSizeConfig } from '../lib/paperSize';
 import { DEFAULT_TEMPLATE, extractSongTitle } from '../lib/template-processor';
+import { activeTemplateId, savedTemplates } from '../lib/templates-store';
 
 type BooleanString = 'true' | 'false';
 
@@ -65,6 +66,14 @@ export default function Home() {
     }, 3000);
   };
 
+  // Sync if template in localStorage was updated externally (e.g. from Gallery)
+  onSettled(() => {
+    const current = getInitialTemplate();
+    if (current !== template()) {
+      setTemplate(current);
+    }
+  });
+
   // Persist template changes using Solid 2.0 two-argument createEffect(compute, apply)
   createEffect(
     () => template(),
@@ -105,22 +114,36 @@ export default function Home() {
     }
   };
 
+  const activeSavedTemplate = createMemo(() => {
+    const id = activeTemplateId();
+    if (!id) return null;
+    return savedTemplates().find((t) => t.id === id) || null;
+  }, { name: 'home_active_saved_template' });
+
+  const isDirty = createMemo(() => {
+    const existing = activeSavedTemplate();
+    if (existing) {
+      return template() !== existing.content;
+    }
+    return template().trim().length > 0;
+  }, { name: 'home_is_dirty' });
+
   return (
-    <div class="h-screen flex flex-col bg-slate-100 dark:bg-slate-950 text-slate-900 dark:text-slate-100 overflow-hidden font-sans antialiased transition-colors">
-      <Title>{extractSongTitle(template())} - Lyric-Chord Creator</Title>
+    <div class="h-full flex flex-col overflow-hidden font-sans antialiased">
+      <Title>
+        {`${isDirty() ? '● ' : ''}${extractSongTitle(template())} - Lyric-Chord Creator`}
+      </Title>
 
       {/* Main Top Header */}
       <Header
         template={template()}
         paperConfig={paperConfig()}
-        onImportTemplate={handleFileImport}
-        onResetToDefault={handleResetToDefault}
       />
 
       {/* Mobile Tab Switcher (< lg screens) */}
       <div class="lg:hidden flex items-center justify-center p-2 bg-slate-200/80 dark:bg-slate-900/80 border-b border-slate-300 dark:border-slate-800 shrink-0">
         <div
-          class="inline-flex rounded-lg bg-slate-300/80 dark:bg-slate-800 p-1 shadow-sm"
+          class="inline-flex rounded-lg bg-slate-300/80 dark:bg-slate-800 p-1 shadow-xs"
           role="tablist"
           aria-label="Workspace views"
         >
@@ -135,7 +158,7 @@ export default function Home() {
             class={[
               'flex items-center gap-1.5 px-4 py-1.5 rounded-md text-xs font-semibold transition-all',
               activeTab() === 'editor'
-                ? 'bg-white dark:bg-slate-700 text-slate-900 dark:text-white shadow-sm'
+                ? 'bg-white dark:bg-slate-700 text-slate-900 dark:text-white shadow-xs'
                 : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white',
             ]}
           >
@@ -153,7 +176,7 @@ export default function Home() {
             class={[
               'flex items-center gap-1.5 px-4 py-1.5 rounded-md text-xs font-semibold transition-all',
               activeTab() === 'preview'
-                ? 'bg-white dark:bg-slate-700 text-slate-900 dark:text-white shadow-sm'
+                ? 'bg-white dark:bg-slate-700 text-slate-900 dark:text-white shadow-xs'
                 : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white',
             ]}
           >
@@ -164,7 +187,7 @@ export default function Home() {
       </div>
 
       {/* Workspace Area: Side-by-side on desktop (lg+), Tabbed on mobile */}
-      <main class="flex-1 min-h-0 p-2 sm:p-3 lg:p-4 grid grid-cols-1 lg:grid-cols-2 gap-3 lg:gap-4 overflow-hidden">
+      <div class="flex-1 min-h-0 p-2 sm:p-3 lg:p-4 grid grid-cols-1 lg:grid-cols-2 gap-3 lg:gap-4 overflow-hidden">
         {/* Editor Pane (Always visible on desktop; toggleable on mobile) */}
         <div
           id="editor-panel"
@@ -180,6 +203,8 @@ export default function Home() {
             value={template()}
             onInput={handleTemplateInput}
             onFileDrop={handleFileImport}
+            onResetToDefault={handleResetToDefault}
+            onToast={showToast}
           />
         </div>
 
@@ -200,7 +225,7 @@ export default function Home() {
             onPaperConfigChange={setPaperConfig}
           />
         </div>
-      </main>
+      </div>
 
       {/* Toast Notification */}
       <Show when={toastMessage()}>

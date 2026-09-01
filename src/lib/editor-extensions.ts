@@ -1,6 +1,6 @@
 import { StreamLanguage, HighlightStyle, syntaxHighlighting } from '@codemirror/language';
 import { tags as t } from '@lezer/highlight';
-import { EditorView, gutter, GutterMarker } from '@codemirror/view';
+import { EditorView, lineNumbers } from '@codemirror/view';
 import { Extension } from '@codemirror/state';
 
 /**
@@ -42,61 +42,22 @@ export const lyricChordLightHighlight = syntaxHighlighting(
  */
 export const lyricChordDarkHighlight = syntaxHighlighting(
   HighlightStyle.define([
-    { tag: t.meta, color: '#fbbf24', fontWeight: 'bold' }, // amber-400
-    { tag: t.keyword, color: '#fb7185', fontWeight: 'bold' }, // rose-400
-    { tag: t.heading, color: '#818cf8', fontWeight: 'bold' }, // indigo-400
-    { tag: t.atom, color: '#34d399', fontWeight: 'bold' }, // emerald-400
+    { tag: t.meta, color: '#fbbf24', fontWeight: 'bold' }, // amber-400 (@title, @artist, @chord_sequence)
+    { tag: t.keyword, color: '#fb7185', fontWeight: 'bold' }, // rose-400 (@page_break, @column_break, @empty_line)
+    { tag: t.heading, color: '#818cf8', fontWeight: 'bold' }, // indigo-400 ([Section Headers])
+    { tag: t.atom, color: '#34d399', fontWeight: 'bold' }, // emerald-400 ({Chords})
   ]),
 );
-
-/**
- * Gutter Marker class for line numbers
- */
-class LineNumberMarker extends GutterMarker {
-  constructor(
-    readonly text: string,
-    readonly isCurrent: boolean,
-  ) {
-    super();
-  }
-
-  toDOM() {
-    const el = document.createElement('div');
-    el.className = `cm-gutterElement ${this.isCurrent ? 'cm-activeLineGutter' : ''}`;
-    el.textContent = this.text;
-    return el;
-  }
-
-  eq(other: GutterMarker) {
-    return (
-      other instanceof LineNumberMarker &&
-      other.text === this.text &&
-      other.isCurrent === this.isCurrent
-    );
-  }
-}
 
 /**
  * Custom line numbers gutter supporting relative line numbers (hybrid mode)
  */
 export function createLineNumbersGutter(isRelative: boolean): Extension {
-  return gutter({
-    class: 'cm-lineNumbers select-none',
-    lineMarker(view, line) {
-      const lineNo = view.state.doc.lineAt(line.from).number;
-      if (!isRelative) {
-        return new LineNumberMarker(String(lineNo), false);
-      }
-      const currentLineNo = view.state.doc.lineAt(view.state.selection.main.head).number;
-      const isCurrent = lineNo === currentLineNo;
-      const text = isCurrent ? String(lineNo) : String(Math.abs(lineNo - currentLineNo));
-      return new LineNumberMarker(text, isCurrent);
-    },
-    update(update) {
-      return update.docChanged || (isRelative && update.selectionSet) || update.viewportChanged;
-    },
-    initialSpacer() {
-      return new LineNumberMarker('999', false);
+  return lineNumbers({
+    formatNumber(lineNo, state) {
+      if (!isRelative) return String(lineNo);
+      const currentLineNo = state.doc.lineAt(state.selection.main.head).number;
+      return lineNo === currentLineNo ? String(lineNo) : String(Math.abs(lineNo - currentLineNo));
     },
   });
 }
@@ -110,78 +71,46 @@ export function createEditorTheme(isDark: boolean): Extension {
       '&': {
         height: '100%',
         fontSize: '13px',
-        fontFamily:
-          'ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace',
-        backgroundColor: isDark ? '#0f172a' : '#ffffff',
-        color: isDark ? '#f1f5f9' : '#0f172a',
+        fontFamily: 'ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace',
+        backgroundColor: isDark ? '#0f172a' : '#ffffff', // slate-900 / white
+        color: isDark ? '#f8fafc' : '#0f172a',
       },
       '.cm-content': {
-        padding: '12px 12px 24px 12px',
-        lineHeight: '22px',
-        caretColor: isDark ? '#38bdf8' : '#0284c7',
-        fontFamily: 'inherit',
+        padding: '12px 0',
+        caretColor: isDark ? '#38bdf8' : '#0284c7', // sky-400 / sky-600
+        lineHeight: '1.6',
       },
       '.cm-cursor, .cm-dropCursor': {
         borderLeftColor: isDark ? '#38bdf8' : '#0284c7',
         borderLeftWidth: '2px',
       },
       '&.cm-focused .cm-selectionBackground, .cm-selectionBackground, .cm-content ::selection': {
-        backgroundColor: isDark
-          ? 'rgba(56, 189, 248, 0.3) !important'
-          : 'rgba(14, 165, 233, 0.25) !important',
-      },
-      '.cm-activeLine': {
-        backgroundColor: isDark
-          ? 'rgba(30, 41, 59, 0.5)'
-          : 'rgba(240, 249, 255, 0.8)',
+        backgroundColor: isDark ? '#1e293b' : '#e0f2fe', // slate-800 / sky-100
       },
       '.cm-gutters': {
-        backgroundColor: isDark ? '#090d16 !important' : '#f8fafc !important',
-        color: isDark ? '#64748b !important' : '#94a3b8 !important',
-        borderRight: isDark ? '1px solid #1e293b !important' : '1px solid #e2e8f0 !important',
-        minWidth: '40px',
-      },
-      '.cm-gutterElement': {
-        color: isDark ? '#64748b !important' : '#94a3b8 !important',
-        padding: '0 8px 0 6px !important',
-        minWidth: '32px',
-        textAlign: 'right',
-        fontSize: '12px',
-        lineHeight: '22px',
-        fontFamily: 'inherit',
+        backgroundColor: isDark ? '#0b1120' : '#f8fafc', // slate-950 / slate-50
+        color: isDark ? '#475569' : '#94a3b8', // slate-600 / slate-400
+        borderRight: `1px solid ${isDark ? '#1e293b' : '#e2e8f0'}`,
+        userSelect: 'none',
       },
       '.cm-activeLineGutter': {
-        backgroundColor: isDark
-          ? 'rgba(30, 41, 59, 0.9) !important'
-          : 'rgba(224, 242, 254, 0.9) !important',
-        color: isDark ? '#38bdf8 !important' : '#0284c7 !important',
+        backgroundColor: isDark ? '#1e293b' : '#f1f5f9',
+        color: isDark ? '#38bdf8' : '#0284c7',
         fontWeight: 'bold',
+      },
+      '.cm-activeLine': {
+        backgroundColor: isDark ? '#1e293b40' : '#f8fafc',
+      },
+      '.cm-matchingBracket, .cm-nonmatchingBracket': {
+        backgroundColor: isDark ? '#334155' : '#cbd5e1',
+        outline: `1px solid ${isDark ? '#64748b' : '#94a3b8'}`,
+      },
+      '.cm-line': {
+        padding: '0 12px',
       },
       '.cm-scroller': {
         fontFamily: 'inherit',
-        lineHeight: '22px',
         overflow: 'auto',
-      },
-      '.cm-vim-panel': {
-        padding: '3px 8px',
-        backgroundColor: isDark ? '#020617' : '#f8fafc',
-        color: isDark ? '#94a3b8' : '#475569',
-        fontSize: '11px',
-        fontFamily: 'inherit',
-        borderTop: isDark ? '1px solid #1e293b' : '1px solid #e2e8f0',
-      },
-      '.cm-vim-panel input': {
-        color: isDark ? '#f1f5f9' : '#0f172a',
-        backgroundColor: 'transparent',
-        fontFamily: 'inherit',
-      },
-      '.cm-fat-cursor': {
-        backgroundColor: isDark ? '#38bdf8 !important' : '#0284c7 !important',
-        color: '#ffffff !important',
-      },
-      '&:not(.cm-focused) .cm-fat-cursor': {
-        outline: isDark ? '1px solid #38bdf8 !important' : '1px solid #0284c7 !important',
-        backgroundColor: 'transparent !important',
       },
     },
     { dark: isDark },

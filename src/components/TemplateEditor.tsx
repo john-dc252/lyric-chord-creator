@@ -20,11 +20,21 @@ import {
   createLineNumbersGutter,
   createEditorTheme,
 } from '../lib/editor-extensions';
+import {
+  activeTemplateId,
+  savedTemplates,
+  saveTemplate,
+  exportTemplateAsFile,
+  type SavedTemplate,
+} from '../lib/templates-store';
+import SaveTemplateModal from './SaveTemplateModal';
 
 interface TemplateEditorProps {
   value: string;
   onInput: (val: string) => void;
   onFileDrop?: (content: string, filename: string) => void;
+  onResetToDefault?: () => void;
+  onToast?: (message: string) => void;
 }
 
 const WORD_WRAP_KEY = 'scgt_word_wrap';
@@ -70,6 +80,7 @@ function getInitialRelativeLineNumbers(): boolean {
 export default function TemplateEditor(props: TemplateEditorProps) {
   let editorContainerRef: HTMLDivElement | undefined = undefined;
   let view: EditorView | undefined = undefined;
+  let fileInputRef: HTMLInputElement | undefined = undefined;
 
   const [wordWrap, setWordWrapSignal] = createSignal(getInitialWordWrap(), { name: 'word_wrap' });
   const [vimMode, setVimModeSignal] = createSignal(getInitialVimMode(), { name: 'vim_mode' });
@@ -83,6 +94,27 @@ export default function TemplateEditor(props: TemplateEditorProps) {
   });
   const [isDraggingOver, setIsDraggingOver] = createSignal(false, { name: 'drag_over' });
   const [cursorInfo, setCursorInfo] = createSignal({ line: 1, col: 1 }, { name: 'cursor_info' });
+
+  // Menu and Save Modal states
+  const [isFileMenuOpen, setIsFileMenuOpen] = createSignal(false, { name: 'file_menu_open' });
+  const [isSaveModalOpen, setIsSaveModalOpen] = createSignal(false, { name: 'save_modal_open' });
+  const [saveAsMode, setSaveAsMode] = createSignal(false, { name: 'save_as_mode' });
+
+  // Active saved template object if currently linked
+  const activeSavedTemplate = createMemo(() => {
+    const id = activeTemplateId();
+    if (!id) return null;
+    return savedTemplates().find((t) => t.id === id) || null;
+  }, { name: 'active_saved_template' });
+
+  // Detects if current content has unsaved modifications
+  const isDirty = createMemo(() => {
+    const existing = activeSavedTemplate();
+    if (existing) {
+      return props.value !== existing.content;
+    }
+    return props.value.trim().length > 0;
+  }, { name: 'editor_is_dirty' });
 
   // CodeMirror Extension Compartments for fine-grained dynamic updates
   const vimCompartment = new Compartment();
@@ -118,6 +150,67 @@ export default function TemplateEditor(props: TemplateEditorProps) {
       localStorage.setItem(RELATIVE_LINE_NUMBERS_KEY, String(next));
     } catch (e) {
       console.error('Failed to save relative line numbers preference:', e);
+    }
+  };
+
+  // Quick Save handler
+  const handleQuickSave = () => {
+    setIsFileMenuOpen(false);
+    const existing = activeSavedTemplate();
+    if (existing) {
+      const res = saveTemplate(existing.name, props.value, existing.id);
+      if (res.success) {
+        props.onToast?.(`Saved "${existing.name}" successfully!`);
+      } else {
+        props.onToast?.(res.error || 'Failed to save.');
+      }
+    } else {
+      setSaveAsMode(false);
+      setIsSaveModalOpen(true);
+    }
+  };
+
+  const handleSaveAs = () => {
+    setIsFileMenuOpen(false);
+    setSaveAsMode(true);
+    setIsSaveModalOpen(true);
+  };
+
+  const handleExport = () => {
+    setIsFileMenuOpen(false);
+    const existing = activeSavedTemplate();
+    const filename = existing?.name || 'song-chord-guide';
+    exportTemplateAsFile(filename, props.value);
+    props.onToast?.(`Exported "${filename}.lcct.txt"!`);
+  };
+
+  const handleImportClick = () => {
+    setIsFileMenuOpen(false);
+    fileInputRef?.click();
+  };
+
+  const handleFileChange = (e: Event) => {
+    const target = e.target as HTMLInputElement;
+    const file = target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        const text = event.target?.result as string;
+        if (text) {
+          props.onInput(text);
+          if (view) {
+            view.dispatch({
+              changes: { from: 0, to: view.state.doc.length, insert: text },
+            });
+          }
+          if (props.onFileDrop) {
+            props.onFileDrop(text, file.name);
+          }
+          props.onToast?.(`Imported "${file.name}" successfully!`);
+        }
+      };
+      reader.readAsText(file);
+      target.value = '';
     }
   };
 
@@ -222,7 +315,18 @@ export default function TemplateEditor(props: TemplateEditorProps) {
         highlightActiveLine(),
         highlightActiveLineGutter(),
         history(),
-        keymap.of([indentWithTab, ...defaultKeymap, ...historyKeymap]),
+        keymap.of([
+          {
+            key: 'Mod-s',
+            run: () => {
+              handleQuickSave();
+              return true;
+            },
+          },
+          indentWithTab,
+          ...defaultKeymap,
+          ...historyKeymap,
+        ]),
         EditorView.updateListener.of((update) => {
           if (update.docChanged) {
             const currentDoc = update.state.doc.toString();
@@ -365,12 +469,165 @@ export default function TemplateEditor(props: TemplateEditorProps) {
       onDragLeave={handleDragLeave}
       onDrop={handleDrop}
     >
+      {/* Hidden File Input for Import */}
+      <input
+        ref={(el) => (fileInputRef = el)}
+        type="file"
+        accept=".txt,.scgt,.lcct.txt"
+        onChange={handleFileChange}
+        class="hidden"
+      />
+
       {/* Editor Toolbar Header */}
       <div class="flex flex-wrap items-center justify-between gap-2 px-3 py-2 bg-slate-100/80 dark:bg-slate-800/80 border-b border-slate-200 dark:border-slate-700/80 text-xs text-slate-600 dark:text-slate-300 select-none">
         <div class="flex flex-wrap items-center gap-1.5 sm:gap-2">
-          <span class="font-bold tracking-wide uppercase text-[11px] text-slate-500 dark:text-slate-400">
-            Editor
-          </span>
+          {/* File Menu Dropdown */}
+          <div class="relative">
+            <button
+              type="button"
+              onClick={() => setIsFileMenuOpen(!isFileMenuOpen())}
+              class="inline-flex items-center gap-1 px-2.5 py-1 rounded text-xs font-semibold bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700 shadow-xs transition-colors"
+            >
+              <span>📁</span>
+              <span>File</span>
+              <span class="text-[10px] text-slate-400">▼</span>
+            </button>
+
+            {/* Dropdown Menu Popup */}
+            <Show when={isFileMenuOpen()}>
+              <>
+                <div
+                  class="fixed inset-0 z-20"
+                  onClick={() => setIsFileMenuOpen(false)}
+                />
+                <div class="absolute left-0 top-full mt-1 w-56 rounded-lg bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-xl py-1 z-30 menu-popover text-xs">
+                  {/* Save to Library / Update */}
+                  <button
+                    type="button"
+                    onClick={handleQuickSave}
+                    class="w-full flex items-center gap-2.5 px-3 py-2 text-left hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 font-medium"
+                  >
+                    <span>💾</span>
+                    <div class="flex-1">
+                      <div>{activeSavedTemplate() ? 'Save Changes' : 'Save to Library'}</div>
+                      <div class="text-[10px] text-slate-400">
+                        {activeSavedTemplate() ? `Update "${activeSavedTemplate()?.name}"` : 'Save as unique template'}
+                      </div>
+                    </div>
+                  </button>
+
+                  {/* Save As New */}
+                  <button
+                    type="button"
+                    onClick={handleSaveAs}
+                    class="w-full flex items-center gap-2.5 px-3 py-2 text-left hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 font-medium"
+                  >
+                    <span>📑</span>
+                    <div class="flex-1">
+                      <div>Save As New Template...</div>
+                      <div class="text-[10px] text-slate-400">Save with a new unique name</div>
+                    </div>
+                  </button>
+
+                  <div class="my-1 border-t border-slate-200 dark:border-slate-700" />
+
+                  {/* Import from File */}
+                  <button
+                    type="button"
+                    onClick={handleImportClick}
+                    class="w-full flex items-center gap-2.5 px-3 py-2 text-left hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 font-medium"
+                  >
+                    <span>📂</span>
+                    <div class="flex-1">
+                      <div>Import from File (*.lcct.txt)</div>
+                      <div class="text-[10px] text-slate-400">Load template file from device</div>
+                    </div>
+                  </button>
+
+                  {/* Export as File */}
+                  <button
+                    type="button"
+                    onClick={handleExport}
+                    class="w-full flex items-center gap-2.5 px-3 py-2 text-left hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 font-medium"
+                  >
+                    <span>💾</span>
+                    <div class="flex-1">
+                      <div>Export as File (*.lcct.txt)</div>
+                      <div class="text-[10px] text-slate-400">Download current sheet template</div>
+                    </div>
+                  </button>
+
+                  <Show when={props.onResetToDefault}>
+                    <div class="my-1 border-t border-slate-200 dark:border-slate-700" />
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setIsFileMenuOpen(false);
+                        props.onResetToDefault?.();
+                      }}
+                      class="w-full flex items-center gap-2.5 px-3 py-2 text-left hover:bg-slate-100 dark:hover:bg-slate-700 text-rose-600 dark:text-rose-400 font-medium"
+                    >
+                      <span>🔄</span>
+                      <div class="flex-1">
+                        <div>Reset to Default Sample</div>
+                        <div class="text-[10px] text-slate-400">Discard unsaved edits</div>
+                      </div>
+                    </button>
+                  </Show>
+                </div>
+              </>
+            </Show>
+          </div>
+
+          {/* Quick Save Button */}
+          <button
+            type="button"
+            onClick={handleQuickSave}
+            class="inline-flex items-center gap-1 px-2.5 py-1 rounded text-xs font-semibold bg-sky-600 hover:bg-sky-500 text-white shadow-xs transition-colors"
+            title={
+              activeSavedTemplate()
+                ? `Save changes to "${activeSavedTemplate()?.name}" (Ctrl/Cmd+S)`
+                : 'Save template to library (Ctrl/Cmd+S)'
+            }
+          >
+            <span>💾</span>
+            <span>Save</span>
+          </button>
+
+          {/* Active Template & Unsaved Changes Status Badge */}
+          <div
+            class={[
+              'flex items-center gap-1.5 px-2.5 py-0.5 rounded-md text-[11px] font-medium border transition-all select-none max-w-[200px]',
+              isDirty()
+                ? 'bg-amber-50 dark:bg-amber-950/60 text-amber-800 dark:text-amber-300 border-amber-300 dark:border-amber-800/80 shadow-2xs'
+                : 'bg-slate-200/70 dark:bg-slate-800 text-slate-600 dark:text-slate-400 border-slate-300 dark:border-slate-700',
+            ]}
+            title={
+              isDirty()
+                ? activeSavedTemplate()
+                  ? `Unsaved changes in "${activeSavedTemplate()?.name}". Click Save or press Ctrl/Cmd+S to update.`
+                  : 'Unsaved new draft. Click Save or press Ctrl/Cmd+S to store in your library.'
+                : activeSavedTemplate()
+                  ? `All changes saved to "${activeSavedTemplate()?.name}".`
+                  : 'No unsaved changes.'
+            }
+          >
+            <Show
+              when={isDirty()}
+              fallback={<span class="text-emerald-500 dark:text-emerald-400 font-bold text-xs">✓</span>}
+            >
+              <span class="w-2 h-2 rounded-full bg-amber-500 dark:bg-amber-400 animate-pulse shrink-0" />
+            </Show>
+            <span class="truncate">
+              {activeSavedTemplate() ? activeSavedTemplate()?.name : 'Draft'}
+            </span>
+            <Show when={isDirty()}>
+              <span class="text-[10px] font-bold text-amber-600 dark:text-amber-400 shrink-0">
+                (unsaved)
+              </span>
+            </Show>
+          </div>
+
           <span class="text-slate-300 dark:text-slate-600">|</span>
 
           {/* Vim Mode Toggle Button */}
@@ -491,6 +748,19 @@ export default function TemplateEditor(props: TemplateEditorProps) {
           <span>Tab = 2 spaces</span>
         </div>
       </div>
+
+      {/* Save Template Modal */}
+      <Show when={isSaveModalOpen()}>
+        <SaveTemplateModal
+          content={props.value}
+          existingTemplate={saveAsMode() ? null : activeSavedTemplate()}
+          onSaveSuccess={(saved) => {
+            props.onToast?.(`Template "${saved.name}" saved to library!`);
+            setIsSaveModalOpen(false);
+          }}
+          onClose={() => setIsSaveModalOpen(false)}
+        />
+      </Show>
     </div>
   );
 }

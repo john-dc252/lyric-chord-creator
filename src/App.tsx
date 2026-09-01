@@ -4,6 +4,7 @@ import '@unocss/reset/tailwind.css';
 import 'virtual:uno.css';
 import {Router} from './router';
 import {useRegisterSW} from "virtual:pwa-register/solid";
+import AppLayout from './components/AppLayout';
 import './App.css';
 
 export default function App() {
@@ -20,12 +21,12 @@ export default function App() {
   return (
     <Router>
       {(props) => (
-        <>
+        <AppLayout>
           <Title>Lyric-Chord Creator</Title>
           <Loading fallback={<main class="p-8 text-center text-slate-500">Loading…</main>}>
             {props.children}
           </Loading>
-        </>
+        </AppLayout>
       )}
     </Router>
   );

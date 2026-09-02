@@ -84,8 +84,63 @@ export function createEditorTheme(isDark: boolean): Extension {
         borderLeftColor: isDark ? '#38bdf8' : '#0284c7',
         borderLeftWidth: '2px',
       },
-      '&.cm-focused .cm-selectionBackground, .cm-selectionBackground, .cm-content ::selection': {
-        backgroundColor: isDark ? '#1e293b' : '#e0f2fe', // slate-800 / sky-100
+      // Context-aware Vim Mode Cursor
+      '.cm-vimCursorLayer': {
+        zIndex: '5',
+      },
+      '.cm-vimCursorLayer .cm-fat-cursor': {
+        position: 'absolute',
+        backgroundColor: isDark ? 'rgba(56, 189, 248, 0.75)' : 'rgba(2, 132, 199, 0.75)',
+        mixBlendMode: isDark ? 'screen' : 'multiply',
+        color: isDark ? '#0f172a !important' : '#ffffff !important',
+        border: 'none',
+        borderRadius: '1px',
+      },
+      // Insert mode: emerald/green caret
+      '&[data-vim-mode="insert"] .cm-cursor': {
+        borderLeftColor: isDark ? '#34d399' : '#059669',
+        borderLeftWidth: '2.5px',
+      },
+      '&[data-vim-mode="insert"] .cm-content': {
+        caretColor: isDark ? '#34d399' : '#059669',
+      },
+      // Visual mode (focused): blue fat cursor and selection
+      '&.cm-focused[data-vim-mode^="visual"] .cm-vimCursorLayer .cm-fat-cursor': {
+        backgroundColor: isDark ? 'rgba(56, 189, 248, 0.85)' : 'rgba(2, 132, 199, 0.85)',
+        mixBlendMode: isDark ? 'screen' : 'multiply',
+        color: isDark ? '#0f172a !important' : '#ffffff !important',
+      },
+      '&[data-vim-mode^="visual"] .cm-selectionBackground, &[data-vim-mode^="visual"] .cm-selectionLayer .cm-selectionBackground, &[data-vim-mode^="visual"].cm-focused > .cm-scroller > .cm-selectionLayer .cm-selectionBackground': {
+        backgroundColor: isDark ? 'rgba(14, 165, 233, 0.5) !important' : '#60a5fa !important',
+      },
+      '&:not(.cm-focused)[data-vim-mode^="visual"] .cm-selectionBackground, &:not(.cm-focused)[data-vim-mode^="visual"] .cm-selectionLayer .cm-selectionBackground': {
+        backgroundColor: isDark ? '#1e3a5f !important' : '#93c5fd !important',
+      },
+      // Replace mode: crimson/rose underline cursor
+      '&.cm-focused[data-vim-mode="replace"] .cm-vimCursorLayer .cm-fat-cursor': {
+        backgroundColor: isDark ? 'rgba(244, 63, 94, 0.85)' : 'rgba(225, 29, 72, 0.85)',
+        color: '#ffffff !important',
+        borderBottom: `2px solid ${isDark ? '#f43f5e' : '#e11d48'}`,
+      },
+      '&[data-vim-mode="replace"] .cm-content': {
+        caretColor: isDark ? '#f43f5e' : '#e11d48',
+      },
+      // Unfocused fat cursor in all modes (normal, visual, replace)
+      '&:not(.cm-focused) .cm-fat-cursor, &:not(.cm-focused) .cm-vimCursorLayer .cm-fat-cursor, &:not(.cm-focused)[data-vim-mode] .cm-vimCursorLayer .cm-fat-cursor': {
+        backgroundColor: 'transparent !important',
+        outline: `1.5px solid ${isDark ? '#38bdf8' : '#0284c7'} !important`,
+        color: `${isDark ? '#f8fafc' : '#0f172a'} !important`,
+        mixBlendMode: 'normal !important',
+      },
+      // Selection highlights: Light Mode (rich blue) & Dark Mode (cyan-blue)
+      '.cm-selectionBackground': {
+        backgroundColor: isDark ? '#1e3a5f !important' : '#93c5fd !important',
+      },
+      '&.cm-focused > .cm-scroller > .cm-selectionLayer .cm-selectionBackground, &.cm-focused .cm-selectionBackground': {
+        backgroundColor: isDark ? 'rgba(14, 165, 233, 0.5) !important' : '#60a5fa !important',
+      },
+      '.cm-content ::selection': {
+        backgroundColor: 'transparent !important',
       },
       '.cm-gutters': {
         backgroundColor: isDark ? '#0b1120' : '#f8fafc', // slate-950 / slate-50
@@ -99,7 +154,7 @@ export function createEditorTheme(isDark: boolean): Extension {
         fontWeight: 'bold',
       },
       '.cm-activeLine': {
-        backgroundColor: isDark ? '#1e293b40' : '#f8fafc',
+        backgroundColor: isDark ? 'rgba(30, 41, 59, 0.35)' : 'rgba(241, 245, 249, 0.5)',
       },
       '.cm-matchingBracket, .cm-nonmatchingBracket': {
         backgroundColor: isDark ? '#334155' : '#cbd5e1',

@@ -83,3 +83,75 @@
   transform: none;
   font-weight: bold;
 }
+
+/* CodeMirror High-Contrast Selection Highlights */
+.cm-editor .cm-activeLine {
+  background-color: rgba(241, 245, 249, 0.5) !important;
+}
+
+.dark .cm-editor .cm-activeLine {
+  background-color: rgba(30, 41, 59, 0.35) !important;
+}
+
+/* Hide native browser selection to prevent duplicate overlapping highlights over CodeMirror's drawSelection */
+.cm-editor .cm-content ::selection,
+.cm-editor .cm-line::selection,
+.cm-editor .cm-line *::selection {
+  background: transparent !important;
+  background-color: transparent !important;
+}
+
+.cm-editor .cm-selectionBackground,
+.cm-editor .cm-selectionLayer .cm-selectionBackground,
+.cm-editor.cm-focused > .cm-scroller > .cm-selectionLayer .cm-selectionBackground,
+.cm-editor.cm-focused .cm-selectionBackground {
+  background: #60a5fa !important;
+  background-color: #60a5fa !important;
+}
+
+.cm-editor:not(.cm-focused) .cm-selectionBackground,
+.cm-editor:not(.cm-focused) .cm-selectionLayer .cm-selectionBackground {
+  background: #93c5fd !important;
+  background-color: #93c5fd !important;
+}
+
+.dark .cm-editor .cm-selectionBackground,
+.dark .cm-editor .cm-selectionLayer .cm-selectionBackground,
+.dark .cm-editor.cm-focused > .cm-scroller > .cm-selectionLayer .cm-selectionBackground,
+.dark .cm-editor.cm-focused .cm-selectionBackground {
+  background: rgba(14, 165, 233, 0.5) !important;
+  background-color: rgba(14, 165, 233, 0.5) !important;
+}
+
+.dark .cm-editor:not(.cm-focused) .cm-selectionBackground,
+.dark .cm-editor:not(.cm-focused) .cm-selectionLayer .cm-selectionBackground {
+  background: #1e3a5f !important;
+  background-color: #1e3a5f !important;
+}
+
+/* Visual Mode Selection Highlight in Vim */
+.cm-editor[data-vim-mode^="visual"] .cm-selectionBackground,
+.cm-editor[data-vim-mode^="visual"].cm-focused > .cm-scroller > .cm-selectionLayer .cm-selectionBackground,
+.cm-editor[data-vim-mode^="visual"] .cm-selectionLayer .cm-selectionBackground {
+  background: #60a5fa !important;
+  background-color: #60a5fa !important;
+}
+
+.cm-editor:not(.cm-focused)[data-vim-mode^="visual"] .cm-selectionBackground,
+.cm-editor:not(.cm-focused)[data-vim-mode^="visual"] .cm-selectionLayer .cm-selectionBackground {
+  background: #93c5fd !important;
+  background-color: #93c5fd !important;
+}
+
+.dark .cm-editor[data-vim-mode^="visual"] .cm-selectionBackground,
+.dark .cm-editor[data-vim-mode^="visual"].cm-focused > .cm-scroller > .cm-selectionLayer .cm-selectionBackground,
+.dark .cm-editor[data-vim-mode^="visual"] .cm-selectionLayer .cm-selectionBackground {
+  background: rgba(14, 165, 233, 0.5) !important;
+  background-color: rgba(14, 165, 233, 0.5) !important;
+}
+
+.dark .cm-editor:not(.cm-focused)[data-vim-mode^="visual"] .cm-selectionBackground,
+.dark .cm-editor:not(.cm-focused)[data-vim-mode^="visual"] .cm-selectionLayer .cm-selectionBackground {
+  background: #1e3a5f !important;
+  background-color: #1e3a5f !important;
+}

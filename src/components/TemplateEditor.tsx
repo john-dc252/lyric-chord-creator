@@ -37,6 +37,8 @@ interface TemplateEditorProps {
   onToast?: (message: string) => void;
 }
 
+type VimEditorMode = 'NORMAL' | 'INSERT' | 'VISUAL' | 'VISUAL LINE' | 'VISUAL BLOCK' | 'REPLACE';
+
 const WORD_WRAP_KEY = 'scgt_word_wrap';
 const VIM_MODE_KEY = 'scgt_vim_mode';
 const RELATIVE_LINE_NUMBERS_KEY = 'scgt_relative_line_numbers';
@@ -215,6 +217,12 @@ export default function TemplateEditor(props: TemplateEditorProps) {
   };
 
   // Register custom Vim Ex commands
+  Vim.defineEx('write', 'w', () => {
+    handleQuickSave();
+  });
+  Vim.defineEx('update', 'up', () => {
+    handleQuickSave();
+  });
   Vim.defineEx('rnu', 'rnu', () => {
     setRelativeLineNumbersSignal(true);
     try {
@@ -349,21 +357,49 @@ export default function TemplateEditor(props: TemplateEditorProps) {
       parent: editorContainerRef,
     });
 
+    const applyVimMode = (mode: string, subMode?: string) => {
+      let modeName: VimEditorMode = 'NORMAL';
+      let attrMode = 'normal';
+      switch (mode) {
+        case 'normal':
+          modeName = 'NORMAL';
+          attrMode = 'normal';
+          break;
+        case 'insert':
+          modeName = 'INSERT';
+          attrMode = 'insert';
+          break;
+        case 'visual':
+          if (subMode === 'linewise') {
+            modeName = 'VISUAL LINE';
+            attrMode = 'visual-line';
+          } else if (subMode === 'blockwise') {
+            modeName = 'VISUAL BLOCK';
+            attrMode = 'visual-block';
+          } else {
+            modeName = 'VISUAL';
+            attrMode = 'visual';
+          }
+          break;
+        case 'replace':
+          modeName = 'REPLACE';
+          attrMode = 'replace';
+          break;
+      }
+      setVimModeName(modeName);
+      if (view) {
+        view.dom.setAttribute('data-vim-mode', attrMode);
+      }
+    };
+
     // Attach Vim mode listener if available
     const cm = getCM(view);
     if (cm) {
+      if (vimMode()) {
+        applyVimMode('normal');
+      }
       cm.on('vim-mode-change', (data: { mode: string; subMode?: string }) => {
-        if (data.mode === 'normal') {
-          setVimModeName('NORMAL');
-        } else if (data.mode === 'insert') {
-          setVimModeName('INSERT');
-        } else if (data.mode === 'visual') {
-          if (data.subMode === 'linewise') setVimModeName('VISUAL LINE');
-          else if (data.subMode === 'blockwise') setVimModeName('VISUAL BLOCK');
-          else setVimModeName('VISUAL');
-        } else if (data.mode === 'replace') {
-          setVimModeName('REPLACE');
-        }
+        applyVimMode(data.mode, data.subMode);
       });
     }
   });
@@ -389,23 +425,42 @@ export default function TemplateEditor(props: TemplateEditorProps) {
           effects: vimCompartment.reconfigure(enabled ? [vim()] : []),
         });
         if (enabled) {
+          view.dom.setAttribute('data-vim-mode', 'normal');
           setVimModeName('NORMAL');
           const cm = getCM(view);
           if (cm) {
             cm.on('vim-mode-change', (data: { mode: string; subMode?: string }) => {
+              let modeName: 'NORMAL' | 'INSERT' | 'VISUAL' | 'VISUAL LINE' | 'VISUAL BLOCK' | 'REPLACE' = 'NORMAL';
+              let attrMode = 'normal';
               if (data.mode === 'normal') {
-                setVimModeName('NORMAL');
+                modeName = 'NORMAL';
+                attrMode = 'normal';
               } else if (data.mode === 'insert') {
-                setVimModeName('INSERT');
+                modeName = 'INSERT';
+                attrMode = 'insert';
               } else if (data.mode === 'visual') {
-                if (data.subMode === 'linewise') setVimModeName('VISUAL LINE');
-                else if (data.subMode === 'blockwise') setVimModeName('VISUAL BLOCK');
-                else setVimModeName('VISUAL');
+                if (data.subMode === 'linewise') {
+                  modeName = 'VISUAL LINE';
+                  attrMode = 'visual-line';
+                } else if (data.subMode === 'blockwise') {
+                  modeName = 'VISUAL BLOCK';
+                  attrMode = 'visual-block';
+                } else {
+                  modeName = 'VISUAL';
+                  attrMode = 'visual';
+                }
               } else if (data.mode === 'replace') {
-                setVimModeName('REPLACE');
+                modeName = 'REPLACE';
+                attrMode = 'replace';
+              }
+              setVimModeName(modeName);
+              if (view) {
+                view.dom.setAttribute('data-vim-mode', attrMode);
               }
             });
           }
+        } else {
+          view.dom.removeAttribute('data-vim-mode');
         }
       }
     },

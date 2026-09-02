@@ -404,12 +404,12 @@ export default function Gallery() {
                     </div>
 
                     {/* Rendered Output (Clean paper sheet rendering with spacious padding) */}
-                    <div class="p-4 sm:p-5 bg-slate-200/70 dark:bg-slate-950/80 overflow-x-auto border-b border-slate-200 dark:border-slate-800">
+                    <div class="p-4 sm:p-5 bg-slate-200/70 dark:bg-slate-950/80 overflow-hidden border-b border-slate-200 dark:border-slate-800">
                       <div class="text-[10px] uppercase font-bold text-slate-500 dark:text-slate-400 mb-3 select-none">
                         Rendered Chord Sheet Preview
                       </div>
                       {/* Container for rendered pages */}
-                      <div class="guide-sheet-container flex flex-col gap-4 font-mono text-xs select-text max-h-72 overflow-y-auto p-3 sm:p-4 rounded-xl bg-slate-300/40 dark:bg-slate-900/60 shadow-inner">
+                      <div class="guide-sheet-container flex flex-col gap-4 font-mono select-text h-72 overflow-hidden p-3 sm:p-4 rounded-xl bg-slate-300/40 dark:bg-slate-900/60 shadow-inner">
                         <ChordGuidePages template={template.content} />
                       </div>
                     </div>

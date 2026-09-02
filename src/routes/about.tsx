@@ -388,22 +388,29 @@ export default function About() {
                   {/* Split Preview of Code vs Rendered Output */}
                   <div class="grid grid-cols-1 lg:grid-cols-2 divide-y lg:divide-y-0 lg:divide-x divide-slate-200 dark:divide-slate-800">
                     {/* Source Code */}
-                    <div class="p-4 bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-slate-100 font-mono text-xs overflow-x-auto transition-colors">
+                    <div class="p-4 bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-slate-100 font-mono text-xs overflow-hidden flex flex-col transition-colors">
                       <div class="text-[10px] uppercase font-bold text-slate-500 dark:text-slate-400 mb-2 select-none">
                         Template Source (*.lcct.txt)
                       </div>
-                      <pre class="whitespace-pre-wrap leading-relaxed select-text font-mono">
+                      <pre class="whitespace-pre-wrap leading-relaxed select-text font-mono overflow-y-auto h-72 sm:h-80 pr-2">
                         <TemplateSyntaxHighlighter code={example.code} />
                       </pre>
                     </div>
 
                     {/* Rendered Output (Clean paper sheet rendering) */}
-                    <div class="p-4 bg-slate-200/60 dark:bg-slate-950 overflow-x-auto">
+                    <div class="p-4 bg-slate-200/60 dark:bg-slate-950 overflow-hidden flex flex-col">
                       <div class="text-[10px] uppercase font-bold text-slate-500 dark:text-slate-400 mb-3 select-none">
                         Rendered Chord Sheet Preview
                       </div>
                       {/* Container for rendered pages */}
-                      <div class="guide-sheet-container flex flex-col gap-4 font-mono text-xs select-text">
+                      <div
+                        class={[
+                          'guide-sheet-container flex flex-col gap-4 font-mono select-text h-72 sm:h-80 rounded-xl bg-slate-300/40 dark:bg-slate-900/60 p-3 sm:p-4 shadow-inner',
+                          example.code.includes('@page_break')
+                            ? 'scrollable overflow-auto'
+                            : 'overflow-hidden',
+                        ].join(' ')}
+                      >
                         <ChordGuidePages template={example.code} />
                       </div>
                     </div>
@@ -448,64 +455,6 @@ export default function About() {
           </ul>
         </section>
       </main>
-
-      {/* Scoped CSS styling for guide previews */}
-      <style>{`
-        .guide-sheet-container .page {
-          background: #ffffff;
-          color: #000000;
-          padding: 1.25rem;
-          border-radius: 6px;
-          box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.15), 0 2px 4px -2px rgba(0, 0, 0, 0.1);
-          column-count: 2;
-          column-fill: auto;
-          column-gap: 1.25rem;
-          width: 100%;
-          box-sizing: border-box;
-          font-family: "monospace", monospace, "Courier New", Courier;
-          font-size: 11px;
-        }
-
-        .guide-sheet-container .column-break {
-          break-after: column;
-        }
-
-        .guide-sheet-container .title {
-          font-weight: bold;
-          text-decoration: underline;
-        }
-
-        .guide-sheet-container .artist {
-          font-weight: bold;
-        }
-
-        .guide-sheet-container .section-label {
-          line-height: 1.5rem;
-          break-after: avoid;
-          font-weight: bold;
-        }
-
-        .guide-sheet-container .line {
-          position: relative;
-          line-height: 2.8rem;
-          break-inside: avoid-page;
-          white-space: pre-wrap;
-          word-break: break-word;
-        }
-
-        .guide-sheet-container .chord {
-          font-weight: bold;
-          position: absolute;
-          line-height: 1em;
-          color: #000;
-        }
-
-        .guide-sheet-container .chord.sequence {
-          position: relative;
-          transform: none;
-          font-weight: bold;
-        }
-      `}</style>
     </div>
   );
 }

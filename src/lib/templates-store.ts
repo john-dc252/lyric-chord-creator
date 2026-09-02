@@ -1,5 +1,5 @@
 import { createSignal } from 'solid-js';
-import { extractSongArtist, extractSongTitle, DEFAULT_TEMPLATE } from './template-processor';
+import { extractSongArtist, extractSongTitle, extractSongsMetadata, DEFAULT_TEMPLATE } from './template-processor';
 import {
   dbGetAllTemplates,
   dbPutTemplate,
@@ -259,9 +259,16 @@ export function searchTemplates(
   if (!q) return templates;
 
   return templates.filter((template) => {
+    const songs = extractSongsMetadata(template.content);
+    const titles = songs.map((s) => s.title.toLowerCase());
+    const artists = songs.map((s) => (s.artist || '').toLowerCase());
+
     const nameMatch = template.name.toLowerCase().includes(q);
-    const titleMatch = template.title.toLowerCase().includes(q);
-    const artistMatch = (template.artist || '').toLowerCase().includes(q);
+    const titleMatch =
+      template.title.toLowerCase().includes(q) || titles.some((t) => t.includes(q));
+    const artistMatch =
+      (template.artist || '').toLowerCase().includes(q) ||
+      artists.some((a) => a.includes(q));
     const lyricsMatch =
       extractLyricsText(template.content).toLowerCase().includes(q) ||
       template.content.toLowerCase().includes(q);
@@ -312,6 +319,20 @@ export function loadTemplateIntoEditor(template: SavedTemplate): void {
       localStorage.setItem(STORAGE_KEY_TEMPLATE_CONTENT, template.content);
     } catch (e) {
       console.error('Failed to set current template:', e);
+    }
+  }
+}
+
+/**
+ * Clears the active template selection and resets the editor content to empty.
+ */
+export function createNewTemplate(): void {
+  setActiveTemplateId(null);
+  if (typeof window !== 'undefined') {
+    try {
+      localStorage.setItem(STORAGE_KEY_TEMPLATE_CONTENT, '');
+    } catch (e) {
+      console.error('Failed to reset current template:', e);
     }
   }
 }

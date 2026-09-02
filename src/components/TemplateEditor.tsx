@@ -34,6 +34,7 @@ interface TemplateEditorProps {
   onInput: (val: string) => void;
   onFileDrop?: (content: string, filename: string) => void;
   onResetToDefault?: () => void;
+  onNewTemplate?: () => void;
   onToast?: (message: string) => void;
 }
 
@@ -556,6 +557,25 @@ export default function TemplateEditor(props: TemplateEditorProps) {
                   onClick={() => setIsFileMenuOpen(false)}
                 />
                 <div class="absolute left-0 top-full mt-1 w-56 rounded-lg bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-xl py-1 z-30 menu-popover text-xs">
+                  {/* New Empty Template */}
+                  <Show when={props.onNewTemplate}>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setIsFileMenuOpen(false);
+                        props.onNewTemplate?.();
+                      }}
+                      class="w-full flex items-center gap-2.5 px-3 py-2 text-left hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 font-medium"
+                    >
+                      <span>➕</span>
+                      <div class="flex-1">
+                        <div>New Template</div>
+                        <div class="text-[10px] text-slate-400">Start with empty editor</div>
+                      </div>
+                    </button>
+                    <div class="my-1 border-t border-slate-200 dark:border-slate-700" />
+                  </Show>
+
                   {/* Save to Library / Update */}
                   <button
                     type="button"

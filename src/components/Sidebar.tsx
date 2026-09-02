@@ -44,7 +44,7 @@ export default function Sidebar() {
       ),
     },
     {
-      label: 'Gallery',
+      label: 'Local Library',
       path: '/gallery',
       icon: (
         <svg
@@ -56,10 +56,10 @@ export default function Sidebar() {
           stroke-linecap="round"
           stroke-linejoin="round"
         >
-          <rect x="3" y="3" width="7" height="7" rx="1" />
-          <rect x="14" y="3" width="7" height="7" rx="1" />
-          <rect x="14" y="14" width="7" height="7" rx="1" />
-          <rect x="3" y="14" width="7" height="7" rx="1" />
+          <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" />
+          <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z" />
+          <path d="M9 7h6" />
+          <path d="M9 11h6" />
         </svg>
       ),
       badge: () => savedTemplates().length,

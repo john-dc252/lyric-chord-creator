@@ -1,6 +1,6 @@
 import {render} from '@solidjs/testing-library';
 import {describe, expect, test} from 'vitest';
-import {ChordGuidePages, EMBEDDED_CHORDS, extractSongArtist, extractSongTitle, transformLineToJsx,} from './index';
+import {ChordGuidePages, EMBEDDED_CHORDS, extractSongArtist, extractSongTitle, extractSongsMetadata, transformLineToJsx,} from './index';
 
 describe('Template Processor JSX', () => {
   test('parseChordSegments splits lyrics and chords accurately', () => {
@@ -66,5 +66,21 @@ describe('Template Processor JSX', () => {
     const template = `@title: Blessed Be Your Name\n@artist: Matt Redman\n[Verse 1]`;
     expect(extractSongTitle(template)).toBe('Blessed Be Your Name');
     expect(extractSongArtist(template)).toBe('Matt Redman');
+  });
+
+  test('extractSongsMetadata extracts all songs in multi-song templates', () => {
+    const template = `@title: Song One
+@artist: Artist One
+[Verse 1]
+{C}Lyrics
+@page_break
+@title: Song Two
+@artist: Artist Two
+[Verse 1]
+{G}Lyrics`;
+    const songs = extractSongsMetadata(template);
+    expect(songs.length).toBe(2);
+    expect(songs[0]).toEqual({ title: 'Song One', artist: 'Artist One' });
+    expect(songs[1]).toEqual({ title: 'Song Two', artist: 'Artist Two' });
   });
 });

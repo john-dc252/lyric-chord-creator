@@ -1,6 +1,6 @@
-import { createSignal, createMemo, Show, onSettled } from 'solid-js';
+import { createSignal, createMemo, Show, For, onSettled } from 'solid-js';
 import { isTemplateNameUnique, saveTemplate, type SavedTemplate } from '../lib/templates-store';
-import { extractSongTitle, extractSongArtist } from '../lib/template-processor';
+import { extractSongTitle, extractSongArtist, extractSongsMetadata } from '../lib/template-processor';
 
 interface SaveTemplateModalProps {
   content: string;
@@ -26,8 +26,7 @@ export default function SaveTemplateModal(props: SaveTemplateModalProps) {
   const [name, setName] = createSignal(defaultInitialName(), { name: 'save_template_name' });
   const [errorMessage, setErrorMessage] = createSignal<string | null>(null, { name: 'save_error' });
 
-  const titlePreview = createMemo(() => extractSongTitle(props.content));
-  const artistPreview = createMemo(() => extractSongArtist(props.content));
+  const songsList = createMemo(() => extractSongsMetadata(props.content));
 
   const trimmedName = () => name().trim();
 
@@ -67,13 +66,13 @@ export default function SaveTemplateModal(props: SaveTemplateModalProps) {
 
   return (
     <div
-      class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs animate-fade-in"
+      class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs modal-backdrop"
       onClick={(e) => {
         if (e.target === e.currentTarget) props.onClose();
       }}
     >
       <div
-        class="w-full max-w-md bg-white dark:bg-slate-900 rounded-xl shadow-2xl border border-slate-200 dark:border-slate-800 overflow-hidden"
+        class="w-full max-w-md bg-white dark:bg-slate-900 rounded-xl shadow-2xl border border-slate-200 dark:border-slate-800 overflow-hidden modal-content"
         role="dialog"
         aria-modal="true"
         aria-labelledby="save-modal-title"
@@ -86,7 +85,7 @@ export default function SaveTemplateModal(props: SaveTemplateModalProps) {
             </div>
             <div>
               <h2 id="save-modal-title" class="font-bold text-sm text-slate-900 dark:text-white">
-                {props.existingTemplate ? 'Update Saved Template' : 'Save Template to Library'}
+                {props.existingTemplate ? 'Update Saved Template' : 'Save Template to Local Library'}
               </h2>
               <p class="text-xs text-slate-500 dark:text-slate-400">
                 Templates are stored locally on your device
@@ -144,22 +143,36 @@ export default function SaveTemplateModal(props: SaveTemplateModalProps) {
           </div>
 
           {/* Extracted Metadata Preview */}
-          <div class="p-3 rounded-lg bg-slate-50 dark:bg-slate-800/60 border border-slate-200/80 dark:border-slate-700/80 text-xs space-y-1.5">
+          <div class="p-3 rounded-lg bg-slate-50 dark:bg-slate-800/60 border border-slate-200/80 dark:border-slate-700/80 text-xs space-y-2">
             <div class="font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider text-[10px]">
-              Extracted Metadata
+              Extracted Song Metadata ({songsList().length} {songsList().length === 1 ? 'song' : 'songs'})
             </div>
-            <div class="flex items-center justify-between text-slate-700 dark:text-slate-300">
-              <span class="text-slate-500 dark:text-slate-400">Song Title:</span>
-              <span class="font-medium text-slate-900 dark:text-white truncate max-w-[200px]">
-                {titlePreview() || 'Untitled'}
-              </span>
-            </div>
-            <Show when={artistPreview()}>
-              <div class="flex items-center justify-between text-slate-700 dark:text-slate-300">
-                <span class="text-slate-500 dark:text-slate-400">Artist:</span>
-                <span class="font-medium text-slate-900 dark:text-white truncate max-w-[200px]">
-                  {artistPreview()}
-                </span>
+            <Show
+              when={songsList().length > 0}
+              fallback={
+                <div class="text-slate-500 dark:text-slate-400 italic text-[11px]">
+                  No @title or @artist directives detected
+                </div>
+              }
+            >
+              <div class="space-y-1.5 max-h-32 overflow-y-auto pr-1">
+                <For each={songsList()}>
+                  {(song, idx) => (
+                    <div class="flex items-center justify-between text-slate-700 dark:text-slate-300 py-0.5 border-b border-slate-200/40 dark:border-slate-700/40 last:border-b-0">
+                      <div class="flex items-center gap-1.5 min-w-0">
+                        <span class="text-[10px] text-slate-400 shrink-0">#{idx() + 1}</span>
+                        <span class="font-medium text-slate-900 dark:text-white truncate">
+                          {song.title}
+                        </span>
+                      </div>
+                      <Show when={song.artist}>
+                        <span class="text-slate-500 dark:text-slate-400 truncate max-w-[140px] text-right ml-2">
+                          by {song.artist}
+                        </span>
+                      </Show>
+                    </div>
+                  )}
+                </For>
               </div>
             </Show>
           </div>

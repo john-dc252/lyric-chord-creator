@@ -8,13 +8,14 @@ import {
   renameTemplate,
   exportTemplateAsFile,
   loadTemplateIntoEditor,
+  createNewTemplate,
   saveTemplate,
   resetToSeedTemplates,
   isTemplateNameUnique,
   type SavedTemplate,
   type SearchField,
 } from '../lib/templates-store';
-import { ChordGuidePages } from '../lib/template-processor';
+import { ChordGuidePages, extractSongsMetadata } from '../lib/template-processor';
 
 const PAGE_SIZE = 10;
 
@@ -88,6 +89,11 @@ export default function Gallery() {
   }, { name: 'paginated_templates' });
 
   // Navigation / Action handlers
+  const handleNewTemplate = () => {
+    createNewTemplate();
+    window.location.href = '#/';
+  };
+
   const handleOpenInEditor = (template: SavedTemplate) => {
     loadTemplateIntoEditor(template);
     showToast(`Loaded "${template.name}" into Editor.`);
@@ -192,7 +198,7 @@ export default function Gallery() {
 
   return (
     <div class="h-full flex flex-col overflow-y-auto bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 p-3 sm:p-5 lg:p-8">
-      <Title>Template Gallery - Lyric-Chord Creator</Title>
+      <Title>Local Library - Lyric-Chord Creator</Title>
 
       {/* Hidden file input for importing */}
       <input
@@ -213,7 +219,7 @@ export default function Gallery() {
               </div>
               <div>
                 <h1 class="text-xl sm:text-2xl font-bold text-slate-900 dark:text-white tracking-tight">
-                  Template Gallery
+                  Local Library
                 </h1>
                 <p class="text-xs sm:text-sm text-slate-500 dark:text-slate-400">
                   Manage and search templates saved locally on your device
@@ -232,14 +238,15 @@ export default function Gallery() {
               <span>📂</span>
               <span>Import File</span>
             </button>
-            <a
-              href="#/"
-              class="inline-flex items-center gap-1.5 px-3.5 py-2 text-xs font-semibold rounded-lg bg-sky-600 hover:bg-sky-500 text-white shadow-xs transition-colors no-underline"
-              title="Create a new chord guide template"
+            <button
+              type="button"
+              onClick={handleNewTemplate}
+              class="inline-flex items-center gap-1.5 px-3.5 py-2 text-xs font-semibold rounded-lg bg-sky-600 hover:bg-sky-500 text-white shadow-xs transition-colors"
+              title="Create a new empty template"
             >
               <span>➕</span>
               <span>New Template</span>
-            </a>
+            </button>
           </div>
         </div>
 
@@ -385,16 +392,29 @@ export default function Gallery() {
                           </h3>
                         </div>
 
-                        {/* Song Title & Artist Badges */}
+                        {/* Song Title & Artist Badges for all songs in template */}
                         <div class="flex flex-wrap items-center gap-1.5 mt-1.5 text-[11px]">
-                          <span class="px-2 py-0.5 rounded-md bg-sky-50 dark:bg-sky-950/80 text-sky-700 dark:text-sky-300 font-medium">
-                            Title: {template.title || 'Untitled'}
-                          </span>
-                          <Show when={template.artist}>
-                            <span class="px-2 py-0.5 rounded-md bg-indigo-50 dark:bg-indigo-950/80 text-indigo-700 dark:text-indigo-300 font-medium">
-                              Artist: {template.artist}
-                            </span>
-                          </Show>
+                          <For
+                            each={extractSongsMetadata(template.content)}
+                            fallback={
+                              <span class="px-2 py-0.5 rounded-md bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 font-medium">
+                                Title: {template.title || 'Untitled'}
+                              </span>
+                            }
+                          >
+                            {(song) => (
+                              <div class="inline-flex flex-wrap items-center gap-1">
+                                <span class="px-2 py-0.5 rounded-md bg-sky-50 dark:bg-sky-950/80 text-sky-700 dark:text-sky-300 font-medium">
+                                  🎵 {song.title}
+                                </span>
+                                <Show when={song.artist}>
+                                  <span class="px-2 py-0.5 rounded-md bg-indigo-50 dark:bg-indigo-950/80 text-indigo-700 dark:text-indigo-300 font-medium">
+                                    👤 {song.artist}
+                                  </span>
+                                </Show>
+                              </div>
+                            )}
+                          </For>
                         </div>
                       </div>
 
@@ -512,8 +532,8 @@ export default function Gallery() {
 
       {/* Rename Modal */}
       <Show when={renamingTemplate()}>
-        <div class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs animate-fade-in">
-          <div class="w-full max-w-sm bg-white dark:bg-slate-900 rounded-xl shadow-2xl border border-slate-200 dark:border-slate-800 p-5 space-y-4">
+        <div class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs modal-backdrop">
+          <div class="w-full max-w-sm bg-white dark:bg-slate-900 rounded-xl shadow-2xl border border-slate-200 dark:border-slate-800 p-5 space-y-4 modal-content">
             <h3 class="font-bold text-sm text-slate-900 dark:text-white">
               Rename Template
             </h3>
@@ -552,8 +572,8 @@ export default function Gallery() {
 
       {/* Delete Confirmation Modal */}
       <Show when={deletingTemplate()}>
-        <div class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs animate-fade-in">
-          <div class="w-full max-w-sm bg-white dark:bg-slate-900 rounded-xl shadow-2xl border border-slate-200 dark:border-slate-800 p-5 space-y-4">
+        <div class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs modal-backdrop">
+          <div class="w-full max-w-sm bg-white dark:bg-slate-900 rounded-xl shadow-2xl border border-slate-200 dark:border-slate-800 p-5 space-y-4 modal-content">
             <div class="flex items-center gap-3 text-rose-600 dark:text-rose-400">
               <span class="text-2xl">⚠️</span>
               <h3 class="font-bold text-sm text-slate-900 dark:text-white">

@@ -5,7 +5,7 @@ import Header from '../components/Header';
 import TemplateEditor from '../components/TemplateEditor';
 import { DEFAULT_PAPER_SIZE, type PaperSizeConfig } from '../lib/paperSize';
 import { DEFAULT_TEMPLATE, extractSongTitle } from '../lib/template-processor';
-import { activeTemplateId, savedTemplates } from '../lib/templates-store';
+import { activeTemplateId, savedTemplates, createNewTemplate } from '../lib/templates-store';
 
 type BooleanString = 'true' | 'false';
 
@@ -16,7 +16,7 @@ function getInitialTemplate(): string {
   if (typeof window !== 'undefined') {
     try {
       const savedTemplate = localStorage.getItem(STORAGE_KEY_TEMPLATE);
-      if (savedTemplate && savedTemplate.trim().length > 0) {
+      if (savedTemplate !== null) {
         return savedTemplate;
       }
     } catch (e) {
@@ -114,6 +114,12 @@ export default function Home() {
     }
   };
 
+  const handleNewTemplate = () => {
+    setTemplate('');
+    createNewTemplate();
+    showToast('Created new empty template.');
+  };
+
   const activeSavedTemplate = createMemo(() => {
     const id = activeTemplateId();
     if (!id) return null;
@@ -204,6 +210,7 @@ export default function Home() {
             onInput={handleTemplateInput}
             onFileDrop={handleFileImport}
             onResetToDefault={handleResetToDefault}
+            onNewTemplate={handleNewTemplate}
             onToast={showToast}
           />
         </div>

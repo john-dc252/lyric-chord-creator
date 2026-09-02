@@ -129,6 +129,40 @@ export function transformLineToJsx(str: string): JSX.Element {
   );
 }
 
+export interface SongMetadata {
+  title: string;
+  artist?: string;
+}
+
+/**
+ * Extracts all songs (title and optional artist) defined in the template.
+ */
+export function extractSongsMetadata(template: string): SongMetadata[] {
+  const songs: SongMetadata[] = [];
+  const lines = template.split('\n');
+  let currentTitle: string | null = null;
+  let currentArtist: string | undefined = undefined;
+
+  for (const rawLine of lines) {
+    const line = rawLine.trim();
+    if (line.startsWith('@title:')) {
+      if (currentTitle) {
+        songs.push({ title: currentTitle, artist: currentArtist });
+        currentArtist = undefined;
+      }
+      currentTitle = line.replace(/^@title:\s*/, '').trim() || 'Untitled Song';
+    } else if (line.startsWith('@artist:')) {
+      currentArtist = line.replace(/^@artist:\s*/, '').trim() || undefined;
+    }
+  }
+
+  if (currentTitle) {
+    songs.push({ title: currentTitle, artist: currentArtist });
+  }
+
+  return songs;
+}
+
 /**
  * Extracts the song title from the template if present.
  */

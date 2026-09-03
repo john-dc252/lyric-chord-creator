@@ -1,9 +1,10 @@
 import presetWind4 from '@unocss/preset-wind4';
-import { fileRoutes } from 'filesystem-routing/vite';
+import {fileRoutes} from 'filesystem-routing/vite';
 import UnoCSS from 'unocss/vite';
-import { defineConfig } from 'vitest/config';
+import {defineConfig} from 'vitest/config';
 import solid from '@solidjs/vite-plugin';
 import {VitePWA} from "vite-plugin-pwa";
+import pkg from './package.json' with {type: 'json'};
 
 export default defineConfig({
   base: '/apps/lyric-chord-creator/',
@@ -14,12 +15,12 @@ export default defineConfig({
   plugins: [
     // `extensions` makes @solidjs/vite-plugin also compile the `?pick=` route
     // modules the fileRoutes plugin emits (their ids end in a query string).
-    solid({ start: true, extensions: ['.jsx', '.tsx'], diagnostics: true }), // add `ssr: true` for streaming SSR
-    fileRoutes({ types: true }),
+    solid({start: true, extensions: ['.jsx', '.tsx'], diagnostics: true}), // add `ssr: true` for streaming SSR
+    fileRoutes({types: true}),
     // Scans source files for class names and serves their CSS as the
     // virtual:uno.css module (imported by src/App.tsx). Config can grow
     // into uno.config.ts; the wind4 preset is Tailwind-compatible utilities.
-    UnoCSS({ presets: [presetWind4()] }),
+    UnoCSS({presets: [presetWind4()]}),
     VitePWA({
       registerType: 'autoUpdate',
       injectRegister: false,
@@ -37,6 +38,7 @@ export default defineConfig({
       ],
       scope: '/apps/lyric-chord-creator/',
       manifest: {
+        id: `/apps/lyric-chord-creator@${pkg.version}`,
         name: 'Lyric-Chord Creator',
         short_name: 'Lyric-Chord',
         description: 'Offline-capable lyric-chord sheet creation utility',
@@ -95,7 +97,7 @@ export default defineConfig({
 
         // Explicitly precache turnkey index.html to satisfy navigateFallback
         additionalManifestEntries: [
-          { url: 'index.html', revision: null },
+          {url: 'index.html', revision: null},
         ],
 
         // Prevents the service worker from failing on larger route chunks

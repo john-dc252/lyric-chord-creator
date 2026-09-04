@@ -26,13 +26,13 @@ import {
   savedTemplates,
   saveTemplate,
   exportTemplateAsFile,
-  type SavedTemplate,
 } from '../lib/templates-store';
 import SaveTemplateModal from './SaveTemplateModal';
 
 interface TemplateEditorProps {
   value: string;
   onInput: (val: string) => void;
+  onCursorLineChange?: (line: number) => void;
   onFileDrop?: (content: string, filename: string) => void;
   onResetToDefault?: () => void;
   onNewTemplate?: () => void;
@@ -85,6 +85,7 @@ export default function TemplateEditor(props: TemplateEditorProps) {
   let editorContainerRef: HTMLDivElement | undefined = undefined;
   let view: EditorView | undefined = undefined;
   let fileInputRef: HTMLInputElement | undefined = undefined;
+  let lastReportedLine = 1;
 
   const [wordWrap, setWordWrapSignal] = createSignal(getInitialWordWrap(), { name: 'word_wrap' });
   const [vimMode, setVimModeSignal] = createSignal(getInitialVimMode(), { name: 'vim_mode' });
@@ -220,10 +221,10 @@ export default function TemplateEditor(props: TemplateEditorProps) {
 
   // Register custom Vim Ex commands
   Vim.defineEx('write', 'w', () => {
-    handleQuickSave();
+    untrack(() => handleQuickSave());
   });
   Vim.defineEx('update', 'up', () => {
-    handleQuickSave();
+    untrack(() => handleQuickSave());
   });
   Vim.defineEx('rnu', 'rnu', () => {
     setRelativeLineNumbersSignal(true);
@@ -350,6 +351,10 @@ export default function TemplateEditor(props: TemplateEditorProps) {
               line: line.number,
               col: pos - line.from + 1,
             });
+            if (line.number !== lastReportedLine) {
+              lastReportedLine = line.number;
+              untrack(() => props.onCursorLineChange?.(line.number));
+            }
           }
         }),
       ],
@@ -359,6 +364,11 @@ export default function TemplateEditor(props: TemplateEditorProps) {
       state: startState,
       parent: editorContainerRef,
     });
+
+    const initialPos = view.state.selection.main.head;
+    const initialLine = view.state.doc.lineAt(initialPos);
+    lastReportedLine = initialLine.number;
+    props.onCursorLineChange?.(initialLine.number);
 
     const applyVimMode = (mode: string, subMode?: string) => {
       let modeName: VimEditorMode = 'NORMAL';
@@ -415,6 +425,16 @@ export default function TemplateEditor(props: TemplateEditorProps) {
         view.dispatch({
           changes: { from: 0, to: view.state.doc.length, insert: val },
         });
+        const pos = view.state.selection.main.head;
+        const line = view.state.doc.lineAt(pos);
+        setCursorInfo({
+          line: line.number,
+          col: pos - line.from + 1,
+        });
+        if (line.number !== lastReportedLine) {
+          lastReportedLine = line.number;
+          props.onCursorLineChange?.(line.number);
+        }
       }
     },
   );

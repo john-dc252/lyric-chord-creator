@@ -1,8 +1,7 @@
 import { Title } from '@solidjs/meta';
 import { createSignal, For } from 'solid-js';
 import { TemplateSyntaxHighlighter } from '../components/TemplateSyntaxHighlighter';
-import { DEFAULT_PAPER_SIZE } from '../lib/paperSize';
-import { ChordGuidePages, DEFAULT_TEMPLATE } from '../lib/template-processor';
+import { ChordGuidePages } from '../lib/template-processor';
 import { setActiveTemplateId } from '../lib/templates-store';
 
 interface ExampleSnippet {
@@ -100,7 +99,6 @@ The {E}Hope of nations`,
 
 export default function About() {
   const [copiedIndex, setCopiedIndex] = createSignal<number | null>(null, { name: 'copied_index' });
-  const paperConfig = DEFAULT_PAPER_SIZE;
 
   const copyToClipboard = (text: string, index: number) => {
     navigator.clipboard.writeText(text).then(() => {
@@ -409,7 +407,7 @@ export default function About() {
                           example.code.includes('@page_break')
                             ? 'scrollable overflow-auto'
                             : 'overflow-hidden',
-                        ].join(' ')}
+                        ]}
                       >
                         <ChordGuidePages template={example.code} />
                       </div>

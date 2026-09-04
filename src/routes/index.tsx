@@ -4,7 +4,7 @@ import ChordGuidePreview from '../components/ChordGuidePreview';
 import Header from '../components/Header';
 import TemplateEditor from '../components/TemplateEditor';
 import { DEFAULT_PAPER_SIZE, type PaperSizeConfig } from '../lib/paperSize';
-import { DEFAULT_TEMPLATE, extractSongTitle } from '../lib/template-processor';
+import { DEFAULT_TEMPLATE, extractSongAtLine } from '../lib/template-processor';
 import { activeTemplateId, savedTemplates, createNewTemplate } from '../lib/templates-store';
 
 type BooleanString = 'true' | 'false';
@@ -47,6 +47,10 @@ export default function Home() {
 
   const [paperConfig, setPaperConfig] = createSignal<PaperSizeConfig>(getInitialPaperConfig(), {
     name: 'app_paper_config',
+  });
+
+  const [cursorLine, setCursorLine] = createSignal(1, {
+    name: 'editor_cursor_line',
   });
 
   // Mobile active tab: 'editor' | 'preview'
@@ -134,15 +138,21 @@ export default function Home() {
     return template().trim().length > 0;
   }, { name: 'home_is_dirty' });
 
+  const currentSong = createMemo(
+    () => extractSongAtLine(template(), cursorLine()),
+    { name: 'home_current_song' },
+  );
+
   return (
     <div class="h-full flex flex-col overflow-hidden font-sans antialiased">
       <Title>
-        {`${isDirty() ? '● ' : ''}${extractSongTitle(template())} - Lyric-Chord Creator`}
+        {`${isDirty() ? '● ' : ''}${currentSong().title} - Lyric-Chord Creator`}
       </Title>
 
       {/* Main Top Header */}
       <Header
         template={template()}
+        cursorLine={cursorLine()}
         paperConfig={paperConfig()}
       />
 
@@ -208,6 +218,7 @@ export default function Home() {
           <TemplateEditor
             value={template()}
             onInput={handleTemplateInput}
+            onCursorLineChange={setCursorLine}
             onFileDrop={handleFileImport}
             onResetToDefault={handleResetToDefault}
             onNewTemplate={handleNewTemplate}

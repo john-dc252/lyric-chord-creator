@@ -1,6 +1,6 @@
 import {render} from '@solidjs/testing-library';
 import {describe, expect, test} from 'vitest';
-import {ChordGuidePages, EMBEDDED_CHORDS, extractSongArtist, extractSongTitle, extractSongsMetadata, transformLineToJsx,} from './index';
+import {ChordGuidePages, EMBEDDED_CHORDS, extractSongArtist, extractSongAtLine, extractSongTitle, extractSongsMetadata, transformLineToJsx,} from './index';
 
 describe('Template Processor JSX', () => {
   test('parseChordSegments splits lyrics and chords accurately', () => {
@@ -82,5 +82,41 @@ describe('Template Processor JSX', () => {
     expect(songs.length).toBe(2);
     expect(songs[0]).toEqual({ title: 'Song One', artist: 'Artist One' });
     expect(songs[1]).toEqual({ title: 'Song Two', artist: 'Artist Two' });
+  });
+
+  test('extractSongAtLine identifies the current song based on cursor line', () => {
+    const multiSongTemplate = [
+      '@title: Song One',      // Line 1
+      '@artist: Artist One',   // Line 2
+      '[Verse 1]',             // Line 3
+      '{C}Lyrics for song 1',  // Line 4
+      '',                      // Line 5
+      '@page_break',           // Line 6
+      '',                      // Line 7
+      '@title: Song Two',      // Line 8
+      '@artist: Artist Two',   // Line 9
+      '[Verse 1]',             // Line 10
+      '{G}Lyrics for song 2',  // Line 11
+      '@page_break',           // Line 12
+      '@title: Song Three',    // Line 13
+      '[Chorus]',              // Line 14
+    ].join('\n');
+
+    // Cursor at Song One
+    expect(extractSongAtLine(multiSongTemplate, 1)).toEqual({ title: 'Song One', artist: 'Artist One' });
+    expect(extractSongAtLine(multiSongTemplate, 4)).toEqual({ title: 'Song One', artist: 'Artist One' });
+    expect(extractSongAtLine(multiSongTemplate, 7)).toEqual({ title: 'Song One', artist: 'Artist One' });
+
+    // Cursor at Song Two
+    expect(extractSongAtLine(multiSongTemplate, 8)).toEqual({ title: 'Song Two', artist: 'Artist Two' });
+    expect(extractSongAtLine(multiSongTemplate, 11)).toEqual({ title: 'Song Two', artist: 'Artist Two' });
+
+    // Cursor at Song Three (no artist specified)
+    expect(extractSongAtLine(multiSongTemplate, 13)).toEqual({ title: 'Song Three', artist: undefined });
+    expect(extractSongAtLine(multiSongTemplate, 14)).toEqual({ title: 'Song Three', artist: undefined });
+
+    // Edge cases: out of range line numbers or empty template
+    expect(extractSongAtLine(multiSongTemplate, 999)).toEqual({ title: 'Song Three', artist: undefined });
+    expect(extractSongAtLine('', 1)).toEqual({ title: 'Untitled Song', artist: undefined });
   });
 });

@@ -189,6 +189,67 @@ export function extractSongArtist(template: string): string | undefined {
   return artist || undefined;
 }
 
+/**
+ * Extracts the song metadata (title and optional artist) corresponding to a specific line number (1-based),
+ * identifying the active song currently being edited based on cursor position.
+ */
+export function extractSongAtLine(template: string, lineNumber = 1): SongMetadata {
+  const lines = template.split('\n');
+  if (lines.length === 0) {
+    return { title: 'Untitled Song', artist: undefined };
+  }
+
+  const titleIndices: number[] = [];
+  lines.forEach((line, idx) => {
+    if (line.trim().startsWith('@title:')) {
+      titleIndices.push(idx);
+    }
+  });
+
+  if (titleIndices.length === 0) {
+    return {
+      title: extractSongTitle(template),
+      artist: extractSongArtist(template),
+    };
+  }
+
+  const targetIndex = Math.max(0, Math.min(lineNumber - 1, lines.length - 1));
+
+  let songStartIndex = 0;
+  let songEndIndex = lines.length;
+
+  for (let i = 0; i < titleIndices.length; i++) {
+    const currentTitleLine = titleIndices[i];
+    const nextTitleLine = i + 1 < titleIndices.length ? titleIndices[i + 1] : lines.length;
+    const spanStart = i === 0 ? 0 : currentTitleLine;
+    const spanEnd = nextTitleLine;
+
+    if (targetIndex >= spanStart && targetIndex < spanEnd) {
+      songStartIndex = spanStart;
+      songEndIndex = spanEnd;
+      break;
+    }
+  }
+
+  const songLines = lines.slice(songStartIndex, songEndIndex);
+  let title: string | undefined = undefined;
+  let artist: string | undefined = undefined;
+
+  for (const rawLine of songLines) {
+    const line = rawLine.trim();
+    if (!title && line.startsWith('@title:')) {
+      title = line.replace(/^@title:\s*/, '').trim();
+    } else if (!artist && line.startsWith('@artist:')) {
+      artist = line.replace(/^@artist:\s*/, '').trim();
+    }
+  }
+
+  return {
+    title: title && title.length > 0 ? title : 'Untitled Song',
+    artist: artist && artist.length > 0 ? artist : undefined,
+  };
+}
+
 export interface TemplatePageData {
   lines: string[];
 }

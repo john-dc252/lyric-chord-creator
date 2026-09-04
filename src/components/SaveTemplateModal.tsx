@@ -1,6 +1,6 @@
 import { createSignal, createMemo, Show, For, onSettled } from 'solid-js';
 import { isTemplateNameUnique, saveTemplate, type SavedTemplate } from '../lib/templates-store';
-import { extractSongTitle, extractSongArtist, extractSongsMetadata } from '../lib/template-processor';
+import { extractSongTitle, extractSongsMetadata } from '../lib/template-processor';
 
 interface SaveTemplateModalProps {
   content: string;
@@ -94,7 +94,7 @@ export default function SaveTemplateModal(props: SaveTemplateModalProps) {
           </div>
           <button
             type="button"
-            onClick={props.onClose}
+            onClick={() => props.onClose()}
             class="p-1 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
             aria-label="Close"
           >
@@ -181,7 +181,7 @@ export default function SaveTemplateModal(props: SaveTemplateModalProps) {
           <div class="flex items-center justify-end gap-2.5 pt-2">
             <button
               type="button"
-              onClick={props.onClose}
+              onClick={() => props.onClose()}
               class="px-3.5 py-2 text-xs font-semibold text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors"
             >
               Cancel

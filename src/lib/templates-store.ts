@@ -1,5 +1,5 @@
 import { createSignal } from 'solid-js';
-import { extractSongArtist, extractSongTitle, extractSongsMetadata, DEFAULT_TEMPLATE } from './template-processor';
+import { extractSongArtist, extractSongTitle, extractSongsMetadata } from './template-processor';
 import {
   dbGetAllTemplates,
   dbPutTemplate,

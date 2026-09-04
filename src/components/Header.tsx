@@ -1,16 +1,21 @@
-import { Show } from 'solid-js';
-import { extractSongArtist, extractSongTitle } from '../lib/template-processor';
+import { createMemo, Show } from 'solid-js';
+import { extractSongAtLine } from '../lib/template-processor';
 import { activeTemplateId, savedTemplates } from '../lib/templates-store';
 import type { PaperSizeConfig } from '../lib/paperSize';
 
 interface HeaderProps {
   template: string;
+  cursorLine?: number;
   paperConfig?: PaperSizeConfig;
 }
 
 export default function Header(props: HeaderProps) {
-  const songTitle = () => extractSongTitle(props.template);
-  const songArtist = () => extractSongArtist(props.template);
+  const currentSong = createMemo(
+    () => extractSongAtLine(props.template, props.cursorLine ?? 1),
+    { name: 'header_current_song' },
+  );
+  const songTitle = () => currentSong().title;
+  const songArtist = () => currentSong().artist;
 
   const activeSavedTemplate = () => {
     const id = activeTemplateId();

@@ -7,6 +7,7 @@ import {
   highlightActiveLineGutter,
   dropCursor,
   drawSelection,
+  scrollPastEnd,
 } from '@codemirror/view';
 import { defaultKeymap, history, historyKeymap, indentWithTab } from '@codemirror/commands';
 import { bracketMatching } from '@codemirror/language';
@@ -312,6 +313,7 @@ export default function TemplateEditor(props: TemplateEditorProps) {
     const startState = EditorState.create({
       doc: props.value,
       extensions: [
+        scrollPastEnd(),
         vimCompartment.of(getVimExtension(vimMode())),
         lineNumbersCompartment.of(createLineNumbersGutter(relativeLineNumbers())),
         wordWrapCompartment.of(getWordWrapExtension(wordWrap())),

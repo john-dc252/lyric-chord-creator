@@ -56,6 +56,7 @@ export default function AppLayout(props: ParentProps) {
             <span class="font-bold text-sm text-slate-900 dark:text-white tracking-tight leading-none">
               Lyric-Chord Creator
             </span>
+            <span class="text-sm font-bold bg-indigo px-2 rounded-2">v{import.meta.env.APP_VERSION}</span>
           </a>
         </div>
       </header>

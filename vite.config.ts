@@ -12,6 +12,9 @@ export default defineConfig({
   // generates the entries around src/App.tsx, wrapped in src/Document.tsx
   // (or a built-in shell). `vite build` prerenders the shell into
   // dist/client/index.html and emits a purely static dist/client.
+  define: {
+    'import.meta.env.APP_VERSION': JSON.stringify(pkg.version),
+  },
   plugins: [
     // `extensions` makes @solidjs/vite-plugin also compile the `?pick=` route
     // modules the fileRoutes plugin emits (their ids end in a query string).
@@ -95,9 +98,12 @@ export default defineConfig({
         // Caches all generated JS chunks including virtual route files
         globPatterns: ['**/*.{js,css,html,ico,png,svg}'],
 
+        skipWaiting: true,
+        clientsClaim: true,
+
         // Explicitly precache turnkey index.html to satisfy navigateFallback
         additionalManifestEntries: [
-          {url: 'index.html', revision: null},
+          { url: 'index.html', revision: `${pkg.version}-${Date.now()}` },
         ],
 
         // Prevents the service worker from failing on larger route chunks

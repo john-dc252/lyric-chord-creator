@@ -18,9 +18,11 @@ interface ChordGuidePreviewProps {
 export type ZoomLevel = 'fit' | 0.5 | 0.75 | 1.0 | 1.25 | 1.5;
 
 export default function ChordGuidePreview(props: ChordGuidePreviewProps) {
+  let previewRootRef: HTMLDivElement | undefined = undefined;
   let containerRef: HTMLDivElement | undefined = undefined;
   let sheetRef: HTMLDivElement | undefined = undefined;
 
+  const [isFullscreen, setIsFullscreen] = createSignal(false, { name: 'preview_is_fullscreen' });
   const [zoom, setZoom] = createSignal<ZoomLevel>('fit', { name: 'preview_zoom' });
   const [scaleFactor, setScaleFactor] = createSignal<number>(1.0, { name: 'scale_factor' });
   const [sheetWidth, setSheetWidth] = createSignal<number>(816, { name: 'sheet_width' });
@@ -51,6 +53,31 @@ export default function ChordGuidePreview(props: ChordGuidePreviewProps) {
     }
   };
 
+  const toggleFullscreen = async () => {
+    if (!previewRootRef) return;
+
+    if (!isFullscreen()) {
+      if (document.fullscreenEnabled && previewRootRef.requestFullscreen) {
+        try {
+          await previewRootRef.requestFullscreen();
+          setIsFullscreen(true);
+        } catch {
+          setIsFullscreen(true);
+        }
+      } else {
+        setIsFullscreen(true);
+      }
+    } else {
+      if (document.fullscreenElement && document.exitFullscreen) {
+        try {
+          await document.exitFullscreen();
+        } catch {}
+      }
+      setIsFullscreen(false);
+    }
+    setTimeout(() => updateScaling(zoom()), 60);
+  };
+
   onSettled(() => {
     updateScaling(zoom());
 
@@ -69,10 +96,31 @@ export default function ChordGuidePreview(props: ChordGuidePreviewProps) {
       updateScaling(zoom());
     };
 
+    const handleFullscreenChange = () => {
+      const active = !!document.fullscreenElement && document.fullscreenElement === previewRootRef;
+      setIsFullscreen(active);
+      setTimeout(() => updateScaling(zoom()), 60);
+    };
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && isFullscreen()) {
+        if (document.fullscreenElement && document.exitFullscreen) {
+          document.exitFullscreen().catch(() => {});
+        }
+        setIsFullscreen(false);
+        setTimeout(() => updateScaling(zoom()), 60);
+      }
+    };
+
     window.addEventListener('resize', handleWindowResize);
+    document.addEventListener('fullscreenchange', handleFullscreenChange);
+    window.addEventListener('keydown', handleKeyDown);
+
     return () => {
       resizeObserver.disconnect();
       window.removeEventListener('resize', handleWindowResize);
+      document.removeEventListener('fullscreenchange', handleFullscreenChange);
+      window.removeEventListener('keydown', handleKeyDown);
     };
   });
 
@@ -185,7 +233,15 @@ export default function ChordGuidePreview(props: ChordGuidePreviewProps) {
   };
 
   return (
-    <div class="relative flex flex-col h-full w-full bg-slate-200/90 dark:bg-slate-900 border border-slate-300 dark:border-slate-800 rounded-lg overflow-hidden shadow-sm">
+    <div
+      ref={(el) => (previewRootRef = el)}
+      class={[
+        'relative flex flex-col w-full bg-slate-200/90 dark:bg-slate-900 border border-slate-300 dark:border-slate-800 overflow-hidden shadow-sm transition-all',
+        isFullscreen()
+          ? 'fixed inset-0 z-50 rounded-none h-screen w-screen'
+          : 'h-full rounded-lg',
+      ]}
+    >
       {/* Preview Control Toolbar */}
       <div class="relative z-30 flex flex-wrap items-center justify-between gap-2 px-3 py-2 bg-slate-100 dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700 text-xs text-slate-700 dark:text-slate-300">
         <div class="flex items-center gap-2">
@@ -256,6 +312,22 @@ export default function ChordGuidePreview(props: ChordGuidePreviewProps) {
           {/* Action buttons */}
           <button
             type="button"
+            onClick={toggleFullscreen}
+            class={[
+              'inline-flex items-center gap-1 rounded-md px-2.5 py-1 text-xs font-semibold border shadow-sm transition-colors',
+              isFullscreen()
+                ? 'bg-sky-600 hover:bg-sky-500 text-white border-sky-500'
+                : 'bg-white dark:bg-slate-700 text-slate-700 dark:text-slate-200 border-slate-300 dark:border-slate-600 hover:bg-slate-50 dark:hover:bg-slate-600',
+            ]}
+            title={isFullscreen() ? 'Exit Fullscreen (Esc)' : 'Fullscreen Preview'}
+            aria-label={isFullscreen() ? 'Exit Fullscreen' : 'Fullscreen Preview'}
+          >
+            <span>{isFullscreen() ? '🗗' : '⛶'}</span>
+            <span class="hidden sm:inline">{isFullscreen() ? 'Exit' : 'Fullscreen'}</span>
+          </button>
+
+          <button
+            type="button"
             onClick={handlePrint}
             class="inline-flex items-center gap-1 rounded-md bg-white dark:bg-slate-700 px-2.5 py-1 text-xs font-semibold text-slate-700 dark:text-slate-200 border border-slate-300 dark:border-slate-600 hover:bg-slate-50 dark:hover:bg-slate-600 shadow-sm transition-colors"
             title="Print Chord Sheet"
@@ -269,11 +341,17 @@ export default function ChordGuidePreview(props: ChordGuidePreviewProps) {
       {/* Preview Sheet Canvas Area - Fixed Dark/Neutral Backdrop */}
       <div
         ref={(el) => (containerRef = el)}
-        class="relative flex-1 overflow-auto p-2 sm:p-4 md:p-6 bg-[#2d3238]"
+        class={[
+          'relative flex-1 overflow-auto p-2 sm:p-4 md:p-6 bg-[#2d3238]',
+          isFullscreen() ? 'flex flex-col items-center' : '',
+        ]}
       >
         {/* Sizing box matching exact scaled dimensions prevents flex clipping on mobile */}
         <div
-          class="shrink-0 transition-[width,height] duration-150"
+          class={[
+            'shrink-0 transition-[width,height] duration-150',
+            isFullscreen() ? 'mx-auto' : '',
+          ]}
           style={{
             width: `${sheetWidth() * scaleFactor()}px`,
             height: `${sheetHeight() * scaleFactor()}px`,

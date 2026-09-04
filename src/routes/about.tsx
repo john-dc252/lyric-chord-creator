@@ -36,7 +36,7 @@ How {G}precious did that {C}grace ap{G}pear
 The hour I {D7}first be{G}lieved`,
   },
   {
-    title: 'Inline Chords & Section Headers',
+    title: 'Chord Sequences & Section Headers',
     description: 'Using @chord_sequence for instrumental sections like Intro, Interlude, or Solo.',
     code: `@title: Hotel California
 @artist: Eagles

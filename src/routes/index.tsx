@@ -211,7 +211,7 @@ export default function Home() {
           aria-labelledby="editor-tab"
           tabindex={0}
           class={[
-            'h-full min-h-0 focus:outline-none',
+            'relative h-full min-h-0 focus:outline-none',
             activeTab() === 'editor' ? 'flex flex-col' : 'hidden lg:flex lg:flex-col',
           ]}
         >
@@ -224,6 +224,14 @@ export default function Home() {
             onNewTemplate={handleNewTemplate}
             onToast={showToast}
           />
+
+          {/* Toast Notification (Displayed on the editor side) */}
+          <Show when={toastMessage()}>
+            <div class="absolute bottom-10 right-4 z-40 flex items-center gap-2 bg-slate-900 text-white dark:bg-white dark:text-slate-900 px-3.5 py-2 rounded-lg shadow-xl text-xs font-semibold border border-slate-700 dark:border-slate-200 animate-fade-in pointer-events-none select-none">
+              <span>✨</span>
+              <span>{toastMessage()}</span>
+            </div>
+          </Show>
         </div>
 
         {/* Preview Pane (Always visible on desktop; toggleable on mobile) */}
@@ -244,14 +252,6 @@ export default function Home() {
           />
         </div>
       </div>
-
-      {/* Toast Notification */}
-      <Show when={toastMessage()}>
-        <div class="fixed bottom-4 right-4 z-50 flex items-center gap-2 bg-slate-900 text-white dark:bg-white dark:text-slate-900 px-4 py-2.5 rounded-lg shadow-xl text-xs font-semibold border border-slate-700 dark:border-slate-200 animate-fade-in">
-          <span>✨</span>
-          <span>{toastMessage()}</span>
-        </div>
-      </Show>
     </div>
   );
 }

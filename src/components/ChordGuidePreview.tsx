@@ -1,5 +1,6 @@
 import { createEffect, createMemo, createSignal, onSettled } from 'solid-js';
 import {
+  clampColumns,
   formatCssDimension,
   getEffectiveDimensions,
   type PaperSizeConfig,
@@ -133,6 +134,7 @@ export default function ChordGuidePreview(props: ChordGuidePreviewProps) {
       props.paperConfig.orientation,
       props.paperConfig.margin,
       props.paperConfig.fontSize,
+      props.paperConfig.columns,
       zoom(),
     ],
     () => {
@@ -161,6 +163,10 @@ export default function ChordGuidePreview(props: ChordGuidePreviewProps) {
     const size = props.paperConfig.fontSize ?? 10;
     return `${size}pt`;
   }, { name: 'paper_font_size_css' });
+
+  const paperColumns = createMemo(() => {
+    return clampColumns(props.paperConfig.columns, props.paperConfig.orientation);
+  }, { name: 'paper_columns' });
 
   const handlePrint = () => {
     if (!sheetRef) {
@@ -207,7 +213,7 @@ export default function ChordGuidePreview(props: ChordGuidePreviewProps) {
         min-height: 100%;
         background: #fff;
         color: #000;
-        column-count: 2;
+        column-count: ${paperColumns()};
         column-fill: auto;
         column-gap: 0.2in;
         white-space: pre-wrap;
@@ -403,7 +409,7 @@ export default function ChordGuidePreview(props: ChordGuidePreviewProps) {
               id="chord-guide-paper-container"
               class="flex flex-col gap-8 text-left select-text"
             >
-              <ChordGuidePages template={props.template} />
+              <ChordGuidePages template={props.template} columns={paperColumns()} />
             </div>
           </div>
         </div>
@@ -420,7 +426,7 @@ export default function ChordGuidePreview(props: ChordGuidePreviewProps) {
           font-size: ${paperFontSizeCss()};
           background: #fff;
           color: #000;
-          column-count: 2;
+          column-count: ${paperColumns()};
           column-fill: auto;
           column-gap: 0.2in;
           box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.4), 0 8px 10px -6px rgba(0, 0, 0, 0.3);
@@ -500,6 +506,7 @@ export default function ChordGuidePreview(props: ChordGuidePreviewProps) {
             page-break-after: always !important;
             break-after: page !important;
             font-size: ${paperFontSizeCss()} !important;
+            column-count: ${paperColumns()} !important;
           }
         }
       `}</style>

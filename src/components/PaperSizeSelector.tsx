@@ -1,8 +1,10 @@
 import { createSignal, For, Show } from 'solid-js';
 import {
+  clampColumns,
   DEFAULT_PAPER_SIZE,
   FONT_SIZE_PRESETS,
   getEffectiveDimensions,
+  getMaxColumns,
   getPresetDimensions,
   MARGIN_PRESETS,
   PAPER_PRESETS,
@@ -23,8 +25,10 @@ export default function PaperSizeSelector(props: PaperSizeSelectorProps) {
   const currentOrientation = () => props.value.orientation || 'portrait';
   const currentFontSize = () => props.value.fontSize ?? 10;
   const currentMargin = () => props.value.margin ?? (props.value.unit === 'cm' ? 1.27 : 0.5);
+  const currentColumns = () => clampColumns(props.value.columns, currentOrientation());
 
   const handleOrientationChange = (orientation: PaperOrientation) => {
+    const clampedCols = clampColumns(props.value.columns ?? 2, orientation);
     if (props.value.preset === 'custom') {
       const { width, height } = getEffectiveDimensions({
         width: props.value.width,
@@ -36,6 +40,7 @@ export default function PaperSizeSelector(props: PaperSizeSelectorProps) {
         orientation,
         width,
         height,
+        columns: clampedCols,
       });
     } else {
       const { width, height, unit } = getPresetDimensions(props.value.preset, orientation);
@@ -45,6 +50,7 @@ export default function PaperSizeSelector(props: PaperSizeSelectorProps) {
         width,
         height,
         unit,
+        columns: clampedCols,
       });
     }
   };
@@ -126,6 +132,14 @@ export default function PaperSizeSelector(props: PaperSizeSelectorProps) {
     });
   };
 
+  const handleColumnsChange = (cols: number) => {
+    const clamped = clampColumns(cols, currentOrientation());
+    props.onChange({
+      ...props.value,
+      columns: clamped,
+    });
+  };
+
   const handleResetDefaults = () => {
     props.onChange({ ...DEFAULT_PAPER_SIZE });
   };
@@ -134,6 +148,8 @@ export default function PaperSizeSelector(props: PaperSizeSelectorProps) {
     const isLandscape = currentOrientation() === 'landscape';
     const orientIcon = isLandscape ? '📃' : '📄';
     const orientText = isLandscape ? 'Landscape' : 'Portrait';
+    const cols = currentColumns();
+    const colsText = `${cols} ${cols === 1 ? 'col' : 'cols'}`;
 
     let sizeLabel = '';
     if (props.value.preset === 'custom') {
@@ -143,7 +159,7 @@ export default function PaperSizeSelector(props: PaperSizeSelectorProps) {
       sizeLabel = PAPER_PRESETS[props.value.preset]?.label || 'Paper';
     }
 
-    return `${orientIcon} ${sizeLabel} (${orientText}) • ${currentFontSize()}pt`;
+    return `${orientIcon} ${sizeLabel} (${orientText}) • ${currentFontSize()}pt • ${colsText}`;
   };
 
   return (
@@ -355,7 +371,56 @@ export default function PaperSizeSelector(props: PaperSizeSelectorProps) {
             </div>
           </Show>
 
-          {/* 3. Font Size Controls */}
+          {/* 3. Columns Controls */}
+          <div class="pt-2 border-t border-slate-200 dark:border-slate-700 flex flex-col gap-1.5">
+            <div class="flex items-center justify-between">
+              <span class="text-[11px] font-semibold text-slate-700 dark:text-slate-300">
+                Columns
+              </span>
+              <span class="text-[11px] font-mono font-bold text-sky-600 dark:text-sky-400">
+                {currentColumns()} {currentColumns() === 1 ? 'Column' : 'Columns'}
+                <span class="text-[10px] text-slate-400 font-normal ml-1">
+                  (max {getMaxColumns(currentOrientation())})
+                </span>
+              </span>
+            </div>
+
+            <div class="grid grid-cols-4 gap-1.5">
+              <For each={[1, 2, 3, 4]}>
+                {(colCount) => {
+                  const maxAllowed = () => getMaxColumns(currentOrientation());
+                  const isDisabled = () => colCount > maxAllowed();
+                  const isSelected = () => currentColumns() === colCount;
+
+                  return (
+                    <button
+                      type="button"
+                      disabled={isDisabled()}
+                      onClick={() => handleColumnsChange(colCount)}
+                      class={[
+                        'flex flex-col items-center justify-center py-1.5 px-2 rounded text-center border transition-all cursor-pointer',
+                        isDisabled()
+                          ? 'opacity-30 cursor-not-allowed bg-slate-100 dark:bg-slate-800 text-slate-400 border-slate-200 dark:border-slate-700'
+                          : isSelected()
+                            ? 'bg-sky-500 text-white border-sky-500 font-bold'
+                            : 'bg-white dark:bg-slate-700 text-slate-600 dark:text-slate-300 border-slate-200 dark:border-slate-600 hover:bg-slate-100 dark:hover:bg-slate-600',
+                      ]}
+                      title={
+                        isDisabled()
+                          ? `Max ${maxAllowed()} columns allowed in ${currentOrientation()}`
+                          : `${colCount} ${colCount === 1 ? 'column' : 'columns'}`
+                      }
+                    >
+                      <span class="text-xs font-bold">{colCount}</span>
+                      <span class="text-[9px] opacity-80">{colCount === 1 ? 'Col' : 'Cols'}</span>
+                    </button>
+                  );
+                }}
+              </For>
+            </div>
+          </div>
+
+          {/* 4. Font Size Controls */}
           <div class="pt-2 border-t border-slate-200 dark:border-slate-700 flex flex-col gap-1.5">
             <div class="flex items-center justify-between">
               <span class="text-[11px] font-semibold text-slate-700 dark:text-slate-300">
@@ -414,7 +479,7 @@ export default function PaperSizeSelector(props: PaperSizeSelectorProps) {
             </div>
           </div>
 
-          {/* 4. Margins Controls */}
+          {/* 5. Margins Controls */}
           <div class="pt-2 border-t border-slate-200 dark:border-slate-700 flex flex-col gap-1.5">
             <div class="flex items-center justify-between">
               <span class="text-[11px] font-semibold text-slate-700 dark:text-slate-300">

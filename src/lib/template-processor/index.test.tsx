@@ -1,6 +1,16 @@
 import {render} from '@solidjs/testing-library';
 import {describe, expect, test} from 'vitest';
-import {ChordGuidePages, EMBEDDED_CHORDS, extractSongArtist, extractSongAtLine, extractSongTitle, extractSongsMetadata, transformLineToJsx,} from './index';
+import {
+  ChordGuidePages,
+  EMBEDDED_CHORDS,
+  extractSongArtist,
+  extractSongAtLine,
+  extractSongTitle,
+  extractSongsMetadata,
+  parseTemplatePages,
+  renderPageLines,
+  transformLineToJsx,
+} from './index';
 
 describe('Template Processor JSX', () => {
   test('parseChordSegments splits lyrics and chords accurately', () => {
@@ -40,26 +50,101 @@ describe('Template Processor JSX', () => {
     expect(breakContainer.querySelector('br')).not.toBeNull();
   });
 
-  test('<ChordGuidePages /> renders multi-page template structure', () => {
+  test('renderPageLines bounds @column_break by column count and ignores excess breaks', () => {
+    const lines = [
+      '[Verse 1]',
+      '{C}Line 1',
+      '@column_break',
+      '[Verse 2]',
+      '{G}Line 2',
+      '@column_break',
+      '[Verse 3]',
+      '{Am}Line 3',
+      '@column_break',
+      '[Verse 4]',
+      '{F}Line 4',
+    ];
+
+    // 1 column: 0 column breaks allowed (all @column_break ignored)
+    const res1 = render(() => <>{renderPageLines(lines, 1)}</>);
+    expect(res1.container.querySelectorAll('.column-break').length).toBe(0);
+
+    // 2 columns: max 1 column break allowed
+    const res2 = render(() => <>{renderPageLines(lines, 2)}</>);
+    expect(res2.container.querySelectorAll('.column-break').length).toBe(1);
+
+    // 3 columns: max 2 column breaks allowed
+    const res3 = render(() => <>{renderPageLines(lines, 3)}</>);
+    expect(res3.container.querySelectorAll('.column-break').length).toBe(2);
+
+    // 4 columns: max 3 column breaks allowed
+    const res4 = render(() => <>{renderPageLines(lines, 4)}</>);
+    expect(res4.container.querySelectorAll('.column-break').length).toBe(3);
+  });
+
+  test('parseTemplatePages splits only on @page_break', () => {
+    const template = `@title: Song One
+[Verse 1]
+@column_break
+[Verse 2]
+@column_break
+[Verse 3]
+@page_break
+@title: Song Two
+[Chorus]`;
+
+    const pages = parseTemplatePages(template);
+    expect(pages.length).toBe(2);
+    expect(pages[0].lines).toContain('@column_break');
+    expect(pages[1].lines).toContain('[Chorus]');
+  });
+
+  test('<ChordGuidePages /> renders multi-page structure and ignores excess column breaks per page', () => {
     const template = `@title: Test Song
 @artist: Test Artist
 [Verse 1]
 {C}Line 1
+@column_break
+[Verse 2]
+{D}Line 2
+@column_break
+[Verse 3]
+{E}Line 3
 @page_break
 [Chorus]
-{G}Line 2`;
+{G}Line 4
+@column_break
+[Bridge]
+{Am}Line 5`;
 
-    const {container} = render(() => <ChordGuidePages template={template}/>);
-    const pages = container.querySelectorAll('.page');
-    expect(pages.length).toBe(2);
+    // Render with 2 columns: only 2 pages (split on @page_break)
+    const {container: container2Col} = render(() => <ChordGuidePages template={template} columns={2}/>);
+    const pages2Col = container2Col.querySelectorAll('.page');
+    expect(pages2Col.length).toBe(2);
 
-    expect(pages[0].querySelector('.title')?.textContent).toBe('Test Song');
-    expect(pages[0].querySelector('.artist')?.textContent).toBe('Test Artist');
-    expect(pages[0].querySelector('.section-label')?.textContent).toBe('[Verse 1]');
-    expect(pages[0].querySelector('.chord')?.textContent).toBe('C');
+    // Page 1 has 2 @column_break directives, but only 1 is rendered as .column-break (the 2nd is ignored)
+    expect(pages2Col[0].querySelectorAll('.column-break').length).toBe(1);
+    expect(pages2Col[0].querySelector('.title')?.textContent).toBe('Test Song');
+    expect(pages2Col[0].querySelector('.artist')?.textContent).toBe('Test Artist');
+    expect(pages2Col[0].querySelector('.section-label')?.textContent).toBe('[Verse 1]');
 
-    expect(pages[1].querySelector('.section-label')?.textContent).toBe('[Chorus]');
-    expect(pages[1].querySelector('.chord')?.textContent).toBe('G');
+    // Page 2 has 1 @column_break directive, and 1 is rendered
+    expect(pages2Col[1].querySelectorAll('.column-break').length).toBe(1);
+    expect(pages2Col[1].querySelector('.section-label')?.textContent).toBe('[Chorus]');
+
+    // Render with 1 column: all @column_break directives are ignored, still 2 pages
+    const {container: container1Col} = render(() => <ChordGuidePages template={template} columns={1}/>);
+    const pages1Col = container1Col.querySelectorAll('.page');
+    expect(pages1Col.length).toBe(2);
+    expect(pages1Col[0].querySelectorAll('.column-break').length).toBe(0);
+    expect(pages1Col[1].querySelectorAll('.column-break').length).toBe(0);
+
+    // Render with 3 columns: page 1 renders both column breaks (up to 2 allowed)
+    const {container: container3Col} = render(() => <ChordGuidePages template={template} columns={3}/>);
+    const pages3Col = container3Col.querySelectorAll('.page');
+    expect(pages3Col.length).toBe(2);
+    expect(pages3Col[0].querySelectorAll('.column-break').length).toBe(2);
+    expect(pages3Col[1].querySelectorAll('.column-break').length).toBe(1);
   });
 
   test('extractSongTitle and extractSongArtist extract metadata correctly', () => {

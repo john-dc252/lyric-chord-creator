@@ -1,7 +1,7 @@
 import { createMemo, Show } from 'solid-js';
 import { extractSongAtLine } from '../lib/template-processor';
 import { activeTemplateId, savedTemplates } from '../lib/templates-store';
-import type { PaperSizeConfig } from '../lib/paperSize';
+import { clampColumns, type PaperSizeConfig } from '../lib/paperSize';
 
 interface HeaderProps {
   template: string;
@@ -70,7 +70,9 @@ export default function Header(props: HeaderProps) {
           <span class="hidden md:inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-slate-100 dark:bg-slate-800 text-[10px] font-semibold text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700">
             <span>{props.paperConfig.orientation === 'landscape' ? '📃' : '📄'}</span>
             <span>{props.paperConfig.preset.toUpperCase()}</span>
-            <span class="text-slate-400">({props.paperConfig.orientation === 'landscape' ? 'LANDSCAPE' : 'PORTRAIT'})</span>
+            <span class="text-slate-400">
+              ({props.paperConfig.orientation === 'landscape' ? 'LANDSCAPE' : 'PORTRAIT'} • {clampColumns(props.paperConfig.columns, props.paperConfig.orientation)} {clampColumns(props.paperConfig.columns, props.paperConfig.orientation) === 1 ? 'COL' : 'COLS'})
+            </span>
           </span>
         )}
       </div>

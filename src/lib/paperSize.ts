@@ -14,6 +14,23 @@ export interface PaperSizeConfig {
   unit: PaperUnit;
   fontSize: number; // in pt (points, e.g. 10)
   margin: number;   // in config.unit (e.g. 0.5 for 'in', 1.27 for 'cm')
+  columns?: number; // 1 to 2 for portrait, 1 to 4 for landscape
+}
+
+export const MIN_COLUMNS = 1;
+export const PORTRAIT_MAX_COLUMNS = 2;
+export const LANDSCAPE_MAX_COLUMNS = 4;
+
+export function getMaxColumns(orientation: PaperOrientation): number {
+  return orientation === 'landscape' ? LANDSCAPE_MAX_COLUMNS : PORTRAIT_MAX_COLUMNS;
+}
+
+export function clampColumns(columns: number | undefined, orientation: PaperOrientation = 'portrait'): number {
+  const max = getMaxColumns(orientation);
+  if (columns === undefined || isNaN(columns)) {
+    return 2;
+  }
+  return Math.min(Math.max(MIN_COLUMNS, Math.round(columns)), max);
 }
 
 export interface PaperPresetDefinition {
@@ -78,6 +95,7 @@ export const DEFAULT_PAPER_SIZE: PaperSizeConfig = {
   unit: 'in',
   fontSize: 10,
   margin: 0.5,
+  columns: 2,
 };
 
 /**
@@ -144,6 +162,7 @@ export function generatePaperCss(config: PaperSizeConfig): string {
   const heightCss = formatCssDimension(height, config.unit);
   const marginCss = formatCssDimension(config.margin ?? (config.unit === 'cm' ? 1.27 : 0.5), config.unit);
   const fontSizeCss = `${config.fontSize ?? 10}pt`;
+  const columns = clampColumns(config.columns, config.orientation);
 
   return `
 @media only print {
@@ -163,6 +182,7 @@ export function generatePaperCss(config: PaperSizeConfig): string {
         box-shadow: none !important;
         break-after: page;
         font-size: ${fontSizeCss} !important;
+        column-count: ${columns} !important;
     }
 }
 
@@ -175,6 +195,7 @@ export function generatePaperCss(config: PaperSizeConfig): string {
         margin: 0.5in auto;
         box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.4), 0 8px 10px -6px rgba(0, 0, 0, 0.3);
         font-size: ${fontSizeCss};
+        column-count: ${columns};
     }
 }
 `;

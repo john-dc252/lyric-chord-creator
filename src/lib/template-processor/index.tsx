@@ -49,6 +49,7 @@ export const EMPTY_LINE = new LineParser(/@empty_line/, undefined, () => <br/>);
 export const PAGE_BREAK_TOKEN = '@page_break';
 export const PAGE_BREAK = new LineParser(/@page_break/, undefined, () => null);
 
+export const COLUMN_BREAK_TOKEN = '@column_break';
 export const COLUMN_BREAK = new LineParser(
   /@column_break/,
   undefined,
@@ -259,7 +260,7 @@ export interface TemplatePageData {
  */
 export function parseTemplatePages(template: string): TemplatePageData[] {
   if (!template || template.trim().length === 0) {
-    return [{lines: []}];
+    return [{ lines: [] }];
   }
 
   return template.split(PAGE_BREAK_TOKEN).map((pageStr) => ({
@@ -270,9 +271,35 @@ export function parseTemplatePages(template: string): TemplatePageData[] {
   }));
 }
 
+/**
+ * Renders an array of template lines to JSX elements for a single page,
+ * ensuring that @column_break directives are bounded by the column count
+ * (ignoring any column breaks beyond columnCount - 1).
+ */
+export function renderPageLines(lines: string[], columns = 2): JSX.Element[] {
+  let colBreakCount = 0;
+  const maxBreaks = Math.max(0, columns - 1);
+  const elements: JSX.Element[] = [];
+
+  for (const line of lines) {
+    if (/@column_break/.test(line)) {
+      if (colBreakCount < maxBreaks) {
+        colBreakCount++;
+        elements.push(<div class="column-break"/>);
+      }
+      // Breaks exceeding column count (columns - 1) on this page are ignored
+    } else {
+      elements.push(transformLineToJsx(line));
+    }
+  }
+
+  return elements;
+}
+
 export interface ChordGuidePagesProps {
   template: string;
   class?: string;
+  columns?: number;
 }
 
 /**
@@ -283,23 +310,32 @@ export function ChordGuidePages(props: ChordGuidePagesProps) {
     name: 'chord_guide_pages',
   });
 
+  const columns = () => props.columns ?? 2;
+
   return (
     <For each={pages()}>
-      {(page) => (
-        <div class={['page', props.class]}>
-          <Show
-            when={page.lines.length > 0}
-            fallback={
-              <>
-                <div class="title">Empty Chord Guide</div>
-                <div class="line">Type template syntax to start...</div>
-              </>
-            }
-          >
-            <For each={page.lines}>{(line) => transformLineToJsx(line)}</For>
-          </Show>
-        </div>
-      )}
+      {(page) => {
+        const pageElements = createMemo(
+          () => renderPageLines(page.lines, columns()),
+          { name: 'page_elements' },
+        );
+
+        return (
+          <div class={['page', props.class]}>
+            <Show
+              when={page.lines.length > 0}
+              fallback={
+                <>
+                  <div class="title">Empty Chord Guide</div>
+                  <div class="line">Type template syntax to start...</div>
+                </>
+              }
+            >
+              <For each={pageElements()}>{(el) => el}</For>
+            </Show>
+          </div>
+        );
+      }}
     </For>
   );
 }

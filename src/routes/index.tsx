@@ -3,7 +3,7 @@ import { createEffect, createMemo, createSignal, onSettled, Show } from 'solid-j
 import ChordGuidePreview from '../components/ChordGuidePreview';
 import Header from '../components/Header';
 import TemplateEditor from '../components/TemplateEditor';
-import { DEFAULT_PAPER_SIZE, type PaperSizeConfig } from '../lib/paperSize';
+import { clampColumns, DEFAULT_PAPER_SIZE, type PaperSizeConfig } from '../lib/paperSize';
 import { DEFAULT_TEMPLATE, extractSongAtLine } from '../lib/template-processor';
 import { activeTemplateId, savedTemplates, createNewTemplate } from '../lib/templates-store';
 
@@ -32,12 +32,14 @@ function getInitialPaperConfig(): PaperSizeConfig {
       const savedPaper = localStorage.getItem(STORAGE_KEY_PAPER);
       if (savedPaper) {
         const parsed = JSON.parse(savedPaper);
+        const orientation = parsed.orientation || 'portrait';
         return {
           ...DEFAULT_PAPER_SIZE,
           ...parsed,
-          orientation: parsed.orientation || 'portrait',
+          orientation,
           fontSize: parsed.fontSize ?? DEFAULT_PAPER_SIZE.fontSize,
           margin: parsed.margin ?? DEFAULT_PAPER_SIZE.margin,
+          columns: clampColumns(parsed.columns ?? DEFAULT_PAPER_SIZE.columns, orientation),
         };
       }
     } catch (e) {

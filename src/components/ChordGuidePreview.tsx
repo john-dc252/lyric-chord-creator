@@ -1,6 +1,7 @@
-import { createMemo, createSignal, onSettled } from 'solid-js';
+import { createEffect, createMemo, createSignal, onSettled } from 'solid-js';
 import {
   formatCssDimension,
+  getEffectiveDimensions,
   type PaperSizeConfig,
 } from '../lib/paperSize';
 import {
@@ -124,13 +125,42 @@ export default function ChordGuidePreview(props: ChordGuidePreviewProps) {
     };
   });
 
+  // Recompute scaling whenever paperConfig or zoom updates
+  createEffect(
+    () => [
+      props.paperConfig.width,
+      props.paperConfig.height,
+      props.paperConfig.orientation,
+      props.paperConfig.margin,
+      props.paperConfig.fontSize,
+      zoom(),
+    ],
+    () => {
+      setTimeout(() => updateScaling(zoom()), 30);
+    },
+  );
+
+  const effectiveDimensions = createMemo(() => {
+    return getEffectiveDimensions(props.paperConfig);
+  }, { name: 'effective_dimensions' });
+
   const paperWidthCss = createMemo(() => {
-    return formatCssDimension(props.paperConfig.width, props.paperConfig.unit);
+    return formatCssDimension(effectiveDimensions().width, props.paperConfig.unit);
   }, { name: 'paper_width_css' });
 
   const paperMinHeightCss = createMemo(() => {
-    return formatCssDimension(props.paperConfig.height, props.paperConfig.unit);
+    return formatCssDimension(effectiveDimensions().height, props.paperConfig.unit);
   }, { name: 'paper_height_css' });
+
+  const paperMarginCss = createMemo(() => {
+    const val = props.paperConfig.margin ?? (props.paperConfig.unit === 'cm' ? 1.27 : 0.5);
+    return formatCssDimension(val, props.paperConfig.unit);
+  }, { name: 'paper_margin_css' });
+
+  const paperFontSizeCss = createMemo(() => {
+    const size = props.paperConfig.fontSize ?? 10;
+    return `${size}pt`;
+  }, { name: 'paper_font_size_css' });
 
   const handlePrint = () => {
     if (!sheetRef) {
@@ -159,7 +189,7 @@ export default function ChordGuidePreview(props: ChordGuidePreviewProps) {
     style.textContent = `
       @page {
         size: ${paperWidthCss()} ${paperMinHeightCss()};
-        margin: 0.5in;
+        margin: ${paperMarginCss()};
       }
       * {
         box-sizing: border-box;
@@ -170,7 +200,7 @@ export default function ChordGuidePreview(props: ChordGuidePreviewProps) {
         background: #fff;
         color: #000;
         font-family: "monospace", monospace, "Courier New", Courier;
-        font-size: 10pt;
+        font-size: ${paperFontSizeCss()};
       }
       .page {
         width: 100%;
@@ -183,6 +213,7 @@ export default function ChordGuidePreview(props: ChordGuidePreviewProps) {
         white-space: pre-wrap;
         page-break-after: always;
         break-after: page;
+        font-size: ${paperFontSizeCss()};
       }
       .column-break {
         break-after: column;
@@ -195,13 +226,14 @@ export default function ChordGuidePreview(props: ChordGuidePreviewProps) {
         font-weight: bold;
       }
       .section-label {
-        line-height: 1.5rem;
+        line-height: 1.5em;
+        margin-bottom: 0.5em;
         break-after: avoid;
         font-weight: bold;
       }
       .line {
         position: relative;
-        line-height: 3rem;
+        line-height: 3.6em;
         break-inside: avoid-page;
       }
       .chord {
@@ -382,10 +414,10 @@ export default function ChordGuidePreview(props: ChordGuidePreviewProps) {
         #chord-guide-paper-container .page {
           width: ${paperWidthCss()};
           height: ${paperMinHeightCss()};
-          padding: 0.5in;
+          padding: ${paperMarginCss()};
           box-sizing: border-box;
           font-family: "monospace", monospace, "Courier New", Courier;
-          font-size: 10pt;
+          font-size: ${paperFontSizeCss()};
           background: #fff;
           color: #000;
           column-count: 2;
@@ -411,14 +443,15 @@ export default function ChordGuidePreview(props: ChordGuidePreviewProps) {
         }
 
         #chord-guide-paper-container .section-label {
-          line-height: 1.5rem;
+          line-height: 1.5em;
+          margin-bottom: 0.5em;
           break-after: avoid;
           font-weight: bold;
         }
 
         #chord-guide-paper-container .line {
           position: relative;
-          line-height: 3rem;
+          line-height: 3.6em;
           break-inside: avoid-page;
         }
 
@@ -438,7 +471,7 @@ export default function ChordGuidePreview(props: ChordGuidePreviewProps) {
         @media print {
           @page {
             size: ${paperWidthCss()} ${paperMinHeightCss()};
-            margin: 0.5in;
+            margin: ${paperMarginCss()};
           }
           body * {
             visibility: hidden !important;
@@ -466,6 +499,7 @@ export default function ChordGuidePreview(props: ChordGuidePreviewProps) {
             min-height: 100% !important;
             page-break-after: always !important;
             break-after: page !important;
+            font-size: ${paperFontSizeCss()} !important;
           }
         }
       `}</style>

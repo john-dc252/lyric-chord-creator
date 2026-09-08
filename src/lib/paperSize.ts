@@ -4,18 +4,22 @@
 
 export type PaperPreset = 'letter' | 'legal' | 'a4' | 'custom';
 export type PaperUnit = 'in' | 'cm';
+export type PaperOrientation = 'portrait' | 'landscape';
 
 export interface PaperSizeConfig {
   preset: PaperPreset;
+  orientation: PaperOrientation;
   width: number;
   height: number;
   unit: PaperUnit;
+  fontSize: number; // in pt (points, e.g. 10)
+  margin: number;   // in config.unit (e.g. 0.5 for 'in', 1.27 for 'cm')
 }
 
 export interface PaperPresetDefinition {
   label: string;
-  width: number;
-  height: number;
+  width: number; // portrait width
+  height: number; // portrait height
   unit: PaperUnit;
   description: string;
 }
@@ -26,7 +30,7 @@ export const PAPER_PRESETS: Record<Exclude<PaperPreset, 'custom'>, PaperPresetDe
     width: 8.5,
     height: 11,
     unit: 'in',
-    description: '8.5 × 11 inches (Standard)',
+    description: '8.5 × 11 inches',
   },
   legal: {
     label: 'Legal',
@@ -40,16 +44,75 @@ export const PAPER_PRESETS: Record<Exclude<PaperPreset, 'custom'>, PaperPresetDe
     width: 21,
     height: 29.7,
     unit: 'cm',
-    description: '21 × 29.7 cm (International)',
+    description: '21 × 29.7 cm',
   },
+};
+
+export const FONT_SIZE_PRESETS = [8, 9, 10, 11, 12, 14, 16] as const;
+
+export interface MarginPresetOption {
+  label: string;
+  value: number;
+  unit: PaperUnit;
+  description: string;
+}
+
+export const MARGIN_PRESETS: Record<PaperUnit, MarginPresetOption[]> = {
+  in: [
+    { label: 'Narrow', value: 0.25, unit: 'in', description: '0.25 in' },
+    { label: 'Normal', value: 0.5, unit: 'in', description: '0.5 in' },
+    { label: 'Wide', value: 0.75, unit: 'in', description: '0.75 in' },
+  ],
+  cm: [
+    { label: 'Narrow', value: 0.64, unit: 'cm', description: '0.64 cm' },
+    { label: 'Normal', value: 1.27, unit: 'cm', description: '1.27 cm' },
+    { label: 'Wide', value: 1.91, unit: 'cm', description: '1.91 cm' },
+  ],
 };
 
 export const DEFAULT_PAPER_SIZE: PaperSizeConfig = {
   preset: 'letter',
+  orientation: 'portrait',
   width: 8.5,
   height: 11,
   unit: 'in',
+  fontSize: 10,
+  margin: 0.5,
 };
+
+/**
+ * Returns effective paper width and height based on the selected orientation.
+ * Landscape ensures width > height, Portrait ensures height >= width.
+ */
+export function getEffectiveDimensions(config: {
+  width: number;
+  height: number;
+  orientation: PaperOrientation;
+}): { width: number; height: number } {
+  const minDim = Math.min(config.width, config.height);
+  const maxDim = Math.max(config.width, config.height);
+
+  if (config.orientation === 'landscape') {
+    return { width: maxDim, height: minDim };
+  }
+  return { width: minDim, height: maxDim };
+}
+
+/**
+ * Gets preset dimensions adjusted for orientation.
+ */
+export function getPresetDimensions(
+  preset: Exclude<PaperPreset, 'custom'>,
+  orientation: PaperOrientation = 'portrait',
+): { width: number; height: number; unit: PaperUnit } {
+  const info = PAPER_PRESETS[preset];
+  const { width, height } = getEffectiveDimensions({
+    width: info.width,
+    height: info.height,
+    orientation,
+  });
+  return { width, height, unit: info.unit };
+}
 
 /**
  * Converts value between inches and centimeters
@@ -76,17 +139,21 @@ export function formatCssDimension(val: number, unit: PaperUnit): string {
  * Generates CSS rules for a given paper size configuration
  */
 export function generatePaperCss(config: PaperSizeConfig): string {
-  const widthCss = formatCssDimension(config.width, config.unit);
-  const heightCss = formatCssDimension(config.height, config.unit);
+  const { width, height } = getEffectiveDimensions(config);
+  const widthCss = formatCssDimension(width, config.unit);
+  const heightCss = formatCssDimension(height, config.unit);
+  const marginCss = formatCssDimension(config.margin ?? (config.unit === 'cm' ? 1.27 : 0.5), config.unit);
+  const fontSizeCss = `${config.fontSize ?? 10}pt`;
 
   return `
 @media only print {
     @page {
-        margin: 0.5in;
+        margin: ${marginCss};
         size: ${widthCss} ${heightCss};
     }
     body {
         background: #fff !important;
+        font-size: ${fontSizeCss} !important;
     }
     .page {
         padding: 0 !important;
@@ -95,17 +162,19 @@ export function generatePaperCss(config: PaperSizeConfig): string {
         min-height: 0 !important;
         box-shadow: none !important;
         break-after: page;
+        font-size: ${fontSizeCss} !important;
     }
 }
 
 @media only screen {
     .page {
         white-space: pre-wrap;
-        padding: 0.5in;
+        padding: ${marginCss};
         width: ${widthCss};
         height: ${heightCss};
         margin: 0.5in auto;
         box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.4), 0 8px 10px -6px rgba(0, 0, 0, 0.3);
+        font-size: ${fontSizeCss};
     }
 }
 `;

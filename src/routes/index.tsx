@@ -31,7 +31,14 @@ function getInitialPaperConfig(): PaperSizeConfig {
     try {
       const savedPaper = localStorage.getItem(STORAGE_KEY_PAPER);
       if (savedPaper) {
-        return JSON.parse(savedPaper);
+        const parsed = JSON.parse(savedPaper);
+        return {
+          ...DEFAULT_PAPER_SIZE,
+          ...parsed,
+          orientation: parsed.orientation || 'portrait',
+          fontSize: parsed.fontSize ?? DEFAULT_PAPER_SIZE.fontSize,
+          margin: parsed.margin ?? DEFAULT_PAPER_SIZE.margin,
+        };
       }
     } catch (e) {
       console.error('Failed to load saved state from localStorage:', e);

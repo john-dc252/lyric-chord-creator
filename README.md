@@ -1,14 +1,14 @@
 # Lyric-Chord Creator
 
-**Lyric-Chord Creator** is a modern, lightweight, and offline-capable web utility built with **SolidJS 2.x** for creating, editing, and printing multi-column lyric-chord sheets.
+**Lyric-Chord Creator** is a modern, lightweight, and offline-capable web app built with **SolidJS 2.x** for creating, editing, and printing multi-column lyric-and-chord sheets.
 
-It uses a clean, intuitive plaintext template syntax that automatically formats lyrics and chord placements into responsive, print-ready pages that fit standard paper sizes without breaking chord-to-lyric alignment.
+Chords are anchored directly to lyrics in plain text (`{G}`) and automatically reflow into balanced multi-column pages designed for print, with `@column_break` and `@page_break` for manual fine-tuning.
 
-<p align="center">
+<p>
   <img src="public/lyric-chord-creator-screenshot.png" alt="Lyric-Chord Creator Desktop View" width="100%" />
 </p>
 
-<p align="center">
+<p>
   <img src="public/lyric-chord-creator-screenshot-mobile.png" alt="Mobile Editor View" width="48%" />
   <img src="public/lyric-chord-creator-screenshot-previewer-mobile.png" alt="Mobile Preview View" width="48%" />
 </p>
@@ -17,141 +17,85 @@ It uses a clean, intuitive plaintext template syntax that automatically formats 
 
 ## ✨ Features
 
-- **Intuitive Template Syntax**: Place chords directly in line with lyrics (e.g. `{G}`, `{C/E}`, `{Am7}`) or write stand-alone chord sequences (`@chord_sequence: G - D - Em - C`).
-- **Automatic Alignment & Column Balancing**: Formatted into an auto-flowing 2-column layout designed to fit standard physical sheets with minimal manual adjustments.
-- **Multiple Songs per Template**: Author entire setlists or multi-song songbooks in a single document using `@page_break` and individual `@title:` and `@artist:` headers.
-- **Live Scaled Preview**:
-  - Real-time rendering as you type.
-  - Zoom controls: **Fit to Screen**, **75%**, and **100%**.
-  - Paper size selector: **Letter**, **A4**, **Legal**, and custom dimensions.
-- **Advanced CodeMirror 6 Editor**:
-  - **Vim Mode**: Full modal editing (Normal, Insert, Visual, Replace, and Command modes) powered by `@replit/codemirror-vim`.
-  - **Toggleable Relative Line Numbers**: Hybrid numbering display (absolute line number on current line, relative distance on surrounding lines) with `:set rnu` / `:set nornu` support.
-  - **Real-Time Syntax Highlighting**: Color-coded tokens for directives, sections, chords, and lyrics.
-  - **Soft Word Wrapping**: Toggleable wrap mode with persistent preferences.
-  - **Drag & Drop File Support**: Drop `*.lcct.txt`, `*.scgt.txt`, or `*.txt` files directly into the editor.
-- **Print & PDF Export**: One-click printing via isolated print iframe with clean print styles.
-- **Dark & Light Modes**: Seamless theme switching with persistent local storage.
-- **PWA & Offline Capable**: Fully functional offline via service worker and Web App Manifest.
+- **Exact Chord Anchoring**: Embed `{Chord}` directly into lyrics or use `@chord_sequence` for standalone progressions.
+- **Adaptive Sheet Layout**: Letter, A4, Legal, or custom sizes; portrait (1–2 cols) or landscape (1–4 cols); adjustable font sizes (6–20pt) and margins.
+- **Live Preview & Print**: Real-time rendering, zoom presets (**Fit**, **75%**, **100%**), fullscreen preview, and lyric-chord sheet printing.
+- **CodeMirror 6 Editor**: Syntax highlighting, soft wrap, scroll-past-end, hybrid relative line numbers, and live song header tracking synced to cursor position.
+- **Vim Mode**: Modal editing with custom Ex commands (`:w` / `:up` to quick-save; `:rnu`, `:nornu`, `:relativenumber`, `:norelativenumber` for line numbers).
+- **File I/O**: Drag-and-drop any text file into the editor, import (`.lcct.txt`, `.scgt.txt`, `.txt`), and export (`.lcct.txt`).
+- **Template Gallery**: Save, duplicate, rename, search (by all, template name, title, artist, or lyrics), and manage templates locally.
+- **PWA & Offline**: Installable PWA with offline caching and light/dark theme toggle.
 
 ---
 
 ## 📝 Syntax Reference
 
-### Document & Song Metadata
 ```txt
 @title: Amazing Grace
 @artist: John Newton
-```
+@empty_line
 
-### Layout Controls
-- `@column_break`: Forces content following this tag to break into the next column.
-- `@page_break`: Forces a page break to begin a new physical page (ideal for multiple songs).
-- `@empty_line`: Inserts a blank vertical spacing line in the column.
-
-### Section Labels
-Wrap section headings in square brackets:
-```txt
-[Intro]
 [Verse 1]
-[Chorus]
-[Bridge]
-[Outro]
-```
-
-### In-Line Chords
-Embed chords inside curly braces right above the intended word or syllable:
-```txt
+@empty_line
 A{G}mazing grace, how {C}sweet the {G}sound
-That saved a {D/F#}wretch like {G}me
+That saved a {D7}wretch like me
+
+@column_break
+
+[Verse 2]
+@empty_line
+'Twas {G}grace that taught my {C}heart to {G}fear
 ```
 
-### Standalone Chord Sequences
-Annotate instrumental intros, interludes, or progressions:
-```txt
-@chord_sequence: G - Em - C - D
-```
-
----
-
-## 🎹 Vim Mode & Keybindings
-
-Toggle Vim Mode directly via the **`Vim: ON / OFF`** button in the editor toolbar or persist your preferred workflow:
-
-- **Mode Switching**:
-  - `i`, `I`, `a`, `A`, `o`, `O` &rarr; Enter **Insert** mode
-  - `v` / `V` &rarr; Enter **Visual** / **Visual Line** mode
-  - `R` &rarr; Enter **Replace** mode
-  - `Esc` or `Ctrl+[` &rarr; Return to **Normal** mode
-- **Relative Line Numbers**:
-  - Toggle via toolbar button or Ex commands: `:set rnu` / `:set nornu`
-- **Motions & Operators**:
-  - `h`, `j`, `k`, `l`, `w`, `b`, `e`, `0`, `$`, `^`, `gg`, `G`
-  - Counts: `5j`, `10k`, `3dd`, `d5j`, `ciw`
-  - `yy` (yank line), `p` / `P` (paste), `u` (undo), `Ctrl+r` (redo)
-  - `/search` and `?search` with `n` / `N` navigation
+| Directive | Description |
+| :--- | :--- |
+| `@title: <Title>` | Song title header (bold, underlined). |
+| `@artist: <Artist>` | Artist metadata line. |
+| `[<Section Name>]` | Section header (e.g. `[Verse 1]`, `[Chorus]`), kept with following lines. |
+| `{<Chord>}` | In-line chord positioned directly above syllable or word. |
+| `@chord_sequence: <Chords>` | Standalone chord progression (e.g. `G - D - Em - C`). |
+| `@empty_line` | Blank vertical spacing (plain empty lines are ignored). |
+| `@column_break` | Breaks content into the next column. |
+| `@page_break` | Starts a new physical page (supports multiple songs per document). |
 
 ---
 
 ## 🛠️ Tech Stack
 
-- **Framework**: [SolidJS 2.x](https://solidjs.com) (fine-grained reactive signals and JSX)
+- **Framework**: [SolidJS 2.x](https://solidjs.com)
 - **Editor**: [CodeMirror 6](https://codemirror.net/) with [@replit/codemirror-vim](https://github.com/replit/codemirror-vim)
-- **Styling**: [UnoCSS](https://unocss.dev) with `@unocss/preset-wind4`
-- **Build Tool**: [Vite](https://vitejs.dev)
-- **PWA**: [vite-plugin-pwa](https://vite-pwa-org.netlify.app/)
-- **Linter & Test**: [oxlint](https://oxc.rs) & [Vitest](https://vitest.dev)
+- **Styling**: [UnoCSS](https://unocss.dev) (`@unocss/preset-wind4`)
+- **Build & PWA**: [Vite](https://vitejs.dev) + [vite-plugin-pwa](https://vite-pwa-org.netlify.app/)
+- **Testing & Linting**: [Vitest](https://vitest.dev) + [oxlint](https://oxc.rs)
 
 ---
 
 ## 🚀 Getting Started
 
-### Development
-
-#### Prerequisites
-- Node.js (>= 18)
-- [pnpm](https://pnpm.io) (recommended) or npm / yarn
-
-#### Project Setup
 ```bash
-git clone https://github.com/jdelacruz/lyric-chord-creator.git
-cd lyric-chord-creator
+# Install dependencies & run dev server
 pnpm install
-```
-
-#### Running the App in dev mode
-```bash
 pnpm dev
-```
-Open [http://localhost:3000/apps/lyric-chord-creator](http://localhost:3000/apps/lyric-chord-creator) in your browser.
 
-### Build & Production
-```bash
+# Build & preview production assets
 pnpm build
 pnpm serve
-```
-The static production assets will be generated in `dist/client`.
 
-### Linting
-```bash
+# Lint & test
 pnpm lint
+pnpm test
 ```
+
+Open [http://localhost:3000/apps/lyric-chord-creator](http://localhost:3000/apps/lyric-chord-creator) in your browser.
 
 ---
 
 ## 🤖 LLM Use Disclosure
 
-While I developed the template syntax, processor, and CSS-based chord anchoring mechanism entirely on my own, the web app implementation was built primarily with AI assistance (`Antigravity CLI` with `Gemini 7.3`), with manual guidance and customizations. This document was also generated with LLM assistance.
+While I developed the template syntax, processor, and CSS-based chord anchoring mechanism entirely on my own, the web app implementation was built primarily with AI assistance (`Antigravity CLI` with `Gemini 7.3`, and later, `Claude Code` with `Opus 5`), with manual guidance and customizations. This document was also generated with LLM assistance.
 
-(Yeah, I know, it isn't all that difficult to come up with the template syntax thing and the CSS-based chord anchoring mechanism.)
-
-The original project where the template syntax and processor were developed:
-
-- [printable-song-chord-guide](https://github.com/john-dc252/printable-song-chord-guide)
-
-Some revisions and additional syntax:
-
-- [my static webapps project](https://github.com/john-dc252/john-dc252.github.io) (Contains other stuff. Look for "song chords utility" in the commit history. I got tired of copying and pasting from the original project, so I just continued here)
+- [Original project repository](https://github.com/john-dc252/printable-song-chord-guide)
+- [Repository with further revisions to the original project (Static apps repository)](https://github.com/john-dc252/john-dc252.github.io)
 
 ---
 

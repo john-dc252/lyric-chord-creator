@@ -125,21 +125,12 @@ export default function About() {
       <main class="flex-1 max-w-5xl mx-auto w-full px-4 sm:px-6 py-8">
         {/* App Description & Overview Section */}
         <section class="mb-10 border-b border-slate-200 dark:border-slate-800 pb-10">
-          <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-sky-100 dark:bg-sky-950/60 text-sky-700 dark:text-sky-300 text-xs font-semibold mb-3">
-            <span>ℹ️</span>
-            <span>About Lyric-Chord Creator</span>
-          </div>
           <h1 class="text-3xl sm:text-4xl font-extrabold text-slate-900 dark:text-white tracking-tight">
             About Lyric-Chord Creator
           </h1>
-          <div class="mt-4 space-y-3 text-base text-slate-700 dark:text-slate-300 leading-relaxed max-w-4xl">
-            <p class="mb-4">
-              <strong>Lyric-Chord Creator</strong> is designed to make creating clean, printable lyric-and-chord sheets fast, flexible, and effortless using an intuitive plain-text template syntax.
-            </p>
-            <p>
-              Traditional chord sheets often break or require tedious reformatting when switching between paper sizes or devices. Lyric-Chord Creator solves this by automatically adjusting and balancing content across standard paper formats (such as US Letter, A4, and Legal) while keeping every chord strictly anchored above its exact syllable. You can also bundle multiple songs or full setlists into a single template with seamless page and column flow.
-            </p>
-          </div>
+          <p class="mt-4 text-base text-slate-700 dark:text-slate-300 leading-relaxed max-w-3xl">
+            Turn plain-text templates into clean, printable lyric-and-chord sheets — with no reformatting when the paper size, orientation, or column count changes.
+          </p>
 
           {/* Key Value Proposition Cards */}
           <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mt-6">
@@ -151,7 +142,7 @@ export default function About() {
                 Adaptive Layout for Any Paper
               </h3>
               <p class="text-xs text-slate-600 dark:text-slate-400 leading-normal">
-                Fits seamlessly on Letter, A4, Legal, or custom sizes. Automatically flows lines in a balanced 2-column layout to maximize paper space.
+                Letter, A4, Legal, or custom sizes in portrait or landscape. Content reflows and balances across 1–4 columns, with font size and margins to match.
               </p>
             </div>
 
@@ -163,7 +154,7 @@ export default function About() {
                 Exact Lyric & Chord Alignment
               </h3>
               <p class="text-xs text-slate-600 dark:text-slate-400 leading-normal">
-                Chords stay anchored directly above their specific syllables without spacebar guesswork or alignment drifting across screen and print sizes.
+                Write <code class="font-mono">&#123;C&#125;</code> inline and the chord pins above that exact syllable — no spacebar guesswork, no drift between screen and print.
               </p>
             </div>
 
@@ -175,7 +166,7 @@ export default function About() {
                 Multiple Songs per Template
               </h3>
               <p class="text-xs text-slate-600 dark:text-slate-400 leading-normal">
-                Bundle entire setlists or multi-song binders in one master template file with simple page and column breaks.
+                Bundle a whole setlist in one file. <code class="font-mono">@page_break</code> and <code class="font-mono">@column_break</code> decide where each song and section lands.
               </p>
             </div>
           </div>
@@ -198,15 +189,11 @@ export default function About() {
 
         {/* Syntax Tokens Reference Grid */}
         <section id="syntax-guide" class="mb-10 scroll-mt-20">
-          <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300 text-xs font-semibold mb-3">
-            <span>📖</span>
-            <span>Syntax Reference</span>
-          </div>
           <h2 class="text-2xl font-bold text-slate-900 dark:text-white mb-2 flex items-center gap-2">
             Template Syntax Guide
           </h2>
           <p class="text-sm text-slate-600 dark:text-slate-400 mb-6">
-            The <code class="px-1.5 py-0.5 rounded bg-slate-200 dark:bg-slate-800 font-mono text-xs">.lcct.txt</code> format is a simple, human-readable plain-text template syntax for creating clean, printable 2-column lyric-chord sheets.
+            The <code class="px-1.5 py-0.5 rounded bg-slate-200 dark:bg-slate-800 font-mono text-xs">.lcct.txt</code> format is a simple, human-readable plain-text template syntax for creating clean, printable multi-column lyric-chord sheets.
           </p>
 
           <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -252,7 +239,8 @@ export default function About() {
               </div>
               <p class="text-xs text-slate-600 dark:text-slate-400 mb-2">
                 Defines a section header (e.g. <code>[Intro x2]</code>, <code>[Verse 1]</code>,{' '}
-                <code>[Chorus]</code>, <code>[Bridge]</code>, <code>[Outro]</code>).
+                <code>[Chorus]</code>). Rendered bold and kept with the lines below it, so it never
+                strands at the foot of a column.
               </p>
               <div class="bg-slate-100 dark:bg-slate-950 p-2.5 rounded-lg font-mono text-xs whitespace-pre-wrap">
                 <TemplateSyntaxHighlighter code="[Chorus x2]" />
@@ -302,7 +290,8 @@ export default function About() {
                 <span class="text-xs text-slate-500">Spacing</span>
               </div>
               <p class="text-xs text-slate-600 dark:text-slate-400 mb-2">
-                Inserts a blank line between song lines or sections.
+                Inserts a blank line. Plain blank lines in your source are stripped out, so this is
+                the only way to add vertical space.
               </p>
               <div class="bg-slate-100 dark:bg-slate-950 p-2.5 rounded-lg font-mono text-xs whitespace-pre-wrap">
                 <TemplateSyntaxHighlighter code={'[Verse 1]\n\n@empty_line\n\n{E}I {Esus4}know You’ve given all I need  {A}'}/>
@@ -318,7 +307,7 @@ export default function About() {
                 <span class="text-xs text-slate-500">Layout Flow</span>
               </div>
               <p class="text-xs text-slate-600 dark:text-slate-400 mb-2">
-                Forces content after this directive to break and continue at the top of the next column.
+                Forces content after this directive to continue at the top of the next column, at any column count.
               </p>
               <div class="bg-slate-100 dark:bg-slate-950 p-2.5 rounded-lg font-mono text-xs whitespace-pre-wrap">
                 <TemplateSyntaxHighlighter code={'I know that Your love is for{A}e---{B}ver\n\n@column_break\n\n[Chorus x2]'}/>
@@ -419,36 +408,24 @@ export default function About() {
           </div>
         </section>
 
-        {/* Tips Section */}
+        {/* Sheet Settings Section */}
         <section class="p-6 rounded-xl bg-gradient-to-br from-sky-50 to-indigo-50 dark:from-slate-900 dark:to-slate-800 border border-sky-200 dark:border-slate-700">
-          <h3 class="font-bold text-base text-slate-900 dark:text-white mb-3 flex items-center gap-2">
-            <span>💡</span>
-            <span>Formatting Tips for Best Results</span>
-          </h3>
+          <h2 class="font-bold text-base text-slate-900 dark:text-white mb-1.5 flex items-center gap-2">
+            <span>⚙️</span>
+            <span>Sheet Settings</span>
+          </h2>
+          <p class="text-xs sm:text-sm text-slate-600 dark:text-slate-400 mb-3">
+            Page layout lives in the sheet settings dropdown in the editor, not in the template.
+          </p>
           <ul class="flex flex-col gap-2.5 text-xs sm:text-sm text-slate-700 dark:text-slate-300 list-disc list-inside">
             <li>
-              <strong>Header Metadata:</strong> Use <code class="px-1 py-0.5 rounded bg-white/70 dark:bg-slate-800 font-mono text-xs">@title: &lt;Title&gt;</code> and <code class="px-1 py-0.5 rounded bg-white/70 dark:bg-slate-800 font-mono text-xs">@artist: &lt;Artist&gt;</code> at the top of your sheet for standardized headers.
+              <strong>Orientation & Columns:</strong> Portrait takes 1–2 columns, landscape up to 4. Switching back to portrait clamps a wider layout down automatically.
             </li>
             <li>
-              <strong>2-Column Balancing & Column Breaks:</strong> Each page automatically flows in 2 equal-width columns. Insert <code class="px-1 py-0.5 rounded bg-white/70 dark:bg-slate-800 font-mono text-xs">@column_break</code> to force subsequent sections to start at the top of the second column.
+              <strong>Paper Size:</strong> Letter, Legal, A4, or a custom width and height in inches or centimeters.
             </li>
             <li>
-              <strong>Multi-Page & Multiple Songs:</strong> Use <code class="px-1 py-0.5 rounded bg-white/70 dark:bg-slate-800 font-mono text-xs">@page_break</code> to split long songs across multiple sheets or add additional songs to the same template.
-            </li>
-            <li>
-              <strong>Vertical Spacing:</strong> Use <code class="px-1 py-0.5 rounded bg-white/70 dark:bg-slate-800 font-mono text-xs">@empty_line</code> for clean line breaks between verses or below section headers without disrupting column flow.
-            </li>
-            <li>
-              <strong>In-Lyric Chord Placement:</strong> Embed chords like <code class="px-1 py-0.5 rounded bg-white/70 dark:bg-slate-800 font-mono text-xs">&#123;C#m7&#125;</code> directly in front of or inside syllables where chord changes occur.
-            </li>
-            <li>
-              <strong>Instrumental Lines:</strong> Use <code class="px-1 py-0.5 rounded bg-white/70 dark:bg-slate-800 font-mono text-xs">@chord_sequence: &lt;Chords&gt;</code> for standalone chord progressions without lyrics (e.g. Intro, Outro, Solo).
-            </li>
-            <li>
-              <strong>Section Headers:</strong> Put section titles inside brackets like <code class="px-1 py-0.5 rounded bg-white/70 dark:bg-slate-800 font-mono text-xs">[Chorus x2]</code>. These are styled bold with automatic break-avoidance so they stay with their lyrics.
-            </li>
-            <li>
-              <strong>Paper Size & Print Customization:</strong> Configure your target paper size (Letter, Legal, A4, or Custom dimensions) from the paper size dropdown on the editor to adjust print and export layout.
+              <strong>Type & Margins:</strong> Font size from 6 to 20pt, with narrow, normal, or wide margins — or your own value.
             </li>
           </ul>
         </section>

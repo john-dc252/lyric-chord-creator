@@ -72,21 +72,21 @@ export default defineConfig({
         screenshots: [
           {
             src: '/apps/lyric-chord-creator/lyric-chord-creator-screenshot.png',
-            sizes: '1876x936',
+            sizes: '1881x936',
             type: 'image/png',
             form_factor: 'wide',
             label: 'Lyric-Chord Creator desktop editor and live sheet preview',
           },
           {
             src: '/apps/lyric-chord-creator/lyric-chord-creator-screenshot-mobile.png',
-            sizes: '381x847',
+            sizes: '390x853',
             type: 'image/png',
             form_factor: 'narrow',
             label: 'Lyric-Chord Creator mobile editor',
           },
           {
             src: '/apps/lyric-chord-creator/lyric-chord-creator-screenshot-previewer-mobile.png',
-            sizes: '381x847',
+            sizes: '390x853',
             type: 'image/png',
             form_factor: 'narrow',
             label: 'Lyric-Chord Creator mobile sheet previewer',
@@ -103,7 +103,7 @@ export default defineConfig({
 
         // Explicitly precache turnkey index.html to satisfy navigateFallback
         additionalManifestEntries: [
-          { url: 'index.html', revision: `${pkg.version}-${Date.now()}` },
+          {url: 'index.html', revision: `${pkg.version}-${Date.now()}`},
         ],
 
         // Prevents the service worker from failing on larger route chunks

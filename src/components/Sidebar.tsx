@@ -1,5 +1,6 @@
 import { Show, For } from 'solid-js';
-import { useLocation } from '@solidjs/router';
+import { useLinkState } from '@solidjs/router';
+import { paths } from '../router';
 import { savedTemplates } from '../lib/templates-store';
 import { theme, toggleTheme } from '../lib/theme';
 import {
@@ -9,24 +10,17 @@ import {
 } from '../lib/sidebar-state';
 
 export default function Sidebar() {
-  const location = useLocation();
-
-  const isCurrentRoute = (path: string) => {
-    const current = location.pathname;
-    if (path === '/') {
-      return (
-        current === '/' ||
-        current === '' ||
-        current === '/apps/lyric-chord-creator/' ||
-        current === '/apps/lyric-chord-creator'
-      );
-    }
-    return current.includes(path);
-  };
+  // useLinkState stringifies its argument, so it needs the *logical* path
+  // ('/about'), not a `paths` node — that coerces to the display href
+  // ('#/about'), whose leading '#' makes it prefix-match every route.
+  const aboutLink = useLinkState(() => '/about');
 
   const navItems = [
     {
       label: 'Editor',
+      // `href` is the display href for the DOM ('#/'); `path` is the logical
+      // route useLinkState matches against location.pathname.
+      href: paths,
       path: '/',
       icon: (
         <svg
@@ -45,6 +39,7 @@ export default function Sidebar() {
     },
     {
       label: 'Local Library',
+      href: paths.gallery,
       path: '/gallery',
       icon: (
         <svg
@@ -91,10 +86,14 @@ export default function Sidebar() {
         <nav class="flex-1 px-2.5 py-3 space-y-1.5 overflow-y-auto overflow-x-hidden">
           <For each={navItems}>
             {(item) => {
-              const active = () => isCurrentRoute(item.path);
+              // The root path normalizes to '', which would prefix-match every
+              // route, so '/' matches exactly while the rest match by prefix.
+              const active = useLinkState(() => item.path, {
+                end: item.path === '/',
+              }).active;
               return (
                 <a
-                  href={item.path}
+                  href={item.href}
                   onClick={closeMobileSidebar}
                   class={[
                     'group relative flex items-center justify-start w-full px-2.5 py-2.5 rounded-lg text-xs font-semibold transition-colors duration-150 no-underline overflow-hidden',
@@ -147,17 +146,17 @@ export default function Sidebar() {
         <div class="p-2.5 border-t border-slate-200 dark:border-slate-800 shrink-0 space-y-1 overflow-hidden">
           {/* About Link */}
           <a
-            href="/about"
+            href={paths.about}
             onClick={closeMobileSidebar}
             class={[
               'group relative flex items-center justify-start w-full px-2.5 py-2.5 rounded-lg text-xs font-semibold transition-colors duration-150 no-underline overflow-hidden',
-              isCurrentRoute('/about')
+              aboutLink.active()
                 ? 'bg-sky-50 dark:bg-sky-950/70 text-sky-600 dark:text-sky-400 font-bold shadow-xs'
                 : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800/80 hover:text-slate-900 dark:hover:text-slate-200',
             ]}
             title={isSidebarCollapsed() && !isMobileSidebarOpen() ? 'About' : undefined}
           >
-            <Show when={isCurrentRoute('/about')}>
+            <Show when={aboutLink.active()}>
               <span class="absolute left-0 top-1.5 bottom-1.5 w-1 bg-sky-600 dark:bg-sky-500 rounded-r-full" />
             </Show>
 

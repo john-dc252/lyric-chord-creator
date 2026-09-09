@@ -1,6 +1,8 @@
 import { Title } from '@solidjs/meta';
+import { useNavigate } from '@solidjs/router';
 import { createSignal, For } from 'solid-js';
 import { TemplateSyntaxHighlighter } from '../components/TemplateSyntaxHighlighter';
+import { paths } from '../router';
 import { ChordGuidePages } from '../lib/template-processor';
 import { setActiveTemplateId } from '../lib/templates-store';
 
@@ -98,7 +100,18 @@ The {E}Hope of nations`,
 ];
 
 export default function About() {
+  const navigate = useNavigate();
   const [copiedIndex, setCopiedIndex] = createSignal<number | null>(null, { name: 'copied_index' });
+
+  let syntaxGuideRef: HTMLElement | undefined = undefined;
+
+  // Scroll via the ref rather than the `#syntax-guide` fragment: under
+  // hashHistory the hash is the route, so the router intercepts the anchor and
+  // resolves the fragment as a path instead of scrolling.
+  const scrollToSyntaxGuide = (e: MouseEvent) => {
+    e.preventDefault();
+    syntaxGuideRef?.scrollIntoView({ behavior: 'smooth' });
+  };
 
   const copyToClipboard = (text: string, index: number) => {
     navigator.clipboard.writeText(text).then(() => {
@@ -111,11 +124,10 @@ export default function About() {
     try {
       setActiveTemplateId(null);
       localStorage.setItem('scgt_current_template', code);
-      window.location.href = '#/';
     } catch (e) {
       console.error('Failed to store example:', e);
-      window.location.href = '#/';
     }
+    navigate(paths);
   };
 
   return (
@@ -173,13 +185,14 @@ export default function About() {
 
           <div class="mt-6 flex flex-wrap items-center gap-3">
             <a
-              href="/"
+              href={paths()}
               class="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-sky-600 hover:bg-sky-500 text-white font-semibold text-xs shadow-xs transition-colors no-underline"
             >
               <span>← Open Editor</span>
             </a>
             <a
               href="#syntax-guide"
+              onClick={scrollToSyntaxGuide}
               class="inline-flex items-center gap-2 px-4 py-2 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-200 font-semibold text-xs transition-colors no-underline"
             >
               <span>View Syntax Guide ↓</span>
@@ -188,7 +201,11 @@ export default function About() {
         </section>
 
         {/* Syntax Tokens Reference Grid */}
-        <section id="syntax-guide" class="mb-10 scroll-mt-20">
+        <section
+          ref={(el) => (syntaxGuideRef = el)}
+          id="syntax-guide"
+          class="mb-10 scroll-mt-20"
+        >
           <h2 class="text-2xl font-bold text-slate-900 dark:text-white mb-2 flex items-center gap-2">
             Template Syntax Guide
           </h2>

@@ -1,4 +1,5 @@
 import { type ParentProps } from 'solid-js';
+import { paths } from '../router';
 import Sidebar from './Sidebar';
 import { toggleSidebar, isSidebarCollapsed } from '../lib/sidebar-state';
 
@@ -33,7 +34,7 @@ export default function AppLayout(props: ParentProps) {
 
           {/* Logo & Application Brand */}
           <a
-            href="/"
+            href={paths()}
             class="flex items-center gap-2.5 no-underline group"
             title="Lyric-Chord Creator"
           >

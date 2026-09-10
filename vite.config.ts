@@ -1,4 +1,5 @@
 import presetWind4 from '@unocss/preset-wind4';
+import {presetIcons} from 'unocss';
 import {fileRoutes} from 'filesystem-routing/vite';
 import UnoCSS from 'unocss/vite';
 import {defineConfig} from 'vitest/config';
@@ -23,7 +24,19 @@ export default defineConfig({
     // Scans source files for class names and serves their CSS as the
     // virtual:uno.css module (imported by src/App.tsx). Config can grow
     // into uno.config.ts; the wind4 preset is Tailwind-compatible utilities.
-    UnoCSS({presets: [presetWind4()]}),
+    UnoCSS({
+      presets: [
+        presetWind4(),
+        presetIcons({
+          cdn: 'https://esm.sh/',
+          scale: 1.2,
+          extraProperties: {
+            display: 'inline-block',
+            'vertical-align': 'middle',
+          },
+        }),
+      ],
+    }),
     VitePWA({
       registerType: 'autoUpdate',
       injectRegister: false,

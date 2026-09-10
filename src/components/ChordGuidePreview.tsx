@@ -352,7 +352,7 @@ export default function ChordGuidePreview(props: ChordGuidePreviewProps) {
             type="button"
             onClick={toggleFullscreen}
             class={[
-              'inline-flex items-center gap-1 rounded-md px-2.5 py-1 text-xs font-semibold border shadow-sm transition-colors',
+              'inline-flex items-center gap-1.5 rounded-md px-2.5 py-1 text-xs font-semibold border shadow-sm transition-colors',
               isFullscreen()
                 ? 'bg-sky-600 hover:bg-sky-500 text-white border-sky-500'
                 : 'bg-white dark:bg-slate-700 text-slate-700 dark:text-slate-200 border-slate-300 dark:border-slate-600 hover:bg-slate-50 dark:hover:bg-slate-600',
@@ -360,17 +360,21 @@ export default function ChordGuidePreview(props: ChordGuidePreviewProps) {
             title={isFullscreen() ? 'Exit Fullscreen (Esc)' : 'Fullscreen Preview'}
             aria-label={isFullscreen() ? 'Exit Fullscreen' : 'Fullscreen Preview'}
           >
-            <span>{isFullscreen() ? '🗗' : '⛶'}</span>
+            {isFullscreen() ? (
+              <span class="i-lucide-minimize w-3.5 h-3.5" aria-hidden="true" />
+            ) : (
+              <span class="i-lucide-maximize w-3.5 h-3.5" aria-hidden="true" />
+            )}
             <span class="hidden sm:inline">{isFullscreen() ? 'Exit' : 'Fullscreen'}</span>
           </button>
 
           <button
             type="button"
             onClick={handlePrint}
-            class="inline-flex items-center gap-1 rounded-md bg-white dark:bg-slate-700 px-2.5 py-1 text-xs font-semibold text-slate-700 dark:text-slate-200 border border-slate-300 dark:border-slate-600 hover:bg-slate-50 dark:hover:bg-slate-600 shadow-sm transition-colors"
+            class="inline-flex items-center gap-1.5 rounded-md bg-white dark:bg-slate-700 px-2.5 py-1 text-xs font-semibold text-slate-700 dark:text-slate-200 border border-slate-300 dark:border-slate-600 hover:bg-slate-50 dark:hover:bg-slate-600 shadow-sm transition-colors"
             title="Print Chord Sheet"
           >
-            <span>🖨️</span>
+            <span class="i-lucide-printer w-3.5 h-3.5" aria-hidden="true" />
             <span>Print</span>
           </button>
         </div>

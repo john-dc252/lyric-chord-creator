@@ -80,8 +80,8 @@ export default function SaveTemplateModal(props: SaveTemplateModalProps) {
         {/* Header */}
         <div class="px-5 py-4 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between">
           <div class="flex items-center gap-2.5">
-            <div class="w-8 h-8 rounded-lg bg-sky-100 dark:bg-sky-950/80 text-sky-600 dark:text-sky-400 flex items-center justify-center text-base">
-              💾
+            <div class="w-8 h-8 rounded-lg bg-sky-100 dark:bg-sky-950/80 text-sky-600 dark:text-sky-400 flex items-center justify-center">
+              <span class="i-lucide-save w-4 h-4" aria-hidden="true" />
             </div>
             <div>
               <h2 id="save-modal-title" class="font-bold text-sm text-slate-900 dark:text-white">
@@ -98,7 +98,7 @@ export default function SaveTemplateModal(props: SaveTemplateModalProps) {
             class="p-1 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
             aria-label="Close"
           >
-            ✕
+            <span class="i-lucide-x w-4 h-4" aria-hidden="true" />
           </button>
         </div>
 
@@ -129,14 +129,14 @@ export default function SaveTemplateModal(props: SaveTemplateModalProps) {
               ]}
             />
             <Show when={!isUnique()}>
-              <p class="mt-1.5 text-xs text-rose-600 dark:text-rose-400 flex items-center gap-1">
-                <span>⚠️</span>
+              <p class="mt-1.5 text-xs text-rose-600 dark:text-rose-400 flex items-center gap-1.5">
+                <span class="i-lucide-alert-triangle w-3.5 h-3.5 shrink-0" aria-hidden="true" />
                 <span>A template with this name already exists. Please choose a unique name.</span>
               </p>
             </Show>
             <Show when={errorMessage() && isUnique()}>
-              <p class="mt-1.5 text-xs text-rose-600 dark:text-rose-400 flex items-center gap-1">
-                <span>⚠️</span>
+              <p class="mt-1.5 text-xs text-rose-600 dark:text-rose-400 flex items-center gap-1.5">
+                <span class="i-lucide-alert-triangle w-3.5 h-3.5 shrink-0" aria-hidden="true" />
                 <span>{errorMessage()}</span>
               </p>
             </Show>
@@ -191,7 +191,7 @@ export default function SaveTemplateModal(props: SaveTemplateModalProps) {
               disabled={!trimmedName() || !isUnique()}
               class="inline-flex items-center gap-1.5 px-4 py-2 text-xs font-semibold bg-sky-600 hover:bg-sky-500 disabled:opacity-50 disabled:cursor-not-allowed text-white rounded-lg shadow-sm transition-colors"
             >
-              <span>💾</span>
+              <span class="i-lucide-save w-3.5 h-3.5" aria-hidden="true" />
               <span>{props.existingTemplate ? 'Save Changes' : 'Save Template'}</span>
             </button>
           </div>

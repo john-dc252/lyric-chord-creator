@@ -214,8 +214,8 @@ export default function Gallery() {
         <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-4 border-b border-slate-200 dark:border-slate-800">
           <div>
             <div class="flex items-center gap-2.5">
-              <div class="w-9 h-9 rounded-xl bg-sky-100 dark:bg-sky-950 text-sky-600 dark:text-sky-400 flex items-center justify-center text-lg shadow-xs">
-                🗃️
+              <div class="w-9 h-9 rounded-xl bg-sky-100 dark:bg-sky-950 text-sky-600 dark:text-sky-400 flex items-center justify-center shadow-xs">
+                <span class="i-lucide-folder-archive w-5 h-5" aria-hidden="true" />
               </div>
               <div>
                 <h1 class="text-xl sm:text-2xl font-bold text-slate-900 dark:text-white tracking-tight">
@@ -235,7 +235,7 @@ export default function Gallery() {
               class="inline-flex items-center gap-1.5 px-3 py-2 text-xs font-semibold rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700 shadow-xs transition-colors"
               title="Import a .lcct.txt template file"
             >
-              <span>📂</span>
+              <span class="i-lucide-folder-open w-3.5 h-3.5 text-slate-500 dark:text-slate-400" aria-hidden="true" />
               <span>Import File</span>
             </button>
             <button
@@ -244,7 +244,7 @@ export default function Gallery() {
               class="inline-flex items-center gap-1.5 px-3.5 py-2 text-xs font-semibold rounded-lg bg-sky-600 hover:bg-sky-500 text-white shadow-xs transition-colors"
               title="Create a new empty template"
             >
-              <span>➕</span>
+              <span class="i-lucide-plus w-3.5 h-3.5" aria-hidden="true" />
               <span>New Template</span>
             </button>
           </div>
@@ -256,7 +256,7 @@ export default function Gallery() {
             {/* Search Input */}
             <div class="relative flex-1">
               <span class="absolute left-3 top-2.5 text-slate-400">
-                🔍
+                <span class="i-lucide-search w-4 h-4" aria-hidden="true" />
               </span>
               <input
                 type="text"
@@ -269,10 +269,10 @@ export default function Gallery() {
                 <button
                   type="button"
                   onClick={() => setSearchInput('')}
-                  class="absolute right-2.5 top-2.5 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 text-xs"
+                  class="absolute right-2.5 top-2.5 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 p-0.5 rounded"
                   aria-label="Clear input"
                 >
-                  ✕
+                  <span class="i-lucide-x w-3.5 h-3.5" aria-hidden="true" />
                 </button>
               </Show>
             </div>
@@ -297,7 +297,7 @@ export default function Gallery() {
                 type="submit"
                 class="inline-flex items-center gap-1.5 px-4 py-2 text-xs font-semibold rounded-lg bg-sky-600 hover:bg-sky-500 text-white shadow-xs transition-colors shrink-0"
               >
-                <span>🔍</span>
+                <span class="i-lucide-search w-3.5 h-3.5" aria-hidden="true" />
                 <span>Search</span>
               </button>
             </div>
@@ -316,10 +316,11 @@ export default function Gallery() {
                   <button
                     type="button"
                     onClick={handleClearSearch}
-                    class="hover:text-rose-500 font-bold ml-1"
+                    class="hover:text-rose-500 p-0.5 rounded ml-1"
                     title="Clear filter"
+                    aria-label="Clear filter"
                   >
-                    ✕
+                    <span class="i-lucide-x w-3 h-3" aria-hidden="true" />
                   </button>
                 </span>
               </Show>
@@ -338,7 +339,7 @@ export default function Gallery() {
           when={paginatedTemplates().length > 0}
           fallback={
             <div class="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 p-8 sm:p-12 text-center space-y-4 shadow-xs">
-              <div class="text-4xl">📁</div>
+              <span class="i-lucide-folder w-12 h-12 text-slate-400 dark:text-slate-500 mx-auto" aria-hidden="true" />
               <div class="space-y-1">
                 <h3 class="font-bold text-base text-slate-800 dark:text-slate-200">
                   {appliedQuery() ? 'No Matching Templates' : 'No Templates Saved'}
@@ -383,7 +384,7 @@ export default function Gallery() {
                     <div class="p-4 border-b border-slate-100 dark:border-slate-800 flex items-start justify-between gap-2">
                       <div class="min-w-0 flex-1">
                         <div class="flex items-center gap-2">
-                          <span class="text-sm">🎵</span>
+                          <span class="i-lucide-music w-4 h-4 text-sky-600 dark:text-sky-400 shrink-0" aria-hidden="true" />
                           <h3
                             class="font-bold text-sm sm:text-base text-slate-900 dark:text-white truncate"
                             title={template.name}
@@ -404,12 +405,14 @@ export default function Gallery() {
                           >
                             {(song) => (
                               <div class="inline-flex flex-wrap items-center gap-1">
-                                <span class="px-2 py-0.5 rounded-md bg-sky-50 dark:bg-sky-950/80 text-sky-700 dark:text-sky-300 font-medium">
-                                  🎵 {song.title}
+                                <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-sky-50 dark:bg-sky-950/80 text-sky-700 dark:text-sky-300 font-medium">
+                                  <span class="i-lucide-music w-3 h-3 text-sky-600 dark:text-sky-400 shrink-0" aria-hidden="true" />
+                                  <span>{song.title}</span>
                                 </span>
                                 <Show when={song.artist}>
-                                  <span class="px-2 py-0.5 rounded-md bg-indigo-50 dark:bg-indigo-950/80 text-indigo-700 dark:text-indigo-300 font-medium">
-                                    👤 {song.artist}
+                                  <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-indigo-50 dark:bg-indigo-950/80 text-indigo-700 dark:text-indigo-300 font-medium">
+                                    <span class="i-lucide-user w-3 h-3 text-indigo-600 dark:text-indigo-400 shrink-0" aria-hidden="true" />
+                                    <span>{song.artist}</span>
                                   </span>
                                 </Show>
                               </div>
@@ -442,32 +445,36 @@ export default function Gallery() {
                           onClick={() => handleExport(template)}
                           class="p-1.5 rounded-lg text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
                           title="Export as .lcct.txt"
+                          aria-label="Export as .lcct.txt"
                         >
-                          💾
+                          <span class="i-lucide-download w-4 h-4" aria-hidden="true" />
                         </button>
                         <button
                           type="button"
                           onClick={() => handleDuplicate(template)}
                           class="p-1.5 rounded-lg text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
                           title="Duplicate template"
+                          aria-label="Duplicate template"
                         >
-                          📋
+                          <span class="i-lucide-copy w-4 h-4" aria-hidden="true" />
                         </button>
                         <button
                           type="button"
                           onClick={() => openRenameModal(template)}
                           class="p-1.5 rounded-lg text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
                           title="Rename template"
+                          aria-label="Rename template"
                         >
-                          ✏️
+                          <span class="i-lucide-pencil w-4 h-4" aria-hidden="true" />
                         </button>
                         <button
                           type="button"
                           onClick={() => openDeleteModal(template)}
                           class="p-1.5 rounded-lg text-rose-500 hover:text-rose-700 dark:text-rose-400 dark:hover:text-rose-300 hover:bg-rose-50 dark:hover:bg-rose-950/50 transition-colors"
                           title="Delete template"
+                          aria-label="Delete template"
                         >
-                          🗑️
+                          <span class="i-lucide-trash-2 w-4 h-4" aria-hidden="true" />
                         </button>
                       </div>
 
@@ -476,7 +483,7 @@ export default function Gallery() {
                         onClick={() => handleOpenInEditor(template)}
                         class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg bg-sky-600 hover:bg-sky-500 text-white shadow-xs transition-colors"
                       >
-                        <span>📝</span>
+                        <span class="i-lucide-file-edit w-3.5 h-3.5" aria-hidden="true" />
                         <span>Open in Editor</span>
                       </button>
                     </div>
@@ -496,7 +503,8 @@ export default function Gallery() {
               onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
               class="inline-flex items-center gap-1 px-3 py-1.5 text-xs font-semibold rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 disabled:opacity-40 disabled:cursor-not-allowed hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors"
             >
-              ← Previous
+              <span class="i-lucide-arrow-left w-3.5 h-3.5" aria-hidden="true" />
+              <span>Previous</span>
             </button>
 
             <div class="flex items-center gap-1">
@@ -524,7 +532,8 @@ export default function Gallery() {
               onClick={() => setCurrentPage((p) => Math.min(totalPages(), p + 1))}
               class="inline-flex items-center gap-1 px-3 py-1.5 text-xs font-semibold rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 disabled:opacity-40 disabled:cursor-not-allowed hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors"
             >
-              Next →
+              <span>Next</span>
+              <span class="i-lucide-arrow-right w-3.5 h-3.5" aria-hidden="true" />
             </button>
           </div>
         </Show>
@@ -575,7 +584,7 @@ export default function Gallery() {
         <div class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs modal-backdrop">
           <div class="w-full max-w-sm bg-white dark:bg-slate-900 rounded-xl shadow-2xl border border-slate-200 dark:border-slate-800 p-5 space-y-4 modal-content">
             <div class="flex items-center gap-3 text-rose-600 dark:text-rose-400">
-              <span class="text-2xl">⚠️</span>
+              <span class="i-lucide-alert-triangle w-6 h-6 shrink-0" aria-hidden="true" />
               <h3 class="font-bold text-sm text-slate-900 dark:text-white">
                 Delete Template?
               </h3>
@@ -606,7 +615,7 @@ export default function Gallery() {
       {/* Toast Notification */}
       <Show when={toastMessage()}>
         <div class="fixed bottom-4 right-4 z-50 flex items-center gap-2 bg-slate-900 text-white dark:bg-white dark:text-slate-900 px-4 py-2.5 rounded-lg shadow-xl text-xs font-semibold border border-slate-700 dark:border-slate-200 animate-fade-in">
-          <span>✨</span>
+          <span class="i-lucide-sparkles w-4 h-4 text-amber-400 dark:text-amber-500" aria-hidden="true" />
           <span>{toastMessage()}</span>
         </div>
       </Show>

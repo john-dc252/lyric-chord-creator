@@ -196,8 +196,12 @@ export default function Sidebar() {
             class="w-full flex items-center justify-start px-2.5 py-2.5 rounded-lg text-xs font-semibold text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800/80 hover:text-slate-900 dark:hover:text-slate-200 transition-colors overflow-hidden"
             title={`Switch to ${theme() === 'dark' ? 'Light' : 'Dark'} Mode`}
           >
-            <div class="w-5 h-5 shrink-0 flex items-center justify-center text-base leading-none">
-              {theme() === 'dark' ? '☀️' : '🌙'}
+            <div class="w-5 h-5 shrink-0 flex items-center justify-center">
+              {theme() === 'dark' ? (
+                <span class="i-lucide-sun w-5 h-5 text-amber-500" aria-hidden="true" />
+              ) : (
+                <span class="i-lucide-moon w-5 h-5 text-indigo-400" aria-hidden="true" />
+              )}
             </div>
             <div
               class={[

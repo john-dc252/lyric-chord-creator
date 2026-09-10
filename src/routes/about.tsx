@@ -147,8 +147,8 @@ export default function About() {
           {/* Key Value Proposition Cards */}
           <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mt-6">
             <div class="p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-xs flex flex-col">
-              <div class="w-9 h-9 rounded-lg bg-sky-100 dark:bg-sky-950 text-sky-600 dark:text-sky-400 flex items-center justify-center text-lg mb-3 shrink-0">
-                📐
+              <div class="w-9 h-9 rounded-lg bg-sky-100 dark:bg-sky-950 text-sky-600 dark:text-sky-400 flex items-center justify-center mb-3 shrink-0">
+                <span class="i-lucide-layout w-5 h-5" aria-hidden="true" />
               </div>
               <h3 class="font-bold text-sm text-slate-900 dark:text-white mb-1.5">
                 Adaptive Layout for Any Paper
@@ -159,8 +159,8 @@ export default function About() {
             </div>
 
             <div class="p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-xs flex flex-col">
-              <div class="w-9 h-9 rounded-lg bg-indigo-100 dark:bg-indigo-950 text-indigo-600 dark:text-indigo-400 flex items-center justify-center text-lg mb-3 shrink-0">
-                🎯
+              <div class="w-9 h-9 rounded-lg bg-indigo-100 dark:bg-indigo-950 text-indigo-600 dark:text-indigo-400 flex items-center justify-center mb-3 shrink-0">
+                <span class="i-lucide-target w-5 h-5" aria-hidden="true" />
               </div>
               <h3 class="font-bold text-sm text-slate-900 dark:text-white mb-1.5">
                 Exact Lyric & Chord Alignment
@@ -171,8 +171,8 @@ export default function About() {
             </div>
 
             <div class="p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-xs flex flex-col sm:col-span-2 lg:col-span-1">
-              <div class="w-9 h-9 rounded-lg bg-emerald-100 dark:bg-emerald-950 text-emerald-600 dark:text-emerald-400 flex items-center justify-center text-lg mb-3 shrink-0">
-                📚
+              <div class="w-9 h-9 rounded-lg bg-emerald-100 dark:bg-emerald-950 text-emerald-600 dark:text-emerald-400 flex items-center justify-center mb-3 shrink-0">
+                <span class="i-lucide-book-open w-5 h-5" aria-hidden="true" />
               </div>
               <h3 class="font-bold text-sm text-slate-900 dark:text-white mb-1.5">
                 Multiple Songs per Template
@@ -188,14 +188,16 @@ export default function About() {
               href={paths()}
               class="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-sky-600 hover:bg-sky-500 text-white font-semibold text-xs shadow-xs transition-colors no-underline"
             >
-              <span>← Open Editor</span>
+              <span class="i-lucide-arrow-left w-3.5 h-3.5" aria-hidden="true" />
+              <span>Open Editor</span>
             </a>
             <a
               href="#syntax-guide"
               onClick={scrollToSyntaxGuide}
               class="inline-flex items-center gap-2 px-4 py-2 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-200 font-semibold text-xs transition-colors no-underline"
             >
-              <span>View Syntax Guide ↓</span>
+              <span>View Syntax Guide</span>
+              <span class="i-lucide-arrow-down w-3.5 h-3.5" aria-hidden="true" />
             </a>
           </div>
         </section>
@@ -352,7 +354,7 @@ export default function About() {
         {/* Examples Section */}
         <section class="mb-10">
           <h2 class="text-xl font-bold text-slate-900 dark:text-white mb-4 flex items-center gap-2">
-            <span>💡</span>
+            <span class="i-lucide-lightbulb w-5 h-5 text-amber-500" aria-hidden="true" />
             <span>Example Templates</span>
           </h2>
 
@@ -375,16 +377,27 @@ export default function About() {
                       <button
                         type="button"
                         onClick={() => copyToClipboard(example.code, index())}
-                        class="px-2.5 py-1 text-xs font-semibold rounded-md border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700 shadow-sm transition-colors"
+                        class="inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-semibold rounded-md border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700 shadow-sm transition-colors"
                       >
-                        {copiedIndex() === index() ? '✓ Copied!' : '📋 Copy'}
+                        {copiedIndex() === index() ? (
+                          <>
+                            <span class="i-lucide-check w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" aria-hidden="true" />
+                            <span>Copied!</span>
+                          </>
+                        ) : (
+                          <>
+                            <span class="i-lucide-copy w-3.5 h-3.5" aria-hidden="true" />
+                            <span>Copy</span>
+                          </>
+                        )}
                       </button>
                       <button
                         type="button"
                         onClick={() => loadExampleIntoEditor(example.code)}
-                        class="px-2.5 py-1 text-xs font-semibold rounded-md bg-sky-600 hover:bg-sky-500 text-white shadow-sm transition-colors"
+                        class="inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-semibold rounded-md bg-sky-600 hover:bg-sky-500 text-white shadow-sm transition-colors"
                       >
-                        🚀 Load in Editor
+                        <span class="i-lucide-play w-3.5 h-3.5" aria-hidden="true" />
+                        <span>Load in Editor</span>
                       </button>
                     </div>
                   </div>
@@ -428,7 +441,7 @@ export default function About() {
         {/* Sheet Settings Section */}
         <section class="p-6 rounded-xl bg-gradient-to-br from-sky-50 to-indigo-50 dark:from-slate-900 dark:to-slate-800 border border-sky-200 dark:border-slate-700">
           <h2 class="font-bold text-base text-slate-900 dark:text-white mb-1.5 flex items-center gap-2">
-            <span>⚙️</span>
+            <span class="i-lucide-settings w-4 h-4 text-sky-600 dark:text-sky-400" aria-hidden="true" />
             <span>Sheet Settings</span>
           </h2>
           <p class="text-xs sm:text-sm text-slate-600 dark:text-slate-400 mb-3">

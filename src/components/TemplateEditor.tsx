@@ -564,11 +564,11 @@ export default function TemplateEditor(props: TemplateEditorProps) {
             <button
               type="button"
               onClick={() => setIsFileMenuOpen(!isFileMenuOpen())}
-              class="inline-flex items-center gap-1 px-2.5 py-1 rounded text-xs font-semibold bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700 shadow-xs transition-colors"
+              class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded text-xs font-semibold bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700 shadow-xs transition-colors"
             >
-              <span>📁</span>
+              <span class="i-lucide-folder w-3.5 h-3.5 text-slate-500 dark:text-slate-400" aria-hidden="true" />
               <span>File</span>
-              <span class="text-[10px] text-slate-400">▼</span>
+              <span class="i-lucide-chevron-down w-3.5 h-3.5 text-slate-400" aria-hidden="true" />
             </button>
 
             {/* Dropdown Menu Popup */}
@@ -589,7 +589,7 @@ export default function TemplateEditor(props: TemplateEditorProps) {
                       }}
                       class="w-full flex items-center gap-2.5 px-3 py-2 text-left hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 font-medium"
                     >
-                      <span>➕</span>
+                      <span class="i-lucide-plus w-4 h-4 text-slate-500 dark:text-slate-400 shrink-0" aria-hidden="true" />
                       <div class="flex-1">
                         <div>New Template</div>
                         <div class="text-[10px] text-slate-400">Start with empty editor</div>
@@ -604,7 +604,7 @@ export default function TemplateEditor(props: TemplateEditorProps) {
                     onClick={handleQuickSave}
                     class="w-full flex items-center gap-2.5 px-3 py-2 text-left hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 font-medium"
                   >
-                    <span>💾</span>
+                    <span class="i-lucide-save w-4 h-4 text-slate-500 dark:text-slate-400 shrink-0" aria-hidden="true" />
                     <div class="flex-1">
                       <div>{activeSavedTemplate() ? 'Save Changes' : 'Save to Library'}</div>
                       <div class="text-[10px] text-slate-400">
@@ -619,7 +619,7 @@ export default function TemplateEditor(props: TemplateEditorProps) {
                     onClick={handleSaveAs}
                     class="w-full flex items-center gap-2.5 px-3 py-2 text-left hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 font-medium"
                   >
-                    <span>📑</span>
+                    <span class="i-lucide-copy-plus w-4 h-4 text-slate-500 dark:text-slate-400 shrink-0" aria-hidden="true" />
                     <div class="flex-1">
                       <div>Save As New Template...</div>
                       <div class="text-[10px] text-slate-400">Save with a new unique name</div>
@@ -634,7 +634,7 @@ export default function TemplateEditor(props: TemplateEditorProps) {
                     onClick={handleImportClick}
                     class="w-full flex items-center gap-2.5 px-3 py-2 text-left hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 font-medium"
                   >
-                    <span>📂</span>
+                    <span class="i-lucide-folder-open w-4 h-4 text-slate-500 dark:text-slate-400 shrink-0" aria-hidden="true" />
                     <div class="flex-1">
                       <div>Import from File (*.lcct.txt)</div>
                       <div class="text-[10px] text-slate-400">Load template file from device</div>
@@ -647,7 +647,7 @@ export default function TemplateEditor(props: TemplateEditorProps) {
                     onClick={handleExport}
                     class="w-full flex items-center gap-2.5 px-3 py-2 text-left hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 font-medium"
                   >
-                    <span>💾</span>
+                    <span class="i-lucide-download w-4 h-4 text-slate-500 dark:text-slate-400 shrink-0" aria-hidden="true" />
                     <div class="flex-1">
                       <div>Export as File (*.lcct.txt)</div>
                       <div class="text-[10px] text-slate-400">Download current sheet template</div>
@@ -664,7 +664,7 @@ export default function TemplateEditor(props: TemplateEditorProps) {
                       }}
                       class="w-full flex items-center gap-2.5 px-3 py-2 text-left hover:bg-slate-100 dark:hover:bg-slate-700 text-rose-600 dark:text-rose-400 font-medium"
                     >
-                      <span>🔄</span>
+                      <span class="i-lucide-rotate-ccw w-4 h-4 text-rose-500 shrink-0" aria-hidden="true" />
                       <div class="flex-1">
                         <div>Reset to Default Sample</div>
                         <div class="text-[10px] text-slate-400">Discard unsaved edits</div>
@@ -680,14 +680,14 @@ export default function TemplateEditor(props: TemplateEditorProps) {
           <button
             type="button"
             onClick={handleQuickSave}
-            class="inline-flex items-center gap-1 px-2.5 py-1 rounded text-xs font-semibold bg-sky-600 hover:bg-sky-500 text-white shadow-xs transition-colors"
+            class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded text-xs font-semibold bg-sky-600 hover:bg-sky-500 text-white shadow-xs transition-colors"
             title={
               activeSavedTemplate()
                 ? `Save changes to "${activeSavedTemplate()?.name}" (Ctrl/Cmd+S)`
                 : 'Save template to library (Ctrl/Cmd+S)'
             }
           >
-            <span>💾</span>
+            <span class="i-lucide-save w-3.5 h-3.5" aria-hidden="true" />
             <span>Save</span>
           </button>
 
@@ -711,7 +711,7 @@ export default function TemplateEditor(props: TemplateEditorProps) {
           >
             <Show
               when={isDirty()}
-              fallback={<span class="text-emerald-500 dark:text-emerald-400 font-bold text-xs">✓</span>}
+              fallback={<span class="i-lucide-check w-3.5 h-3.5 text-emerald-500 dark:text-emerald-400 shrink-0" aria-hidden="true" />}
             >
               <span class="w-2 h-2 rounded-full bg-amber-500 dark:bg-amber-400 animate-pulse shrink-0" />
             </Show>
@@ -777,17 +777,21 @@ export default function TemplateEditor(props: TemplateEditorProps) {
 
         {/* Template Stats */}
         <div class="flex items-center gap-2.5 text-[11px]">
-          <span title="Number of chords in template">
-            🎵 <strong class="text-slate-800 dark:text-slate-200">{stats().chords}</strong> chords
+          <span title="Number of chords in template" class="inline-flex items-center gap-1">
+            <span class="i-lucide-music w-3 h-3 text-slate-400" aria-hidden="true" />
+            <span><strong class="text-slate-800 dark:text-slate-200">{stats().chords}</strong> chords</span>
           </span>
-          <span title="Number of sections">
-            🏷️ <strong class="text-slate-800 dark:text-slate-200">{stats().sections}</strong> sections
+          <span title="Number of sections" class="inline-flex items-center gap-1">
+            <span class="i-lucide-tag w-3 h-3 text-slate-400" aria-hidden="true" />
+            <span><strong class="text-slate-800 dark:text-slate-200">{stats().sections}</strong> sections</span>
           </span>
-          <span title="Number of column breaks (@column_break)" class="hidden sm:inline">
-            📑 <strong class="text-slate-800 dark:text-slate-200">{stats().columnBreaks}</strong> col breaks
+          <span title="Number of column breaks (@column_break)" class="hidden sm:inline-flex items-center gap-1">
+            <span class="i-lucide-columns w-3 h-3 text-slate-400" aria-hidden="true" />
+            <span><strong class="text-slate-800 dark:text-slate-200">{stats().columnBreaks}</strong> col breaks</span>
           </span>
-          <span title="Number of page breaks (@page_break)" class="hidden sm:inline">
-            📄 <strong class="text-slate-800 dark:text-slate-200">{stats().pageBreaks}</strong> page breaks
+          <span title="Number of page breaks (@page_break)" class="hidden sm:inline-flex items-center gap-1">
+            <span class="i-lucide-file-text w-3 h-3 text-slate-400" aria-hidden="true" />
+            <span><strong class="text-slate-800 dark:text-slate-200">{stats().pageBreaks}</strong> page breaks</span>
           </span>
         </div>
       </div>
@@ -799,8 +803,9 @@ export default function TemplateEditor(props: TemplateEditorProps) {
         {/* Drag and drop overlay hint */}
         <Show when={isDraggingOver()}>
           <div class="absolute inset-0 bg-sky-500/10 dark:bg-sky-500/20 backdrop-blur-sm flex items-center justify-center pointer-events-none z-10 border-2 border-dashed border-sky-500 rounded-lg">
-            <div class="bg-white dark:bg-slate-800 px-4 py-2 rounded-lg shadow-lg text-sm font-semibold text-sky-600 dark:text-sky-400">
-              📥 Drop *.lcct.txt template file here to load
+            <div class="bg-white dark:bg-slate-800 px-4 py-2 rounded-lg shadow-lg text-sm font-semibold text-sky-600 dark:text-sky-400 inline-flex items-center gap-2">
+              <span class="i-lucide-upload w-4 h-4 text-sky-500 dark:text-sky-400 animate-bounce" aria-hidden="true" />
+              <span>Drop *.lcct.txt template file here to load</span>
             </div>
           </div>
         </Show>

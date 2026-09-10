@@ -187,7 +187,7 @@ export default function Home() {
                 : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white',
             ]}
           >
-            <span>📝</span>
+            <span class="i-lucide-file-edit w-3.5 h-3.5" aria-hidden="true" />
             <span>Editor</span>
           </button>
           <button
@@ -205,7 +205,7 @@ export default function Home() {
                 : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white',
             ]}
           >
-            <span>👁️</span>
+            <span class="i-lucide-eye w-3.5 h-3.5" aria-hidden="true" />
             <span>Preview</span>
           </button>
         </div>
@@ -237,7 +237,7 @@ export default function Home() {
           {/* Toast Notification (Displayed on the editor side) */}
           <Show when={toastMessage()}>
             <div class="absolute bottom-10 right-4 z-40 flex items-center gap-2 bg-slate-900 text-white dark:bg-white dark:text-slate-900 px-3.5 py-2 rounded-lg shadow-xl text-xs font-semibold border border-slate-700 dark:border-slate-200 animate-fade-in pointer-events-none select-none">
-              <span>✨</span>
+              <span class="i-lucide-sparkles w-3.5 h-3.5 text-amber-400 dark:text-amber-500" aria-hidden="true" />
               <span>{toastMessage()}</span>
             </div>
           </Show>

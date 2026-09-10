@@ -35,7 +35,7 @@ export default function Header(props: HeaderProps) {
     <div class="bg-white/80 dark:bg-slate-900/80 backdrop-blur-xs border-b border-slate-200 dark:border-slate-800 px-3 sm:px-4 py-2 flex items-center justify-between gap-3 shrink-0 z-20 select-none">
       {/* Song Info */}
       <div class="flex items-center gap-2.5 min-w-0">
-        <span class="text-sm">🎵</span>
+        <span class="i-lucide-music w-4 h-4 text-sky-600 dark:text-sky-400 shrink-0" aria-hidden="true" />
         <div class="flex items-baseline gap-2 truncate">
           <h1 class="font-bold text-xs sm:text-sm text-slate-900 dark:text-white truncate">
             {songTitle()}
@@ -49,8 +49,8 @@ export default function Header(props: HeaderProps) {
 
         {/* Template origin tag if active */}
         <Show when={activeSavedTemplate()}>
-          <span class="hidden md:inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-medium bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700 truncate max-w-[150px]" title={`Editing library template: ${activeSavedTemplate()?.name}`}>
-            <span>📑</span>
+          <span class="hidden md:inline-flex items-center gap-1.5 px-2 py-0.5 rounded text-[10px] font-medium bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700 truncate max-w-[150px]" title={`Editing library template: ${activeSavedTemplate()?.name}`}>
+            <span class="i-lucide-file-text w-3 h-3 shrink-0" aria-hidden="true" />
             <span class="truncate">{activeSavedTemplate()?.name}</span>
           </span>
         </Show>
@@ -67,8 +67,8 @@ export default function Header(props: HeaderProps) {
         </Show>
 
         {props.paperConfig && (
-          <span class="hidden md:inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-slate-100 dark:bg-slate-800 text-[10px] font-semibold text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700">
-            <span>{props.paperConfig.orientation === 'landscape' ? '📃' : '📄'}</span>
+          <span class="hidden md:inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-slate-100 dark:bg-slate-800 text-[10px] font-semibold text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700">
+            <span class="i-lucide-file-text w-3 h-3 shrink-0" aria-hidden="true" />
             <span>{props.paperConfig.preset.toUpperCase()}</span>
             <span class="text-slate-400">
               ({props.paperConfig.orientation === 'landscape' ? 'LANDSCAPE' : 'PORTRAIT'} • {clampColumns(props.paperConfig.columns, props.paperConfig.orientation)} {clampColumns(props.paperConfig.columns, props.paperConfig.orientation) === 1 ? 'COL' : 'COLS'})

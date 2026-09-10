@@ -146,7 +146,6 @@ export default function PaperSizeSelector(props: PaperSizeSelectorProps) {
 
   const getPresetLabel = () => {
     const isLandscape = currentOrientation() === 'landscape';
-    const orientIcon = isLandscape ? '📃' : '📄';
     const orientText = isLandscape ? 'Landscape' : 'Portrait';
     const cols = currentColumns();
     const colsText = `${cols} ${cols === 1 ? 'col' : 'cols'}`;
@@ -159,7 +158,7 @@ export default function PaperSizeSelector(props: PaperSizeSelectorProps) {
       sizeLabel = PAPER_PRESETS[props.value.preset]?.label || 'Paper';
     }
 
-    return `${orientIcon} ${sizeLabel} (${orientText}) • ${currentFontSize()}pt • ${colsText}`;
+    return `${sizeLabel} (${orientText}) • ${currentFontSize()}pt • ${colsText}`;
   };
 
   return (
@@ -170,19 +169,9 @@ export default function PaperSizeSelector(props: PaperSizeSelectorProps) {
         class="inline-flex items-center gap-1.5 rounded-md bg-white dark:bg-slate-800 px-2.5 py-1 text-xs font-semibold text-slate-700 dark:text-slate-200 border border-slate-300 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700 shadow-sm transition-colors cursor-pointer"
         title="Sheet Formatting & Paper Settings"
       >
+        <span class="i-lucide-file-text w-3.5 h-3.5 text-slate-500 dark:text-slate-400 shrink-0" aria-hidden="true" />
         <span>{getPresetLabel()}</span>
-        <svg
-          class="h-3 w-3 text-slate-400 ml-0.5"
-          xmlns="http://www.w3.org/2000/svg"
-          viewBox="0 0 20 20"
-          fill="currentColor"
-        >
-          <path
-            fill-rule="evenodd"
-            d="M5.23 7.21a.75.75 0 011.06.02L10 11.168l3.71-3.938a.75.75 0 111.08 1.04l-4.25 4.5a.75.75 0 01-1.08 0l-4.25-4.5a.75.75 0 01.02-1.06z"
-            clip-rule="evenodd"
-          />
-        </svg>
+        <span class="i-lucide-chevron-down w-3.5 h-3.5 text-slate-400 ml-0.5 shrink-0" aria-hidden="true" />
       </button>
 
       <Show when={isOpen()}>
@@ -206,9 +195,10 @@ export default function PaperSizeSelector(props: PaperSizeSelectorProps) {
               <button
                 type="button"
                 onClick={() => setIsOpen(false)}
-                class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 text-xs px-1 cursor-pointer"
+                class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 p-0.5 rounded cursor-pointer transition-colors"
+                aria-label="Close"
               >
-                ✕
+                <span class="i-lucide-x w-3.5 h-3.5" aria-hidden="true" />
               </button>
             </div>
           </div>
@@ -229,7 +219,7 @@ export default function PaperSizeSelector(props: PaperSizeSelectorProps) {
                     : 'bg-white dark:bg-slate-700/50 text-slate-600 dark:text-slate-300 border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700',
                 ]}
               >
-                <span>📄</span>
+                <span class="i-lucide-file-text w-3.5 h-3.5" aria-hidden="true" />
                 <span>Portrait</span>
               </button>
               <button
@@ -242,7 +232,7 @@ export default function PaperSizeSelector(props: PaperSizeSelectorProps) {
                     : 'bg-white dark:bg-slate-700/50 text-slate-600 dark:text-slate-300 border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700',
                 ]}
               >
-                <span>📃</span>
+                <span class="i-lucide-file-text w-3.5 h-3.5 rotate-90" aria-hidden="true" />
                 <span>Landscape</span>
               </button>
             </div>

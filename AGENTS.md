@@ -2,6 +2,10 @@
 
 This is a SolidJS 2.x project. Solid is not React: components run once (there is no re-render), reactivity is fine-grained through signals, and effects/memos have Solid-specific semantics. Do not port React patterns.
 
+## Package Manager
+
+- `pnpm`
+
 ## Versioned skills (in node_modules — read on demand)
 
 The installed packages ship agent skills that match their exact installed versions:

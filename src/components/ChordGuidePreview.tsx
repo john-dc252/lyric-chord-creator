@@ -9,15 +9,19 @@ import {
   ChordGuidePages,
   extractSongTitle,
 } from '../lib/template-processor';
+import { transposeTemplate } from '../lib/transposer';
+import ChordTransposeControl from './ChordTransposeControl';
 import PaperSizeSelector from './PaperSizeSelector';
+import PreviewDisplayControls from './PreviewDisplayControls';
+import type { ZoomLevel } from './ZoomControls';
+
+export type { ZoomLevel };
 
 interface ChordGuidePreviewProps {
   template: string;
   paperConfig: PaperSizeConfig;
   onPaperConfigChange: (config: PaperSizeConfig) => void;
 }
-
-export type ZoomLevel = 'fit' | 0.5 | 0.75 | 1.0 | 1.25 | 1.5;
 
 export default function ChordGuidePreview(props: ChordGuidePreviewProps) {
   let previewRootRef: HTMLDivElement | undefined = undefined;
@@ -29,6 +33,12 @@ export default function ChordGuidePreview(props: ChordGuidePreviewProps) {
   const [scaleFactor, setScaleFactor] = createSignal<number>(1.0, { name: 'scale_factor' });
   const [sheetWidth, setSheetWidth] = createSignal<number>(816, { name: 'sheet_width' });
   const [sheetHeight, setSheetHeight] = createSignal<number>(1056, { name: 'sheet_height' });
+  const [transposeDelta, setTransposeDelta] = createSignal<number>(0, { name: 'preview_transpose_delta' });
+
+  const renderedTemplate = createMemo(
+    () => transposeTemplate(props.template, transposeDelta()),
+    { name: 'preview_rendered_template' },
+  );
 
   // Calculate dynamic scale factor when "fit" is selected or window resizes
   const updateScaling = (currentZoom: ZoomLevel) => {
@@ -294,80 +304,14 @@ export default function ChordGuidePreview(props: ChordGuidePreviewProps) {
               setTimeout(() => updateScaling(zoom()), 50);
             }}
           />
+          <span class="text-slate-300 dark:text-slate-600">|</span>
+          <ChordTransposeControl
+            value={transposeDelta()}
+            onChange={setTransposeDelta}
+          />
         </div>
 
         <div class="flex items-center gap-2">
-          {/* Zoom controls */}
-          <div class="flex items-center bg-white dark:bg-slate-700 rounded-md border border-slate-300 dark:border-slate-600 px-1.5 py-0.5 shadow-sm">
-            <span class="text-[10px] text-slate-500 dark:text-slate-400 mr-1.5">Zoom:</span>
-            <button
-              type="button"
-              onClick={() => {
-                setZoom('fit');
-                updateScaling('fit');
-              }}
-              class={[
-                'px-1.5 py-0.5 rounded text-[11px] transition-colors',
-                zoom() === 'fit'
-                  ? 'bg-sky-500 text-white font-bold'
-                  : 'text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-600',
-              ]}
-            >
-              Fit
-            </button>
-            <button
-              type="button"
-              onClick={() => {
-                setZoom(0.75);
-                updateScaling(0.75);
-              }}
-              class={[
-                'px-1.5 py-0.5 rounded text-[11px] transition-colors',
-                zoom() === 0.75
-                  ? 'bg-sky-500 text-white font-bold'
-                  : 'text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-600',
-              ]}
-            >
-              75%
-            </button>
-            <button
-              type="button"
-              onClick={() => {
-                setZoom(1.0);
-                updateScaling(1.0);
-              }}
-              class={[
-                'px-1.5 py-0.5 rounded text-[11px] transition-colors',
-                zoom() === 1.0
-                  ? 'bg-sky-500 text-white font-bold'
-                  : 'text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-600',
-              ]}
-            >
-              100%
-            </button>
-          </div>
-
-          {/* Action buttons */}
-          <button
-            type="button"
-            onClick={toggleFullscreen}
-            class={[
-              'inline-flex items-center gap-1.5 rounded-md px-2.5 py-1 text-xs font-semibold border shadow-sm transition-colors',
-              isFullscreen()
-                ? 'bg-sky-600 hover:bg-sky-500 text-white border-sky-500'
-                : 'bg-white dark:bg-slate-700 text-slate-700 dark:text-slate-200 border-slate-300 dark:border-slate-600 hover:bg-slate-50 dark:hover:bg-slate-600',
-            ]}
-            title={isFullscreen() ? 'Exit Fullscreen (Esc)' : 'Fullscreen Preview'}
-            aria-label={isFullscreen() ? 'Exit Fullscreen' : 'Fullscreen Preview'}
-          >
-            {isFullscreen() ? (
-              <span class="i-lucide-minimize w-3.5 h-3.5" aria-hidden="true" />
-            ) : (
-              <span class="i-lucide-maximize w-3.5 h-3.5" aria-hidden="true" />
-            )}
-            <span class="hidden sm:inline">{isFullscreen() ? 'Exit' : 'Fullscreen'}</span>
-          </button>
-
           <button
             type="button"
             onClick={handlePrint}
@@ -413,11 +357,22 @@ export default function ChordGuidePreview(props: ChordGuidePreviewProps) {
               id="chord-guide-paper-container"
               class="flex flex-col gap-8 text-left select-text"
             >
-              <ChordGuidePages template={props.template} columns={paperColumns()} />
+              <ChordGuidePages template={renderedTemplate()} columns={paperColumns()} />
             </div>
           </div>
         </div>
       </div>
+
+      {/* Preview Section Footer */}
+      <PreviewDisplayControls
+        zoom={zoom()}
+        onZoomChange={(newZoom) => {
+          setZoom(newZoom);
+          updateScaling(newZoom);
+        }}
+        isFullscreen={isFullscreen()}
+        onToggleFullscreen={toggleFullscreen}
+      />
 
       {/* Scoped CSS styling for the paper sheet to match reference exactly */}
       <style>{`

@@ -18,6 +18,7 @@ Chords are anchored directly to lyrics in plain text (`{G}`) and automatically r
 ## ✨ Features
 
 - **Exact Chord Anchoring**: Embed `{Chord}` directly into lyrics or use `@chord_sequence` for standalone progressions.
+- **On-the-Fly Transposition**: Shift keys (±11 semitones) in preview and print without modifying source templates.
 - **Adaptive Sheet Layout**: Letter, A4, Legal, or custom sizes; portrait (1–2 cols) or landscape (1–4 cols); adjustable font sizes (6–20pt) and margins.
 - **Live Preview & Print**: Real-time rendering, zoom presets (**Fit**, **75%**, **100%**), fullscreen preview, and lyric-chord sheet printing.
 - **CodeMirror 6 Editor**: Syntax highlighting, soft wrap, scroll-past-end, hybrid relative line numbers, and live song header tracking synced to cursor position.

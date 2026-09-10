@@ -145,7 +145,7 @@ export default function About() {
           </p>
 
           {/* Key Value Proposition Cards */}
-          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mt-6">
+          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mt-6">
             <div class="p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-xs flex flex-col">
               <div class="w-9 h-9 rounded-lg bg-sky-100 dark:bg-sky-950 text-sky-600 dark:text-sky-400 flex items-center justify-center mb-3 shrink-0">
                 <span class="i-lucide-layout w-5 h-5" aria-hidden="true" />
@@ -170,7 +170,19 @@ export default function About() {
               </p>
             </div>
 
-            <div class="p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-xs flex flex-col sm:col-span-2 lg:col-span-1">
+            <div class="p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-xs flex flex-col">
+              <div class="w-9 h-9 rounded-lg bg-amber-100 dark:bg-amber-950 text-amber-600 dark:text-amber-400 flex items-center justify-center mb-3 shrink-0">
+                <span class="i-lucide-music w-5 h-5" aria-hidden="true" />
+              </div>
+              <h3 class="font-bold text-sm text-slate-900 dark:text-white mb-1.5">
+                On-the-Fly Transposition
+              </h3>
+              <p class="text-xs text-slate-600 dark:text-slate-400 leading-normal">
+                Shift keys (±11 semitones) in the preview and printout without altering your source template.
+              </p>
+            </div>
+
+            <div class="p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-xs flex flex-col">
               <div class="w-9 h-9 rounded-lg bg-emerald-100 dark:bg-emerald-950 text-emerald-600 dark:text-emerald-400 flex items-center justify-center mb-3 shrink-0">
                 <span class="i-lucide-book-open w-5 h-5" aria-hidden="true" />
               </div>
@@ -352,7 +364,7 @@ export default function About() {
         </section>
 
         {/* Examples Section */}
-        <section class="mb-10">
+        <section class="mb-10 border-b border-slate-200 dark:border-slate-800 pb-10">
           <h2 class="text-xl font-bold text-slate-900 dark:text-white mb-4 flex items-center gap-2">
             <span class="i-lucide-lightbulb w-5 h-5 text-amber-500" aria-hidden="true" />
             <span>Example Templates</span>
@@ -439,25 +451,59 @@ export default function About() {
         </section>
 
         {/* Sheet Settings Section */}
-        <section class="p-6 rounded-xl bg-gradient-to-br from-sky-50 to-indigo-50 dark:from-slate-900 dark:to-slate-800 border border-sky-200 dark:border-slate-700">
-          <h2 class="font-bold text-base text-slate-900 dark:text-white mb-1.5 flex items-center gap-2">
-            <span class="i-lucide-settings w-4 h-4 text-sky-600 dark:text-sky-400" aria-hidden="true" />
+        <section class="mb-10">
+          <h2 class="text-2xl font-bold text-slate-900 dark:text-white mb-2 flex items-center gap-2">
+            <span class="i-lucide-settings w-5 h-5 text-sky-600 dark:text-sky-400" aria-hidden="true" />
             <span>Sheet Settings</span>
           </h2>
-          <p class="text-xs sm:text-sm text-slate-600 dark:text-slate-400 mb-3">
-            Page layout lives in the sheet settings dropdown in the editor, not in the template.
+          <p class="text-sm text-slate-600 dark:text-slate-400 mb-4">
+            Page layout and transposition controls live in the preview toolbar, independent of template text.
           </p>
-          <ul class="flex flex-col gap-2.5 text-xs sm:text-sm text-slate-700 dark:text-slate-300 list-disc list-inside">
-            <li>
-              <strong>Orientation & Columns:</strong> Portrait takes 1–2 columns, landscape up to 4. Switching back to portrait clamps a wider layout down automatically.
-            </li>
-            <li>
-              <strong>Paper Size:</strong> Letter, Legal, A4, or a custom width and height in inches or centimeters.
-            </li>
-            <li>
-              <strong>Type & Margins:</strong> Font size from 6 to 20pt, with narrow, normal, or wide margins — or your own value.
-            </li>
-          </ul>
+
+          <div class="overflow-x-auto rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm">
+            <table class="w-full text-left text-xs sm:text-sm text-slate-700 dark:text-slate-300">
+              <thead class="bg-slate-50 dark:bg-slate-800/60 border-b border-slate-200 dark:border-slate-800 text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                <tr>
+                  <th scope="col" class="py-3 px-4 sm:px-6 w-48 sm:w-56">Setting</th>
+                  <th scope="col" class="py-3 px-4 sm:px-6">Description</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-slate-200 dark:divide-slate-800">
+                <tr>
+                  <td class="py-3 px-4 sm:px-6 font-semibold text-slate-900 dark:text-white whitespace-nowrap">
+                    Key Transposition
+                  </td>
+                  <td class="py-3 px-4 sm:px-6 leading-relaxed">
+                    Shift chords up or down (±11 semitones) for preview and print without modifying the template.
+                  </td>
+                </tr>
+                <tr>
+                  <td class="py-3 px-4 sm:px-6 font-semibold text-slate-900 dark:text-white whitespace-nowrap">
+                    Orientation & Columns
+                  </td>
+                  <td class="py-3 px-4 sm:px-6 leading-relaxed">
+                    Portrait takes 1–2 columns, landscape up to 4. Switching back to portrait clamps a wider layout down automatically.
+                  </td>
+                </tr>
+                <tr>
+                  <td class="py-3 px-4 sm:px-6 font-semibold text-slate-900 dark:text-white whitespace-nowrap">
+                    Paper Size
+                  </td>
+                  <td class="py-3 px-4 sm:px-6 leading-relaxed">
+                    Letter, Legal, A4, or a custom width and height in inches or centimeters.
+                  </td>
+                </tr>
+                <tr>
+                  <td class="py-3 px-4 sm:px-6 font-semibold text-slate-900 dark:text-white whitespace-nowrap">
+                    Type & Margins
+                  </td>
+                  <td class="py-3 px-4 sm:px-6 leading-relaxed">
+                    Font size from 6 to 20pt, with narrow, normal, or wide margins — or your own value.
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
         </section>
       </main>
     </div>

@@ -162,15 +162,15 @@ export default function PaperSizeSelector(props: PaperSizeSelectorProps) {
   };
 
   return (
-    <div class="relative inline-block text-left text-xs">
+    <div class="relative min-w-0 text-left text-xs">
       <button
         type="button"
         onClick={() => setIsOpen(!isOpen())}
-        class="inline-flex items-center gap-1.5 rounded-md bg-white dark:bg-slate-800 px-2.5 py-1 text-xs font-semibold text-slate-700 dark:text-slate-200 border border-slate-300 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700 shadow-sm transition-colors cursor-pointer"
+        class="inline-flex max-w-full items-center gap-1.5 rounded-md bg-white dark:bg-slate-800 px-2.5 py-1 text-xs font-semibold text-slate-700 dark:text-slate-200 border border-slate-300 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700 shadow-sm transition-colors cursor-pointer"
         title="Sheet Formatting & Paper Settings"
       >
         <span class="i-lucide-file-text w-3.5 h-3.5 text-slate-500 dark:text-slate-400 shrink-0" aria-hidden="true" />
-        <span>{getPresetLabel()}</span>
+        <span class="truncate">{getPresetLabel()}</span>
         <span class="i-lucide-chevron-down w-3.5 h-3.5 text-slate-400 ml-0.5 shrink-0" aria-hidden="true" />
       </button>
 

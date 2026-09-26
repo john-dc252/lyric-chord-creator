@@ -17,7 +17,7 @@ export default function ChordTransposeControl(props: ChordTransposeControlProps)
   };
 
   return (
-    <div class="flex items-center bg-white dark:bg-slate-700 rounded-md border border-slate-300 dark:border-slate-600 px-1.5 py-0.5 shadow-sm">
+    <div class="shrink-0 flex items-center bg-white dark:bg-slate-700 rounded-md border border-slate-300 dark:border-slate-600 px-1.5 py-0.5 shadow-sm">
       <span class="text-[10px] text-slate-500 dark:text-slate-400 mr-1.5">Key:</span>
       <button
         type="button"

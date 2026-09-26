@@ -72,10 +72,17 @@ export default function Sidebar() {
         />
       </Show>
 
+      {/* Desktop spacer: reserves the sidebar's final width without easing, so
+          `main` snaps while the absolutely positioned sidebar animates over it */}
+      <div
+        class={['hidden lg:block shrink-0', isSidebarCollapsed() ? 'w-16' : 'w-60']}
+        aria-hidden="true"
+      />
+
       {/* Sidebar Container */}
       <aside
         class={[
-          'fixed lg:static top-12 bottom-0 left-0 z-40 flex flex-col bg-white dark:bg-slate-900 border-r border-slate-200 dark:border-slate-800 transition-[width,transform] duration-200 ease-in-out select-none shadow-lg lg:shadow-none overflow-hidden',
+          'fixed lg:absolute top-12 lg:top-0 bottom-0 left-0 z-40 flex flex-col bg-white dark:bg-slate-900 border-r border-slate-200 dark:border-slate-800 transition-[width,transform] duration-200 ease-in-out select-none shadow-lg lg:shadow-none overflow-hidden',
           // Mobile open vs closed
           isMobileSidebarOpen() ? 'translate-x-0 w-60' : '-translate-x-full lg:translate-x-0',
           // Desktop collapsed vs expanded (w-16 vs w-60)

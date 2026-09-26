@@ -36,6 +36,12 @@ export default defineConfig({
           },
         }),
       ],
+      theme: {
+        animation: {
+          durations: {'fade-in': '200ms'},
+          timingFns: {'fade-in': 'ease-out'},
+        },
+      },
     }),
     VitePWA({
       registerType: 'autoUpdate',

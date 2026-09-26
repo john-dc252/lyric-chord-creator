@@ -48,3 +48,14 @@ export function toggleSidebar(): void {
 export function closeMobileSidebar(): void {
   setIsMobileSidebarOpen(false);
 }
+
+// Close the mobile drawer once the viewport crosses into desktop (>=1024px),
+// so it doesn't linger open behind the desktop layout.
+if (typeof window !== 'undefined') {
+  const mql = window.matchMedia('(min-width: 1024px)');
+  const mediaSizeListener = (e: MediaQueryListEvent) => {
+    if (e.matches) closeMobileSidebar();
+  };
+  mql.addEventListener('change', mediaSizeListener);
+  import.meta.hot?.dispose(() => mql.removeEventListener('change', mediaSizeListener));
+}

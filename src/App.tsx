@@ -1,16 +1,21 @@
 import {Title} from '@solidjs/meta';
-import {Loading, onSettled} from 'solid-js';
+import {Loading, onSettled, Show} from 'solid-js';
 import '@unocss/reset/tailwind.css';
 import 'virtual:uno.css';
 import {Router} from './router';
 import {useRegisterSW} from "virtual:pwa-register/solid";
 import AppLayout from './components/AppLayout';
+import UpdateAvailableModal from './components/UpdateAvailableModal';
 import './App.css';
 
 const SERVICE_WORKER_UPDATE_INTERVAL_MILLIS = 60 * 60 * 1000;
+const UPDATE_REMIND_LATER_MILLIS = 60 * 60 * 1000;
 
 export default function App() {
-  useRegisterSW({
+  const {
+    needRefresh: [needRefresh, setNeedRefresh],
+    updateServiceWorker,
+  } = useRegisterSW({
     immediate: true,
     onRegisteredSW(_swScriptUrl, registration) {
       console.log('@Lyric-Chord Creator - Service Worker Registered');
@@ -28,6 +33,13 @@ export default function App() {
       console.error('@Lyric-Chord Creator - Service worker registration error', error);
     },
   });
+
+  let remindLaterTimer: ReturnType<typeof setTimeout> | undefined;
+  const handleUpdateLater = () => {
+    setNeedRefresh(false);
+    clearTimeout(remindLaterTimer);
+    remindLaterTimer = setTimeout(() => setNeedRefresh(true), UPDATE_REMIND_LATER_MILLIS);
+  };
 
   onSettled(() => {
     if (typeof window === 'undefined') return;
@@ -66,6 +78,7 @@ export default function App() {
 
     return () => {
       clearTimeout(resetTimer);
+      clearTimeout(remindLaterTimer);
       navigator.serviceWorker?.removeEventListener('controllerchange', handleControllerChange);
       window.removeEventListener('vite:preloadError', handlePreloadError);
     };
@@ -79,6 +92,9 @@ export default function App() {
           <Loading fallback={<main class="p-8 text-center text-slate-500">Loading…</main>}>
             {props.children}
           </Loading>
+          <Show when={needRefresh()}>
+            <UpdateAvailableModal onUpdate={() => updateServiceWorker()} onLater={handleUpdateLater} />
+          </Show>
         </AppLayout>
       )}
     </Router>

@@ -1,15 +1,16 @@
 {
   "name": "example-with-unocss",
-  "version": "0.2.7",
+  "version": "0.2.9",
   "description": "",
   "type": "module",
   "scripts": {
     "start": "vite",
     "dev": "vite",
-    "build": "vite build",
+    "build": "node scripts/update-screenshots.mjs && vite build",
     "serve": "vite preview",
     "test": "vitest",
-    "lint": "oxlint -c oxlint.config.mjs src"
+    "lint": "oxlint -c oxlint.config.mjs src",
+    "screenshots": "node scripts/update-screenshots.mjs"
   },
   "license": "MIT",
   "devDependencies": {

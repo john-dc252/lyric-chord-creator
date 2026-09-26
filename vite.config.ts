@@ -44,7 +44,7 @@ export default defineConfig({
       },
     }),
     VitePWA({
-      registerType: 'autoUpdate',
+      registerType: 'prompt',
       injectRegister: false,
       includeAssets: [
         '404.html',
@@ -116,9 +116,6 @@ export default defineConfig({
         globDirectory: 'dist/client/',
         // Caches all generated JS chunks including virtual route files
         globPatterns: ['**/*.{js,css,html,ico,png,svg}'],
-
-        skipWaiting: true,
-        clientsClaim: true,
 
         // Explicitly precache turnkey index.html to satisfy navigateFallback
         additionalManifestEntries: [

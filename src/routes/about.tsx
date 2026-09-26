@@ -1,10 +1,13 @@
 import { Title } from '@solidjs/meta';
 import { useNavigate } from '@solidjs/router';
-import { createSignal, For } from 'solid-js';
+import { createSignal, For, Show } from 'solid-js';
 import { TemplateSyntaxHighlighter } from '../components/TemplateSyntaxHighlighter';
 import { paths } from '../router';
 import { ChordGuidePages } from '../lib/template-processor';
 import { setActiveTemplateId } from '../lib/templates-store';
+import { checkForUpdate, type UpdateCheckResult } from '../lib/sw-update';
+
+type UpdateCheckStatus = 'idle' | 'checking' | 'error' | UpdateCheckResult;
 
 interface ExampleSnippet {
   title: string;
@@ -113,6 +116,33 @@ export default function About() {
     syntaxGuideRef?.scrollIntoView({ behavior: 'smooth' });
   };
 
+  const [updateCheck, setUpdateCheck] = createSignal<UpdateCheckStatus>('idle', {
+    name: 'update_check_status',
+  });
+
+  const handleCheckForUpdate = async () => {
+    setUpdateCheck('checking');
+    try {
+      setUpdateCheck(await checkForUpdate());
+    } catch (e) {
+      console.error('@Lyric-Chord Creator - Update check failed', e);
+      setUpdateCheck('error');
+    }
+  };
+
+  const updateCheckMessage = () => {
+    switch (updateCheck()) {
+      case 'current':
+        return 'Up to date.';
+      case 'unsupported':
+        return 'Update checks unavailable.';
+      case 'error':
+        return "Couldn't check. Are you online?";
+      default:
+        return null;
+    }
+  };
+
   const copyToClipboard = (text: string, index: number) => {
     navigator.clipboard.writeText(text).then(() => {
       setCopiedIndex(index);
@@ -140,6 +170,31 @@ export default function About() {
           <h1 class="text-3xl sm:text-4xl font-extrabold text-slate-900 dark:text-white tracking-tight">
             About Lyric-Chord Creator
           </h1>
+
+          <div class="mt-6 flex flex-wrap items-center gap-3 text-xs text-slate-600 dark:text-slate-400">
+            <span class="font-semibold text-slate-700 dark:text-slate-300">
+              v{import.meta.env.APP_VERSION}
+            </span>
+            <button
+              type="button"
+              onClick={handleCheckForUpdate}
+              disabled={updateCheck() === 'checking'}
+              class="inline-flex items-center gap-1.5 px-2.5 py-1 font-semibold rounded-md border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-200 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            >
+              <span
+                class={[
+                  'i-lucide-refresh-cw w-3.5 h-3.5',
+                  updateCheck() === 'checking' && 'animate-spin',
+                ]}
+                aria-hidden="true"
+              />
+              <span>{updateCheck() === 'checking' ? 'Checking…' : 'Check for Updates'}</span>
+            </button>
+            <Show when={updateCheckMessage()}>
+              {(message) => <span role="status">{message()}</span>}
+            </Show>
+          </div>
+
           <p class="mt-4 text-base text-slate-700 dark:text-slate-300 leading-relaxed max-w-3xl">
             Turn plain-text templates into clean, printable lyric-and-chord sheets — with no reformatting when the paper size, orientation, or column count changes.
           </p>

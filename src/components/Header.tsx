@@ -1,6 +1,6 @@
 import { createMemo, Show } from 'solid-js';
 import { extractSongAtLine } from '../lib/template-processor';
-import { activeTemplateId, savedTemplates } from '../lib/templates-store';
+import { findActiveTemplate } from '../lib/library';
 import { clampColumns, type PaperSizeConfig } from '../lib/paperSize';
 
 interface HeaderProps {
@@ -17,11 +17,7 @@ export default function Header(props: HeaderProps) {
   const songTitle = () => currentSong().title;
   const songArtist = () => currentSong().artist;
 
-  const activeSavedTemplate = () => {
-    const id = activeTemplateId();
-    if (!id) return null;
-    return savedTemplates().find((t) => t.id === id) || null;
-  };
+  const activeSavedTemplate = findActiveTemplate;
 
   const isDirty = () => {
     const existing = activeSavedTemplate();

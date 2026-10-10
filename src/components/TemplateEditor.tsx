@@ -21,12 +21,8 @@ import {
   createLineNumbersGutter,
   createEditorTheme,
 } from '../lib/editor-extensions';
-import {
-  activeTemplateId,
-  savedTemplates,
-  saveTemplate,
-  exportTemplateAsFile,
-} from '../lib/templates-store';
+import { activeTemplateLibrary, exportTemplateAsFile } from '../lib/templates-store';
+import { findActiveTemplate, LIBRARY_LABEL, saveToLibrary } from '../lib/library';
 import SaveTemplateModal from './SaveTemplateModal';
 
 interface TemplateEditorProps {
@@ -106,11 +102,7 @@ export default function TemplateEditor(props: TemplateEditorProps) {
   const [saveAsMode, setSaveAsMode] = createSignal(false, { name: 'save_as_mode' });
 
   // Active saved template object if currently linked
-  const activeSavedTemplate = createMemo(() => {
-    const id = activeTemplateId();
-    if (!id) return null;
-    return savedTemplates().find((t) => t.id === id) || null;
-  }, { name: 'active_saved_template' });
+  const activeSavedTemplate = createMemo(findActiveTemplate, { name: 'active_saved_template' });
 
   // Detects if current content has unsaved modifications
   const isDirty = createMemo(() => {
@@ -159,11 +151,11 @@ export default function TemplateEditor(props: TemplateEditorProps) {
   };
 
   // Quick Save handler
-  const handleQuickSave = () => {
+  const handleQuickSave = async () => {
     setIsFileMenuOpen(false);
     const existing = activeSavedTemplate();
     if (existing) {
-      const res = saveTemplate(existing.name, props.value, existing.id);
+      const res = await saveToLibrary(activeTemplateLibrary(), existing.name, props.value, existing.id);
       if (res.success) {
         props.onToast?.(`Saved "${existing.name}" successfully!`);
       } else {
@@ -705,7 +697,7 @@ export default function TemplateEditor(props: TemplateEditorProps) {
                   ? `Unsaved changes in "${activeSavedTemplate()?.name}". Click Save or press Ctrl/Cmd+S to update.`
                   : 'Unsaved new draft. Click Save or press Ctrl/Cmd+S to store in your library.'
                 : activeSavedTemplate()
-                  ? `All changes saved to "${activeSavedTemplate()?.name}".`
+                  ? `All changes saved to "${activeSavedTemplate()?.name}" (${LIBRARY_LABEL[activeTemplateLibrary()]}).`
                   : 'No unsaved changes.'
             }
           >
@@ -714,6 +706,16 @@ export default function TemplateEditor(props: TemplateEditorProps) {
               fallback={<span class="i-lucide-check w-3.5 h-3.5 text-emerald-500 dark:text-emerald-400 shrink-0" aria-hidden="true" />}
             >
               <span class="w-2 h-2 rounded-full bg-amber-500 dark:bg-amber-400 animate-pulse shrink-0" />
+            </Show>
+            <Show when={activeSavedTemplate()}>
+              <span
+                class={[
+                  'w-3.5 h-3.5 shrink-0',
+                  activeTemplateLibrary() === 'cloud' ? 'i-lucide-cloud text-sky-500' : 'i-lucide-hard-drive text-slate-500',
+                ]}
+                role="img"
+                aria-label={LIBRARY_LABEL[activeTemplateLibrary()]}
+              />
             </Show>
             <span class="truncate">
               {activeSavedTemplate() ? activeSavedTemplate()?.name : 'Draft'}
@@ -856,8 +858,9 @@ export default function TemplateEditor(props: TemplateEditorProps) {
         <SaveTemplateModal
           content={props.value}
           existingTemplate={saveAsMode() ? null : activeSavedTemplate()}
+          existingLibrary={activeTemplateLibrary()}
           onSaveSuccess={(saved) => {
-            props.onToast?.(`Template "${saved.name}" saved to library!`);
+            props.onToast?.(`Saved "${saved.name}".`);
             setIsSaveModalOpen(false);
           }}
           onClose={() => setIsSaveModalOpen(false)}

@@ -1,0 +1,3 @@
+# Stub auth users (AUTH_PROVIDER=stub). Dev only.
+# Format: email:password:display name
+local-user@localhost:local-user:Local User

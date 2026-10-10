@@ -8,12 +8,17 @@ import {
   type SavedTemplate,
   SEED_DEFAULT_TEMPLATE,
 } from './db';
+import { downloadBlob, templateFileBaseName } from './download';
 
 export type { SavedTemplate };
 
 export type SearchField = 'all' | 'name' | 'title' | 'artist' | 'lyrics';
 
+/** Which library a template lives in. */
+export type LibraryKind = 'local' | 'cloud';
+
 const STORAGE_KEY_ACTIVE_ID = 'scgt_active_template_id';
+const STORAGE_KEY_ACTIVE_LIBRARY = 'scgt_active_template_library';
 const STORAGE_KEY_TEMPLATE_CONTENT = 'scgt_current_template';
 
 function generateId(): string {
@@ -36,12 +41,20 @@ export const [activeTemplateId, setActiveTemplateIdSignal] = createSignal<string
   { name: 'active_template_id_signal' },
 );
 
+export const [activeTemplateLibrary, setActiveTemplateLibrarySignal] = createSignal<LibraryKind>(
+  'local',
+  { name: 'active_template_library_signal' },
+);
+
 // Asynchronously load and initialize from IndexedDB on startup
 if (typeof window !== 'undefined') {
   try {
     const savedActiveId = localStorage.getItem(STORAGE_KEY_ACTIVE_ID);
     if (savedActiveId) {
       setActiveTemplateIdSignal(savedActiveId);
+    }
+    if (localStorage.getItem(STORAGE_KEY_ACTIVE_LIBRARY) === 'cloud') {
+      setActiveTemplateLibrarySignal('cloud');
     }
   } catch {}
 
@@ -75,14 +88,17 @@ export function getSavedTemplatesList(): SavedTemplate[] {
   return currentTemplatesList;
 }
 
-export function setActiveTemplateId(id: string | null): void {
+export function setActiveTemplateId(id: string | null, library: LibraryKind = 'local'): void {
   setActiveTemplateIdSignal(id);
+  setActiveTemplateLibrarySignal(library);
   if (typeof window !== 'undefined') {
     try {
       if (id) {
         localStorage.setItem(STORAGE_KEY_ACTIVE_ID, id);
+        localStorage.setItem(STORAGE_KEY_ACTIVE_LIBRARY, library);
       } else {
         localStorage.removeItem(STORAGE_KEY_ACTIVE_ID);
+        localStorage.removeItem(STORAGE_KEY_ACTIVE_LIBRARY);
       }
     } catch (e) {
       console.error('Failed to update active template ID:', e);
@@ -110,10 +126,19 @@ export interface SaveTemplateResult {
 /**
  * Saves a new template or updates an existing one in IndexedDB with unique name validation.
  */
+export interface SaveOptions {
+  /** Make the saved template the editor's active one (default true). */
+  activate?: boolean;
+  /** Keep original timestamps for new templates (e.g. when copied from the cloud). */
+  createdAt?: number;
+  updatedAt?: number;
+}
+
 export function saveTemplate(
   name: string,
   content: string,
   existingId?: string,
+  options: SaveOptions = {},
 ): SaveTemplateResult {
   const trimmedName = name.trim();
   if (!trimmedName) {
@@ -170,14 +195,14 @@ export function saveTemplate(
       content,
       title,
       artist,
-      createdAt: now,
-      updatedAt: now,
+      createdAt: options.createdAt ?? now,
+      updatedAt: options.updatedAt ?? now,
     };
     updatedList = [savedItem, ...currentList];
   }
 
   updateState(updatedList);
-  setActiveTemplateId(savedItem.id);
+  if (options.activate ?? true) setActiveTemplateId(savedItem.id);
 
   // Persist to IndexedDB
   dbPutTemplate(savedItem).catch((e) => console.error('Failed to put template to IndexedDB:', e));
@@ -193,7 +218,7 @@ export function deleteTemplate(id: string): boolean {
   const filtered = currentList.filter((t) => t.id !== id);
   if (filtered.length !== currentList.length) {
     updateState(filtered);
-    if (activeTemplateId() === id) {
+    if (activeTemplateId() === id && activeTemplateLibrary() === 'local') {
       setActiveTemplateId(null);
     }
     dbDeleteTemplate(id).catch((e) => console.error('Failed to delete template from IndexedDB:', e));
@@ -293,27 +318,18 @@ export function searchTemplates(
  * Exports template as a downloadable .lcct.txt file.
  */
 export function exportTemplateAsFile(name: string, content: string): void {
-  const sanitized = name
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, '-')
-    .replace(/^-+|-+$/g, '');
-  const filename = `${sanitized || 'lyric-chord-template'}.lcct.txt`;
   const blob = new Blob([content], { type: 'text/plain;charset=utf-8' });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = filename;
-  document.body.appendChild(a);
-  a.click();
-  document.body.removeChild(a);
-  URL.revokeObjectURL(url);
+  downloadBlob(blob, `${templateFileBaseName(name)}.lcct.txt`);
 }
 
 /**
  * Loads a saved template into the active editor state.
  */
-export function loadTemplateIntoEditor(template: SavedTemplate): void {
-  setActiveTemplateId(template.id);
+export function loadTemplateIntoEditor(
+  template: SavedTemplate,
+  library: LibraryKind = 'local',
+): void {
+  setActiveTemplateId(template.id, library);
   if (typeof window !== 'undefined') {
     try {
       localStorage.setItem(STORAGE_KEY_TEMPLATE_CONTENT, template.content);

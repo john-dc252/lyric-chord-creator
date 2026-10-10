@@ -45,6 +45,12 @@ declare module "virtual:file-routes" {
       $$route?: undefined;
     },
     {
+      path: "/cloud";
+      page: true;
+      $component: FileRouteLazyRef<typeof import("./src/routes/cloud")>;
+      $$route?: undefined;
+    },
+    {
       path: "/gallery";
       page: true;
       $component: FileRouteLazyRef<typeof import("./src/routes/gallery")>;
@@ -82,6 +88,14 @@ declare module "virtual:file-routes" {
       id: "/about";
       page: true;
       $component: FileRouteLazyRef<typeof import("./src/routes/about")>;
+      $$route?: undefined;
+      children?: undefined;
+    },
+    {
+      path: "/cloud";
+      id: "/cloud";
+      page: true;
+      $component: FileRouteLazyRef<typeof import("./src/routes/cloud")>;
       $$route?: undefined;
       children?: undefined;
     },

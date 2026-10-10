@@ -1,10 +1,14 @@
-import { createSignal, createMemo, Show, For, onSettled } from 'solid-js';
-import { isTemplateNameUnique, saveTemplate, type SavedTemplate } from '../lib/templates-store';
+import { createSignal, createMemo, Show, For, onSettled, untrack } from 'solid-js';
+import type { LibraryKind, SavedTemplate } from '../lib/templates-store';
+import { isNameUniqueIn, LIBRARY_LABEL, saveToLibrary } from '../lib/library';
+import { isSignedIn } from '../lib/auth';
 import { extractSongTitle, extractSongsMetadata } from '../lib/template-processor';
 
 interface SaveTemplateModalProps {
   content: string;
   existingTemplate?: SavedTemplate | null;
+  /** Library of the active template; the default target for new saves. */
+  existingLibrary?: LibraryKind;
   onSaveSuccess: (template: SavedTemplate) => void;
   onClose: () => void;
 }
@@ -25,6 +29,12 @@ export default function SaveTemplateModal(props: SaveTemplateModalProps) {
 
   const [name, setName] = createSignal(defaultInitialName(), { name: 'save_template_name' });
   const [errorMessage, setErrorMessage] = createSignal<string | null>(null, { name: 'save_error' });
+  const [library, setLibrary] = createSignal<LibraryKind>(
+    // Initial target only; the user can switch it.
+    untrack(() => (isSignedIn() ? (props.existingLibrary ?? 'local') : 'local')),
+    { name: 'save_target_library' },
+  );
+  const [saving, setSaving] = createSignal(false, { name: 'save_in_progress' });
 
   const songsList = createMemo(() => extractSongsMetadata(props.content));
 
@@ -32,7 +42,7 @@ export default function SaveTemplateModal(props: SaveTemplateModalProps) {
 
   const isUnique = createMemo(() => {
     if (!trimmedName()) return true;
-    return isTemplateNameUnique(trimmedName(), props.existingTemplate?.id);
+    return isNameUniqueIn(library(), trimmedName(), props.existingTemplate?.id);
   });
 
   onSettled(() => {
@@ -40,7 +50,7 @@ export default function SaveTemplateModal(props: SaveTemplateModalProps) {
     nameInputRef?.select();
   });
 
-  const handleSave = (e?: Event) => {
+  const handleSave = async (e?: Event) => {
     e?.preventDefault();
     setErrorMessage(null);
 
@@ -55,7 +65,9 @@ export default function SaveTemplateModal(props: SaveTemplateModalProps) {
       return;
     }
 
-    const result = saveTemplate(val, props.content, props.existingTemplate?.id);
+    setSaving(true);
+    const result = await saveToLibrary(library(), val, props.content, props.existingTemplate?.id);
+    setSaving(false);
     if (result.success && result.template) {
       props.onSaveSuccess(result.template);
       props.onClose();
@@ -85,10 +97,10 @@ export default function SaveTemplateModal(props: SaveTemplateModalProps) {
             </div>
             <div>
               <h2 id="save-modal-title" class="font-bold text-sm text-slate-900 dark:text-white">
-                {props.existingTemplate ? 'Update Saved Template' : 'Save Template to Local Library'}
+                {props.existingTemplate ? 'Update Saved Template' : `Save to ${LIBRARY_LABEL[library()]}`}
               </h2>
               <p class="text-xs text-slate-500 dark:text-slate-400">
-                Templates are stored locally on your device
+                {library() === 'cloud' ? 'Stored in your account' : 'Stored on this device'}
               </p>
             </div>
           </div>
@@ -104,6 +116,29 @@ export default function SaveTemplateModal(props: SaveTemplateModalProps) {
 
         {/* Form Body */}
         <form onSubmit={handleSave} class="p-5 space-y-4">
+          <Show when={isSignedIn() && !props.existingTemplate}>
+            <div class="inline-flex rounded-lg bg-slate-100 dark:bg-slate-800 p-1 text-xs font-semibold" role="radiogroup" aria-label="Library">
+              <For each={['local', 'cloud'] as LibraryKind[]}>
+                {(kind) => (
+                  <button
+                    type="button"
+                    role="radio"
+                    aria-checked={library() === kind ? 'true' : 'false'}
+                    onClick={() => setLibrary(kind)}
+                    class={[
+                      'inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md transition-colors',
+                      library() === kind
+                        ? 'bg-white dark:bg-slate-700 text-slate-900 dark:text-white shadow-xs'
+                        : 'text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200',
+                    ]}
+                  >
+                    <span class={[kind === 'cloud' ? 'i-lucide-cloud' : 'i-lucide-hard-drive', 'w-3.5 h-3.5']} aria-hidden="true" />
+                    {kind === 'cloud' ? 'Cloud' : 'Local'}
+                  </button>
+                )}
+              </For>
+            </div>
+          </Show>
           <div>
             <label
               for="template-name-input"
@@ -188,7 +223,7 @@ export default function SaveTemplateModal(props: SaveTemplateModalProps) {
             </button>
             <button
               type="submit"
-              disabled={!trimmedName() || !isUnique()}
+              disabled={!trimmedName() || !isUnique() || saving()}
               class="inline-flex items-center gap-1.5 px-4 py-2 text-xs font-semibold bg-sky-600 hover:bg-sky-500 disabled:opacity-50 disabled:cursor-not-allowed text-white rounded-lg shadow-sm transition-colors"
             >
               <span class="i-lucide-save w-3.5 h-3.5" aria-hidden="true" />

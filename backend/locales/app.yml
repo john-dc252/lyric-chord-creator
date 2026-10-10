@@ -1,0 +1,26 @@
+_version: 2
+
+unauthorized:
+  en: unauthorized
+not_found:
+  en: not found
+internal_error:
+  en: internal error
+template_name_empty:
+  en: Template name cannot be empty.
+template_name_too_long:
+  en: Template name exceeds %{max} characters.
+template_content_too_large:
+  en: Template content is too large.
+invalid_timestamp:
+  en: Invalid timestamp.
+template_name_taken:
+  en: A template named "%{name}" already exists. Please choose a unique name.
+template_id_taken:
+  en: Template id already exists.
+login_code_invalid:
+  en: Sign-in code is invalid or expired.
+rate_limited:
+  en: Too many requests. Retry in %{seconds}s.
+batch_too_large:
+  en: At most %{max} templates per batch.

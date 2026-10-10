@@ -24,7 +24,8 @@ Chords are anchored directly to lyrics in plain text (`{G}`) and automatically r
 - **CodeMirror 6 Editor**: Syntax highlighting, soft wrap, scroll-past-end, hybrid relative line numbers, and live song header tracking synced to cursor position.
 - **Vim Mode**: Modal editing with custom Ex commands (`:w` / `:up` to quick-save; `:rnu`, `:nornu`, `:relativenumber`, `:norelativenumber` for line numbers).
 - **File I/O**: Drag-and-drop any text file into the editor, import (`.lcct.txt`, `.scgt.txt`, `.txt`), and export (`.lcct.txt`).
-- **Template Gallery**: Save, duplicate, rename, search (by all, template name, title, artist, or lyrics), and manage templates locally.
+- **Template Gallery**: Save, duplicate, rename, search (by all, template name, title, artist, or lyrics), and manage templates locally; download the whole library as a `.zip`.
+- **Cloud Library (optional)**: Sign in to keep templates in your account, separate from the Local Library. Upload or save templates between libraries (copy or move); the editor shows which library the open template belongs to.
 - **PWA & Offline**: Installable PWA with offline caching and light/dark theme toggle.
 
 ---
@@ -88,6 +89,8 @@ pnpm test
 ```
 
 Open [http://localhost:3000/apps/lyric-chord-creator](http://localhost:3000/apps/lyric-chord-creator) in your browser.
+
+Cloud features need the Rust backend in [`backend/`](backend/README.md) and `VITE_API_URL` (set to `http://localhost:8080` in `.env.development`). Builds without `VITE_API_URL` hide them.
 
 ---
 

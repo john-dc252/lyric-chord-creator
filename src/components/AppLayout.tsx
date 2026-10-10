@@ -1,9 +1,22 @@
-import { type ParentProps } from 'solid-js';
+import { createEffect, Show, type ParentProps } from 'solid-js';
+import AccountDialog from './AccountDialog';
+import { authNotice, setAuthNotice } from '../lib/auth';
+import { isAccountDialogOpen, setAccountDialogOpen } from '../lib/account-ui';
 import { paths } from '../router';
 import Sidebar from './Sidebar';
 import { toggleSidebar, isSidebarCollapsed } from '../lib/sidebar-state';
 
 export default function AppLayout(props: ParentProps) {
+  // Auto-dismiss sign-in/out notices.
+  createEffect(
+    () => authNotice(),
+    (notice) => {
+      if (!notice) return;
+      const timer = setTimeout(() => setAuthNotice(null), 4000);
+      return () => clearTimeout(timer);
+    },
+  );
+
   return (
     <div class="flex flex-col h-screen w-screen overflow-hidden bg-slate-100 dark:bg-slate-950 text-slate-900 dark:text-slate-100 font-sans antialiased transition-colors">
       {/* Global Top Application Header Bar with Hamburger and Logo */}
@@ -69,6 +82,19 @@ export default function AppLayout(props: ParentProps) {
           {props.children}
         </main>
       </div>
+
+      <Show when={isAccountDialogOpen()}>
+        <AccountDialog onClose={() => setAccountDialogOpen(false)} />
+      </Show>
+      <Show when={authNotice()}>
+        <div
+          class="fixed bottom-4 left-1/2 -translate-x-1/2 z-50 flex items-center gap-2 bg-slate-900 text-white dark:bg-white dark:text-slate-900 px-4 py-2.5 rounded-lg shadow-xl text-xs font-semibold animate-fade-in"
+          role="status"
+        >
+          <span class="i-lucide-user-round w-4 h-4" aria-hidden="true" />
+          <span>{authNotice()}</span>
+        </div>
+      </Show>
     </div>
   );
 }

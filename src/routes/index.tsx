@@ -5,7 +5,8 @@ import Header from '../components/Header';
 import TemplateEditor from '../components/TemplateEditor';
 import { clampColumns, DEFAULT_PAPER_SIZE, type PaperSizeConfig } from '../lib/paperSize';
 import { DEFAULT_TEMPLATE, extractSongAtLine } from '../lib/template-processor';
-import { activeTemplateId, savedTemplates, createNewTemplate } from '../lib/templates-store';
+import { createNewTemplate } from '../lib/templates-store';
+import { findActiveTemplate } from '../lib/library';
 
 type BooleanString = 'true' | 'false';
 
@@ -133,11 +134,7 @@ export default function Home() {
     showToast('Created new empty template.');
   };
 
-  const activeSavedTemplate = createMemo(() => {
-    const id = activeTemplateId();
-    if (!id) return null;
-    return savedTemplates().find((t) => t.id === id) || null;
-  }, { name: 'home_active_saved_template' });
+  const activeSavedTemplate = createMemo(findActiveTemplate, { name: 'home_active_saved_template' });
 
   const isDirty = createMemo(() => {
     const existing = activeSavedTemplate();

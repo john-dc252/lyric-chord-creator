@@ -2,6 +2,11 @@ import { Show, For } from 'solid-js';
 import { useLinkState } from '@solidjs/router';
 import { paths } from '../router';
 import { savedTemplates } from '../lib/templates-store';
+import { cloudEnabled } from '../lib/api';
+import { currentUser, isSignedIn } from '../lib/auth';
+import { cloudTemplates } from '../lib/cloud-store';
+import { setAccountDialogOpen } from '../lib/account-ui';
+import { Avatar } from './AccountDialog';
 import { theme, toggleTheme } from '../lib/theme';
 import {
   isSidebarCollapsed,
@@ -59,6 +64,17 @@ export default function Sidebar() {
       ),
       badge: () => savedTemplates().length,
     },
+    ...(cloudEnabled
+      ? [
+          {
+            label: 'Cloud Library',
+            href: paths.cloud,
+            path: '/cloud',
+            icon: <span class="i-lucide-cloud w-5 h-5 shrink-0" aria-hidden="true" />,
+            badge: () => (isSignedIn() ? cloudTemplates().length : undefined),
+          },
+        ]
+      : []),
   ];
 
   return (
@@ -149,8 +165,40 @@ export default function Sidebar() {
           </For>
         </nav>
 
-        {/* Bottom Section: About and Theme Toggle */}
+        {/* Bottom Section: Account, About and Theme Toggle */}
         <div class="p-2.5 border-t border-slate-200 dark:border-slate-800 shrink-0 space-y-1 overflow-hidden">
+          <Show when={cloudEnabled}>
+            <button
+              type="button"
+              onClick={() => {
+                closeMobileSidebar();
+                setAccountDialogOpen(true);
+              }}
+              class="w-full flex items-center justify-start px-2.5 py-2.5 rounded-lg text-xs font-semibold text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800/80 hover:text-slate-900 dark:hover:text-slate-200 transition-colors overflow-hidden"
+              title={isSignedIn() ? (currentUser()?.email ?? 'Account') : 'Sign in'}
+            >
+              <div class="w-5 h-5 shrink-0 flex items-center justify-center">
+                <Show
+                  when={isSignedIn()}
+                  fallback={<span class="i-lucide-log-in w-5 h-5" aria-hidden="true" />}
+                >
+                  <Avatar size="w-5 h-5" />
+                </Show>
+              </div>
+              <div
+                class={[
+                  'ml-3 flex-1 flex items-center whitespace-nowrap overflow-hidden transition-opacity duration-150 text-left',
+                  isSidebarCollapsed() && !isMobileSidebarOpen()
+                    ? 'opacity-0 w-0 pointer-events-none'
+                    : 'opacity-100',
+                ]}
+              >
+                <span class="truncate">
+                  {isSignedIn() ? (currentUser()?.name ?? currentUser()?.email) : 'Sign in'}
+                </span>
+              </div>
+            </button>
+          </Show>
           {/* About Link */}
           <a
             href={paths.about}

@@ -1,0 +1,24 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Stub sign-in (dev)</title>
+  <style>
+    body { font-family: system-ui, sans-serif; display: grid; place-items: center; min-height: 100vh; margin: 0; }
+    form { display: grid; gap: .75rem; width: 18rem; }
+    .error { color: #b00020; }
+  </style>
+</head>
+<body>
+  <form method="post">
+    <h1>Stub sign-in</h1>
+    <p>Dev only. Users are listed in <code>STUB_USERS_FILE</code>.</p>
+    {{error}}
+    <input type="hidden" name="client_state" value="{{client_state}}">
+    <input name="email" type="email" placeholder="Email" autocomplete="username" required autofocus>
+    <input name="password" type="password" placeholder="Password" autocomplete="current-password" required>
+    <button type="submit">Sign in</button>
+  </form>
+</body>
+</html>

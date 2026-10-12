@@ -17,7 +17,7 @@ import {tmpdir} from 'node:os';
 import {join, resolve} from 'node:path';
 
 const ROOT = resolve(import.meta.dirname, '..');
-const APP_PATH = '/apps/lyric-chord-creator/';
+const APP_PATH = '/';
 
 const SHOTS = [
   {

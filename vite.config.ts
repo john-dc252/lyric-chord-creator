@@ -8,7 +8,7 @@ import {VitePWA} from "vite-plugin-pwa";
 import pkg from './package.json' with {type: 'json'};
 
 export default defineConfig({
-  base: '/apps/lyric-chord-creator/',
+  base: '/',
   // Turnkey client mode: no index.html and no mount file — the plugin
   // generates the entries around src/App.tsx, wrapped in src/Document.tsx
   // (or a built-in shell). `vite build` prerenders the shell into
@@ -58,31 +58,31 @@ export default defineConfig({
         'lyric-chord-creator-screenshot-mobile.png',
         'lyric-chord-creator-screenshot-previewer-mobile.png',
       ],
-      scope: '/apps/lyric-chord-creator/',
+      scope: '/',
       manifest: {
-        id: `/apps/lyric-chord-creator@${pkg.version}`,
+        id: `/@${pkg.version}`,
         name: 'Lyric-Chord Creator',
         short_name: 'Lyric-Chord',
         description: 'Offline-capable lyric-chord sheet creation utility',
-        start_url: '/apps/lyric-chord-creator/',
+        start_url: '/',
         display: 'standalone',
         background_color: '#ffffff',
         theme_color: '#0284c7',
         icons: [
           {
-            src: '/apps/lyric-chord-creator/pwa-192x192.png',
+            src: '/pwa-192x192.png',
             sizes: '192x192',
             type: 'image/png',
             purpose: 'any',
           },
           {
-            src: '/apps/lyric-chord-creator/pwa-512x512.png',
+            src: '/pwa-512x512.png',
             sizes: '512x512',
             type: 'image/png',
             purpose: 'any',
           },
           {
-            src: '/apps/lyric-chord-creator/pwa-maskable-512x512.png',
+            src: '/pwa-maskable-512x512.png',
             sizes: '512x512',
             type: 'image/png',
             purpose: 'maskable',
@@ -90,21 +90,21 @@ export default defineConfig({
         ],
         screenshots: [
           {
-            src: '/apps/lyric-chord-creator/lyric-chord-creator-screenshot.png',
+            src: '/lyric-chord-creator-screenshot.png',
             sizes: '1881x936',
             type: 'image/png',
             form_factor: 'wide',
             label: 'Lyric-Chord Creator desktop editor and live sheet preview',
           },
           {
-            src: '/apps/lyric-chord-creator/lyric-chord-creator-screenshot-mobile.png',
+            src: '/lyric-chord-creator-screenshot-mobile.png',
             sizes: '390x853',
             type: 'image/png',
             form_factor: 'narrow',
             label: 'Lyric-Chord Creator mobile editor',
           },
           {
-            src: '/apps/lyric-chord-creator/lyric-chord-creator-screenshot-previewer-mobile.png',
+            src: '/lyric-chord-creator-screenshot-previewer-mobile.png',
             sizes: '390x853',
             type: 'image/png',
             form_factor: 'narrow',

@@ -87,7 +87,7 @@ pnpm lint
 pnpm test
 ```
 
-Open [http://localhost:3000/apps/lyric-chord-creator](http://localhost:3000/apps/lyric-chord-creator) in your browser.
+Open [http://localhost:3000/](http://localhost:3000/) in your browser.
 
 ---
 

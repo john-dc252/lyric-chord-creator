@@ -1,33 +1,29 @@
-import { createEffect, createMemo, createSignal, onCleanup, onSettled, Show, untrack } from 'solid-js';
-import { EditorState, Compartment, Extension } from '@codemirror/state';
+import {createEffect, createMemo, createSignal, onCleanup, onSettled, Show, untrack} from 'solid-js';
+import {Compartment, EditorState, Extension} from '@codemirror/state';
 import {
+  drawSelection,
+  dropCursor,
   EditorView,
-  keymap,
   highlightActiveLine,
   highlightActiveLineGutter,
-  dropCursor,
-  drawSelection,
+  keymap,
   scrollPastEnd,
 } from '@codemirror/view';
-import { defaultKeymap, history, historyKeymap, indentWithTab } from '@codemirror/commands';
-import { bracketMatching } from '@codemirror/language';
-import { vim, getCM, Vim } from '@replit/codemirror-vim';
+import {defaultKeymap, history, historyKeymap, indentWithTab} from '@codemirror/commands';
+import {bracketMatching} from '@codemirror/language';
+import {getCM, vim, Vim} from '@replit/codemirror-vim';
 
-import { theme } from '../lib/theme';
+import {theme} from '../lib/theme';
 import {
+  createEditorTheme,
+  createLineNumbersGutter,
+  lyricChordDarkHighlight,
   lyricChordLanguage,
   lyricChordLightHighlight,
-  lyricChordDarkHighlight,
-  createLineNumbersGutter,
-  createEditorTheme,
 } from '../lib/editor-extensions';
-import {
-  activeTemplateId,
-  savedTemplates,
-  saveTemplate,
-  exportTemplateAsFile,
-} from '../lib/templates-store';
+import {activeTemplateId, exportTemplateAsFile, savedTemplates, saveTemplate,} from '../lib/templates-store';
 import SaveTemplateModal from './SaveTemplateModal';
+import {detectPotentialMonospaceFormat, monospaceToTemplate} from "../lib/template-processor/monospace-converter";
 
 interface TemplateEditorProps {
   value: string;
@@ -87,30 +83,36 @@ export default function TemplateEditor(props: TemplateEditorProps) {
   let fileInputRef: HTMLInputElement | undefined = undefined;
   let lastReportedLine = 1;
 
-  const [wordWrap, setWordWrapSignal] = createSignal(getInitialWordWrap(), { name: 'word_wrap' });
-  const [vimMode, setVimModeSignal] = createSignal(getInitialVimMode(), { name: 'vim_mode' });
+  const [wordWrap, setWordWrapSignal] = createSignal(getInitialWordWrap(), {name: 'word_wrap'});
+  const [vimMode, setVimModeSignal] = createSignal(getInitialVimMode(), {name: 'vim_mode'});
   const [relativeLineNumbers, setRelativeLineNumbersSignal] = createSignal(
     getInitialRelativeLineNumbers(),
-    { name: 'relative_line_numbers' },
+    {name: 'relative_line_numbers'},
   );
 
   const [vimModeName, setVimModeName] = createSignal<'NORMAL' | 'INSERT' | 'VISUAL' | 'VISUAL LINE' | 'VISUAL BLOCK' | 'REPLACE'>('NORMAL', {
     name: 'vim_mode_name',
   });
-  const [isDraggingOver, setIsDraggingOver] = createSignal(false, { name: 'drag_over' });
-  const [cursorInfo, setCursorInfo] = createSignal({ line: 1, col: 1 }, { name: 'cursor_info' });
+  const [isDraggingOver, setIsDraggingOver] = createSignal(false, {name: 'drag_over'});
+  const [cursorInfo, setCursorInfo] = createSignal({line: 1, col: 1}, {name: 'cursor_info'});
 
   // Menu and Save Modal states
-  const [isFileMenuOpen, setIsFileMenuOpen] = createSignal(false, { name: 'file_menu_open' });
-  const [isSaveModalOpen, setIsSaveModalOpen] = createSignal(false, { name: 'save_modal_open' });
-  const [saveAsMode, setSaveAsMode] = createSignal(false, { name: 'save_as_mode' });
+  const [isFileMenuOpen, setIsFileMenuOpen] = createSignal(false, {name: 'file_menu_open'});
+  const [isSaveModalOpen, setIsSaveModalOpen] = createSignal(false, {name: 'save_modal_open'});
+  const [saveAsMode, setSaveAsMode] = createSignal(false, {name: 'save_as_mode'});
+
+  // Mono to Template
+  const isPotentiallyMonosource = createMemo(
+    () => detectPotentialMonospaceFormat(props.value),
+    {name: 'potentially_monosource'}
+  );
 
   // Active saved template object if currently linked
   const activeSavedTemplate = createMemo(() => {
     const id = activeTemplateId();
     if (!id) return null;
     return savedTemplates().find((t) => t.id === id) || null;
-  }, { name: 'active_saved_template' });
+  }, {name: 'active_saved_template'});
 
   // Detects if current content has unsaved modifications
   const isDirty = createMemo(() => {
@@ -119,7 +121,7 @@ export default function TemplateEditor(props: TemplateEditorProps) {
       return props.value !== existing.content;
     }
     return props.value.trim().length > 0;
-  }, { name: 'editor_is_dirty' });
+  }, {name: 'editor_is_dirty'});
 
   // CodeMirror Extension Compartments for fine-grained dynamic updates
   const vimCompartment = new Compartment();
@@ -136,6 +138,16 @@ export default function TemplateEditor(props: TemplateEditorProps) {
     } catch (e) {
       console.error('Failed to save word wrap preference:', e);
     }
+  };
+
+  const convertMonoToTemplate = () => {
+    view?.dispatch({
+      changes: {
+        from: 0,
+        to: view.state.doc.length,
+        insert: monospaceToTemplate(view.state.doc.toString())
+      }
+    });
   };
 
   const toggleVimMode = () => {
@@ -205,7 +217,7 @@ export default function TemplateEditor(props: TemplateEditorProps) {
           props.onInput(text);
           if (view) {
             view.dispatch({
-              changes: { from: 0, to: view.state.doc.length, insert: text },
+              changes: {from: 0, to: view.state.doc.length, insert: text},
             });
           }
           if (props.onFileDrop) {
@@ -230,30 +242,34 @@ export default function TemplateEditor(props: TemplateEditorProps) {
     setRelativeLineNumbersSignal(true);
     try {
       localStorage.setItem(RELATIVE_LINE_NUMBERS_KEY, 'true');
-    } catch {}
+    } catch {
+    }
   });
   Vim.defineEx('nornu', 'nornu', () => {
     setRelativeLineNumbersSignal(false);
     try {
       localStorage.setItem(RELATIVE_LINE_NUMBERS_KEY, 'false');
-    } catch {}
+    } catch {
+    }
   });
   Vim.defineEx('relativenumber', 'relativenumber', () => {
     setRelativeLineNumbersSignal(true);
     try {
       localStorage.setItem(RELATIVE_LINE_NUMBERS_KEY, 'true');
-    } catch {}
+    } catch {
+    }
   });
   Vim.defineEx('norelativenumber', 'norelativenumber', () => {
     setRelativeLineNumbersSignal(false);
     try {
       localStorage.setItem(RELATIVE_LINE_NUMBERS_KEY, 'false');
-    } catch {}
+    } catch {
+    }
   });
 
   const lineCount = createMemo(() => {
     return props.value.split('\n').length;
-  }, { name: 'line_count' });
+  }, {name: 'line_count'});
 
   const stats = createMemo(() => {
     const text = props.value;
@@ -261,8 +277,8 @@ export default function TemplateEditor(props: TemplateEditorProps) {
     const sections = (text.match(/^\[.*?\]/gm) || []).length;
     const columnBreaks = (text.match(/@column_break\b/g) || []).length;
     const pageBreaks = (text.match(/@page_break\b/g) || []).length;
-    return { chords, sections, columnBreaks, pageBreaks, chars: text.length };
-  }, { name: 'editor_stats' });
+    return {chords, sections, columnBreaks, pageBreaks, chars: text.length};
+  }, {name: 'editor_stats'});
 
   const handleDragOver = (e: DragEvent) => {
     e.preventDefault();
@@ -286,7 +302,7 @@ export default function TemplateEditor(props: TemplateEditorProps) {
           props.onInput(content);
           if (view) {
             view.dispatch({
-              changes: { from: 0, to: view.state.doc.length, insert: content },
+              changes: {from: 0, to: view.state.doc.length, insert: content},
             });
           }
           if (props.onFileDrop) {
@@ -423,7 +439,7 @@ export default function TemplateEditor(props: TemplateEditorProps) {
     (val) => {
       if (view && view.state.doc.toString() !== val) {
         view.dispatch({
-          changes: { from: 0, to: view.state.doc.length, insert: val },
+          changes: {from: 0, to: view.state.doc.length, insert: val},
         });
         const pos = view.state.selection.main.head;
         const line = view.state.doc.lineAt(pos);
@@ -541,7 +557,7 @@ export default function TemplateEditor(props: TemplateEditorProps) {
     <div
       class={[
         'relative flex flex-col h-full w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg overflow-hidden shadow-sm transition-colors',
-        { 'ring-2 ring-sky-500 bg-sky-50/20': isDraggingOver() },
+        {'ring-2 ring-sky-500 bg-sky-50/20': isDraggingOver()},
       ]}
       onDragOver={handleDragOver}
       onDragLeave={handleDragLeave}
@@ -557,7 +573,8 @@ export default function TemplateEditor(props: TemplateEditorProps) {
       />
 
       {/* Editor Toolbar Header */}
-      <div class="flex flex-wrap items-center justify-between gap-2 px-3 py-2 bg-slate-100/80 dark:bg-slate-800/80 border-b border-slate-200 dark:border-slate-700/80 text-xs text-slate-600 dark:text-slate-300 select-none">
+      <div
+        class="flex flex-wrap items-center justify-between gap-2 px-3 py-2 bg-slate-100/80 dark:bg-slate-800/80 border-b border-slate-200 dark:border-slate-700/80 text-xs text-slate-600 dark:text-slate-300 select-none">
         <div class="flex flex-wrap items-center gap-1.5 sm:gap-2">
           {/* File Menu Dropdown */}
           <div class="relative">
@@ -566,9 +583,9 @@ export default function TemplateEditor(props: TemplateEditorProps) {
               onClick={() => setIsFileMenuOpen(!isFileMenuOpen())}
               class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded text-xs font-semibold bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700 shadow-xs transition-colors"
             >
-              <span class="i-lucide-folder w-3.5 h-3.5 text-slate-500 dark:text-slate-400" aria-hidden="true" />
+              <span class="i-lucide-folder w-3.5 h-3.5 text-slate-500 dark:text-slate-400" aria-hidden="true"/>
               <span>File</span>
-              <span class="i-lucide-chevron-down w-3.5 h-3.5 text-slate-400" aria-hidden="true" />
+              <span class="i-lucide-chevron-down w-3.5 h-3.5 text-slate-400" aria-hidden="true"/>
             </button>
 
             {/* Dropdown Menu Popup */}
@@ -578,7 +595,8 @@ export default function TemplateEditor(props: TemplateEditorProps) {
                   class="fixed inset-0 z-20"
                   onClick={() => setIsFileMenuOpen(false)}
                 />
-                <div class="absolute left-0 top-full mt-1 w-56 rounded-lg bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-xl py-1 z-30 menu-popover text-xs">
+                <div
+                  class="absolute left-0 top-full mt-1 w-56 rounded-lg bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-xl py-1 z-30 menu-popover text-xs">
                   {/* New Empty Template */}
                   <Show when={props.onNewTemplate}>
                     <button
@@ -589,13 +607,14 @@ export default function TemplateEditor(props: TemplateEditorProps) {
                       }}
                       class="w-full flex items-center gap-2.5 px-3 py-2 text-left hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 font-medium"
                     >
-                      <span class="i-lucide-plus w-4 h-4 text-slate-500 dark:text-slate-400 shrink-0" aria-hidden="true" />
+                      <span class="i-lucide-plus w-4 h-4 text-slate-500 dark:text-slate-400 shrink-0"
+                            aria-hidden="true"/>
                       <div class="flex-1">
                         <div>New Template</div>
                         <div class="text-[10px] text-slate-400">Start with empty editor</div>
                       </div>
                     </button>
-                    <div class="my-1 border-t border-slate-200 dark:border-slate-700" />
+                    <div class="my-1 border-t border-slate-200 dark:border-slate-700"/>
                   </Show>
 
                   {/* Save to Library / Update */}
@@ -604,7 +623,7 @@ export default function TemplateEditor(props: TemplateEditorProps) {
                     onClick={handleQuickSave}
                     class="w-full flex items-center gap-2.5 px-3 py-2 text-left hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 font-medium"
                   >
-                    <span class="i-lucide-save w-4 h-4 text-slate-500 dark:text-slate-400 shrink-0" aria-hidden="true" />
+                    <span class="i-lucide-save w-4 h-4 text-slate-500 dark:text-slate-400 shrink-0" aria-hidden="true"/>
                     <div class="flex-1">
                       <div>{activeSavedTemplate() ? 'Save Changes' : 'Save to Library'}</div>
                       <div class="text-[10px] text-slate-400">
@@ -619,14 +638,15 @@ export default function TemplateEditor(props: TemplateEditorProps) {
                     onClick={handleSaveAs}
                     class="w-full flex items-center gap-2.5 px-3 py-2 text-left hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 font-medium"
                   >
-                    <span class="i-lucide-copy-plus w-4 h-4 text-slate-500 dark:text-slate-400 shrink-0" aria-hidden="true" />
+                    <span class="i-lucide-copy-plus w-4 h-4 text-slate-500 dark:text-slate-400 shrink-0"
+                          aria-hidden="true"/>
                     <div class="flex-1">
                       <div>Save As New Template...</div>
                       <div class="text-[10px] text-slate-400">Save with a new unique name</div>
                     </div>
                   </button>
 
-                  <div class="my-1 border-t border-slate-200 dark:border-slate-700" />
+                  <div class="my-1 border-t border-slate-200 dark:border-slate-700"/>
 
                   {/* Import from File */}
                   <button
@@ -634,7 +654,8 @@ export default function TemplateEditor(props: TemplateEditorProps) {
                     onClick={handleImportClick}
                     class="w-full flex items-center gap-2.5 px-3 py-2 text-left hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 font-medium"
                   >
-                    <span class="i-lucide-folder-open w-4 h-4 text-slate-500 dark:text-slate-400 shrink-0" aria-hidden="true" />
+                    <span class="i-lucide-folder-open w-4 h-4 text-slate-500 dark:text-slate-400 shrink-0"
+                          aria-hidden="true"/>
                     <div class="flex-1">
                       <div>Import from File (*.lcct.txt)</div>
                       <div class="text-[10px] text-slate-400">Load template file from device</div>
@@ -647,7 +668,8 @@ export default function TemplateEditor(props: TemplateEditorProps) {
                     onClick={handleExport}
                     class="w-full flex items-center gap-2.5 px-3 py-2 text-left hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 font-medium"
                   >
-                    <span class="i-lucide-download w-4 h-4 text-slate-500 dark:text-slate-400 shrink-0" aria-hidden="true" />
+                    <span class="i-lucide-download w-4 h-4 text-slate-500 dark:text-slate-400 shrink-0"
+                          aria-hidden="true"/>
                     <div class="flex-1">
                       <div>Export as File (*.lcct.txt)</div>
                       <div class="text-[10px] text-slate-400">Download current sheet template</div>
@@ -655,7 +677,7 @@ export default function TemplateEditor(props: TemplateEditorProps) {
                   </button>
 
                   <Show when={props.onResetToDefault}>
-                    <div class="my-1 border-t border-slate-200 dark:border-slate-700" />
+                    <div class="my-1 border-t border-slate-200 dark:border-slate-700"/>
                     <button
                       type="button"
                       onClick={() => {
@@ -664,7 +686,7 @@ export default function TemplateEditor(props: TemplateEditorProps) {
                       }}
                       class="w-full flex items-center gap-2.5 px-3 py-2 text-left hover:bg-slate-100 dark:hover:bg-slate-700 text-rose-600 dark:text-rose-400 font-medium"
                     >
-                      <span class="i-lucide-rotate-ccw w-4 h-4 text-rose-500 shrink-0" aria-hidden="true" />
+                      <span class="i-lucide-rotate-ccw w-4 h-4 text-rose-500 shrink-0" aria-hidden="true"/>
                       <div class="flex-1">
                         <div>Reset to Default Sample</div>
                         <div class="text-[10px] text-slate-400">Discard unsaved edits</div>
@@ -687,7 +709,7 @@ export default function TemplateEditor(props: TemplateEditorProps) {
                 : 'Save template to library (Ctrl/Cmd+S)'
             }
           >
-            <span class="i-lucide-save w-3.5 h-3.5" aria-hidden="true" />
+            <span class="i-lucide-save w-3.5 h-3.5" aria-hidden="true"/>
             <span>Save</span>
           </button>
 
@@ -711,9 +733,10 @@ export default function TemplateEditor(props: TemplateEditorProps) {
           >
             <Show
               when={isDirty()}
-              fallback={<span class="i-lucide-check w-3.5 h-3.5 text-emerald-500 dark:text-emerald-400 shrink-0" aria-hidden="true" />}
+              fallback={<span class="i-lucide-check w-3.5 h-3.5 text-emerald-500 dark:text-emerald-400 shrink-0"
+                              aria-hidden="true"/>}
             >
-              <span class="w-2 h-2 rounded-full bg-amber-500 dark:bg-amber-400 animate-pulse shrink-0" />
+              <span class="w-2 h-2 rounded-full bg-amber-500 dark:bg-amber-400 animate-pulse shrink-0"/>
             </Show>
             <span class="truncate">
               {activeSavedTemplate() ? activeSavedTemplate()?.name : 'Draft'}
@@ -724,6 +747,25 @@ export default function TemplateEditor(props: TemplateEditorProps) {
               </span>
             </Show>
           </div>
+
+          {/* Monospace to Template */}
+          <button
+            type="button"
+            disabled={!isPotentiallyMonosource()}
+            onClick={() => {
+              convertMonoToTemplate()
+            }}
+            class={[
+              'inline-flex items-center gap-1.5 px-2.5 py-1 rounded text-xs font-semibold transition-colors',
+              isPotentiallyMonosource()
+                ? 'bg-sky-600 hover:bg-sky-500 text-white shadow-xs'
+                : 'bg-slate-200/70 dark:bg-slate-800 text-slate-600 dark:text-slate-400 border border-slate-300 dark:border-slate-700',
+            ]}
+            title="Convert from monospace format to template format"
+          >
+            <span class="i-lucide-wand-sparkles w-3.5 h-3.5" aria-hidden="true"/>
+            <span>Mono to Template</span>
+          </button>
 
           <span class="text-slate-300 dark:text-slate-600">|</span>
 
@@ -778,19 +820,19 @@ export default function TemplateEditor(props: TemplateEditorProps) {
         {/* Template Stats */}
         <div class="flex items-center gap-2.5 text-[11px]">
           <span title="Number of chords in template" class="inline-flex items-center gap-1">
-            <span class="i-lucide-music w-3 h-3 text-slate-400" aria-hidden="true" />
+            <span class="i-lucide-music w-3 h-3 text-slate-400" aria-hidden="true"/>
             <span><strong class="text-slate-800 dark:text-slate-200">{stats().chords}</strong> chords</span>
           </span>
           <span title="Number of sections" class="inline-flex items-center gap-1">
-            <span class="i-lucide-tag w-3 h-3 text-slate-400" aria-hidden="true" />
+            <span class="i-lucide-tag w-3 h-3 text-slate-400" aria-hidden="true"/>
             <span><strong class="text-slate-800 dark:text-slate-200">{stats().sections}</strong> sections</span>
           </span>
           <span title="Number of column breaks (@column_break)" class="hidden sm:inline-flex items-center gap-1">
-            <span class="i-lucide-columns w-3 h-3 text-slate-400" aria-hidden="true" />
+            <span class="i-lucide-columns w-3 h-3 text-slate-400" aria-hidden="true"/>
             <span><strong class="text-slate-800 dark:text-slate-200">{stats().columnBreaks}</strong> col breaks</span>
           </span>
           <span title="Number of page breaks (@page_break)" class="hidden sm:inline-flex items-center gap-1">
-            <span class="i-lucide-file-text w-3 h-3 text-slate-400" aria-hidden="true" />
+            <span class="i-lucide-file-text w-3 h-3 text-slate-400" aria-hidden="true"/>
             <span><strong class="text-slate-800 dark:text-slate-200">{stats().pageBreaks}</strong> page breaks</span>
           </span>
         </div>
@@ -798,13 +840,15 @@ export default function TemplateEditor(props: TemplateEditorProps) {
 
       {/* Editor Body Canvas */}
       <div class="relative flex-1 min-h-0 overflow-hidden bg-white dark:bg-slate-900">
-        <div ref={(el) => (editorContainerRef = el)} class="h-full w-full overflow-hidden" />
+        <div ref={(el) => (editorContainerRef = el)} class="h-full w-full overflow-hidden"/>
 
         {/* Drag and drop overlay hint */}
         <Show when={isDraggingOver()}>
-          <div class="absolute inset-0 bg-sky-500/10 dark:bg-sky-500/20 backdrop-blur-sm flex items-center justify-center pointer-events-none z-10 border-2 border-dashed border-sky-500 rounded-lg">
-            <div class="bg-white dark:bg-slate-800 px-4 py-2 rounded-lg shadow-lg text-sm font-semibold text-sky-600 dark:text-sky-400 inline-flex items-center gap-2">
-              <span class="i-lucide-upload w-4 h-4 text-sky-500 dark:text-sky-400 animate-bounce" aria-hidden="true" />
+          <div
+            class="absolute inset-0 bg-sky-500/10 dark:bg-sky-500/20 backdrop-blur-sm flex items-center justify-center pointer-events-none z-10 border-2 border-dashed border-sky-500 rounded-lg">
+            <div
+              class="bg-white dark:bg-slate-800 px-4 py-2 rounded-lg shadow-lg text-sm font-semibold text-sky-600 dark:text-sky-400 inline-flex items-center gap-2">
+              <span class="i-lucide-upload w-4 h-4 text-sky-500 dark:text-sky-400 animate-bounce" aria-hidden="true"/>
               <span>Drop *.lcct.txt template file here to load</span>
             </div>
           </div>
@@ -812,7 +856,8 @@ export default function TemplateEditor(props: TemplateEditorProps) {
       </div>
 
       {/* Editor Status Bar Footer */}
-      <div class="flex items-center justify-between px-3 py-1 bg-slate-50 dark:bg-slate-950/80 border-t border-slate-200 dark:border-slate-800 text-[11px] text-slate-500 dark:text-slate-400 select-none">
+      <div
+        class="flex items-center justify-between px-3 py-1 bg-slate-50 dark:bg-slate-950/80 border-t border-slate-200 dark:border-slate-800 text-[11px] text-slate-500 dark:text-slate-400 select-none">
         <div class="flex items-center gap-2">
           {/* Vim Mode Badge when Vim is Active */}
           <Show when={vimMode()}>

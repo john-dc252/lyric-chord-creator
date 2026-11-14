@@ -9,7 +9,16 @@ import {
   keymap,
   scrollPastEnd,
 } from '@codemirror/view';
-import {defaultKeymap, history, historyKeymap, indentWithTab} from '@codemirror/commands';
+import {
+  defaultKeymap,
+  history,
+  historyKeymap,
+  indentWithTab,
+  redo,
+  redoDepth,
+  undo,
+  undoDepth,
+} from '@codemirror/commands';
 import {bracketMatching} from '@codemirror/language';
 import {getCM, vim, Vim} from '@replit/codemirror-vim';
 
@@ -95,6 +104,8 @@ export default function TemplateEditor(props: TemplateEditorProps) {
   });
   const [isDraggingOver, setIsDraggingOver] = createSignal(false, {name: 'drag_over'});
   const [cursorInfo, setCursorInfo] = createSignal({line: 1, col: 1}, {name: 'cursor_info'});
+  const [canUndo, setCanUndo] = createSignal(false, {name: 'can_undo'});
+  const [canRedo, setCanRedo] = createSignal(false, {name: 'can_redo'});
 
   // Menu and Save Modal states
   const [isFileMenuOpen, setIsFileMenuOpen] = createSignal(false, {name: 'file_menu_open'});
@@ -148,6 +159,20 @@ export default function TemplateEditor(props: TemplateEditorProps) {
         insert: monospaceToTemplate(view.state.doc.toString())
       }
     });
+  };
+
+  const handleUndo = () => {
+    if (view) {
+      undo(view);
+      view.focus();
+    }
+  };
+
+  const handleRedo = () => {
+    if (view) {
+      redo(view);
+      view.focus();
+    }
   };
 
   const toggleVimMode = () => {
@@ -356,6 +381,8 @@ export default function TemplateEditor(props: TemplateEditorProps) {
           ...historyKeymap,
         ]),
         EditorView.updateListener.of((update) => {
+          setCanUndo(undoDepth(update.state) > 0);
+          setCanRedo(redoDepth(update.state) > 0);
           if (update.docChanged) {
             const currentDoc = update.state.doc.toString();
             untrack(() => props.onInput(currentDoc));
@@ -712,6 +739,40 @@ export default function TemplateEditor(props: TemplateEditorProps) {
             <span class="i-lucide-save w-3.5 h-3.5" aria-hidden="true"/>
             <span>Save</span>
           </button>
+
+          {/* Undo & Redo Buttons */}
+          <div class="inline-flex items-center gap-1">
+            <button
+              type="button"
+              disabled={!canUndo()}
+              onClick={handleUndo}
+              class={[
+                'inline-flex items-center gap-1 px-2 py-1 rounded text-xs font-semibold border transition-colors',
+                canUndo()
+                  ? 'bg-white dark:bg-slate-800 border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700 shadow-xs cursor-pointer'
+                  : 'bg-slate-200/70 dark:bg-slate-800/60 border-slate-300/70 dark:border-slate-700/70 text-slate-400 dark:text-slate-500 cursor-not-allowed',
+              ]}
+              title="Undo (Ctrl/Cmd+Z)"
+              aria-label="Undo"
+            >
+              <span class="i-lucide-undo-2 w-3.5 h-3.5" aria-hidden="true"/>
+            </button>
+            <button
+              type="button"
+              disabled={!canRedo()}
+              onClick={handleRedo}
+              class={[
+                'inline-flex items-center gap-1 px-2 py-1 rounded text-xs font-semibold border transition-colors',
+                canRedo()
+                  ? 'bg-white dark:bg-slate-800 border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700 shadow-xs cursor-pointer'
+                  : 'bg-slate-200/70 dark:bg-slate-800/60 border-slate-300/70 dark:border-slate-700/70 text-slate-400 dark:text-slate-500 cursor-not-allowed',
+              ]}
+              title="Redo (Ctrl/Cmd+Y or Ctrl/Cmd+Shift+Z)"
+              aria-label="Redo"
+            >
+              <span class="i-lucide-redo-2 w-3.5 h-3.5" aria-hidden="true"/>
+            </button>
+          </div>
 
           {/* Active Template & Unsaved Changes Status Badge */}
           <div

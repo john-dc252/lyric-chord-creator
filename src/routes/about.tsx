@@ -1,11 +1,12 @@
-import { Title } from '@solidjs/meta';
-import { useNavigate } from '@solidjs/router';
-import { createSignal, For, Show } from 'solid-js';
-import { TemplateSyntaxHighlighter } from '../components/TemplateSyntaxHighlighter';
-import { paths } from '../router';
-import { ChordGuidePages } from '../lib/template-processor';
-import { setActiveTemplateId } from '../lib/templates-store';
-import { checkForUpdate, type UpdateCheckResult } from '../lib/sw-update';
+import {Title} from '@solidjs/meta';
+import {useNavigate} from '@solidjs/router';
+import {createSignal, For, Show} from 'solid-js';
+import {TemplateSyntaxHighlighter} from '../components/TemplateSyntaxHighlighter';
+import {paths} from '../router';
+import {ChordGuidePages} from '../lib/template-processor';
+import {setActiveTemplateId} from '../lib/templates-store';
+import {checkForUpdate, type UpdateCheckResult} from '../lib/sw-update';
+import {monospaceToTemplate} from "../lib/template-processor/monospace-converter";
 
 type UpdateCheckStatus = 'idle' | 'checking' | 'error' | UpdateCheckResult;
 
@@ -104,7 +105,7 @@ The {E}Hope of nations`,
 
 export default function About() {
   const navigate = useNavigate();
-  const [copiedIndex, setCopiedIndex] = createSignal<number | null>(null, { name: 'copied_index' });
+  const [copiedIndex, setCopiedIndex] = createSignal<number | null>(null, {name: 'copied_index'});
 
   let syntaxGuideRef: HTMLElement | undefined = undefined;
 
@@ -113,7 +114,7 @@ export default function About() {
   // resolves the fragment as a path instead of scrolling.
   const scrollToSyntaxGuide = (e: MouseEvent) => {
     e.preventDefault();
-    syntaxGuideRef?.scrollIntoView({ behavior: 'smooth' });
+    syntaxGuideRef?.scrollIntoView({behavior: 'smooth'});
   };
 
   const [updateCheck, setUpdateCheck] = createSignal<UpdateCheckStatus>('idle', {
@@ -160,8 +161,19 @@ export default function About() {
     navigate(paths);
   };
 
+  const monospaceSourceSample = `
+@title: Amazing Grace
+@artist: John Newton
+
+[Verse 1]
+ G                 C         G
+Amazing grace, how sweet the sound
+             D7
+That saved a wretch like me`;
+
   return (
-    <div class="h-full flex flex-col overflow-y-auto bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 transition-colors">
+    <div
+      class="h-full flex flex-col overflow-y-auto bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 transition-colors">
       <Title>About - Lyric-Chord Creator</Title>
 
       <main class="flex-1 max-w-5xl mx-auto w-full px-4 sm:px-6 py-8">
@@ -196,38 +208,47 @@ export default function About() {
           </div>
 
           <p class="mt-4 text-base text-slate-700 dark:text-slate-300 leading-relaxed max-w-3xl">
-            Turn plain-text templates into clean, printable lyric-and-chord sheets — with no reformatting when the paper size, orientation, or column count changes.
+            Turn plain-text templates into clean, printable lyric-and-chord sheets — with no reformatting when the paper
+            size, orientation, or column count changes.
           </p>
 
           {/* Key Value Proposition Cards */}
-          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mt-6">
-            <div class="p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-xs flex flex-col">
-              <div class="w-9 h-9 rounded-lg bg-sky-100 dark:bg-sky-950 text-sky-600 dark:text-sky-400 flex items-center justify-center mb-3 shrink-0">
-                <span class="i-lucide-layout w-5 h-5" aria-hidden="true" />
+          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mt-6">
+            <div
+              class="p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-xs flex flex-col">
+              <div
+                class="w-9 h-9 rounded-lg bg-sky-100 dark:bg-sky-950 text-sky-600 dark:text-sky-400 flex items-center justify-center mb-3 shrink-0">
+                <span class="i-lucide-layout w-5 h-5" aria-hidden="true"/>
               </div>
               <h3 class="font-bold text-sm text-slate-900 dark:text-white mb-1.5">
                 Adaptive Layout for Any Paper
               </h3>
               <p class="text-xs text-slate-600 dark:text-slate-400 leading-normal">
-                Letter, A4, Legal, or custom sizes in portrait or landscape. Content reflows and balances across 1–4 columns, with font size and margins to match.
+                Letter, A4, Legal, or custom sizes in portrait or landscape. Content reflows and balances across 1–4
+                columns, with font size and margins to match.
               </p>
             </div>
 
-            <div class="p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-xs flex flex-col">
-              <div class="w-9 h-9 rounded-lg bg-indigo-100 dark:bg-indigo-950 text-indigo-600 dark:text-indigo-400 flex items-center justify-center mb-3 shrink-0">
-                <span class="i-lucide-target w-5 h-5" aria-hidden="true" />
+            <div
+              class="p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-xs flex flex-col">
+              <div
+                class="w-9 h-9 rounded-lg bg-indigo-100 dark:bg-indigo-950 text-indigo-600 dark:text-indigo-400 flex items-center justify-center mb-3 shrink-0">
+                <span class="i-lucide-target w-5 h-5" aria-hidden="true"/>
               </div>
               <h3 class="font-bold text-sm text-slate-900 dark:text-white mb-1.5">
                 Exact Lyric & Chord Alignment
               </h3>
               <p class="text-xs text-slate-600 dark:text-slate-400 leading-normal">
-                Write <code class="font-mono">&#123;C&#125;</code> inline and the chord pins above that exact syllable — no spacebar guesswork, no drift between screen and print.
+                Write <code class="font-mono">&#123;C&#125;</code> inline and the chord pins above that exact syllable —
+                no spacebar guesswork, no drift between screen and print.
               </p>
             </div>
 
-            <div class="p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-xs flex flex-col">
-              <div class="w-9 h-9 rounded-lg bg-amber-100 dark:bg-amber-950 text-amber-600 dark:text-amber-400 flex items-center justify-center mb-3 shrink-0">
-                <span class="i-lucide-music w-5 h-5" aria-hidden="true" />
+            <div
+              class="p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-xs flex flex-col">
+              <div
+                class="w-9 h-9 rounded-lg bg-amber-100 dark:bg-amber-950 text-amber-600 dark:text-amber-400 flex items-center justify-center mb-3 shrink-0">
+                <span class="i-lucide-music w-5 h-5" aria-hidden="true"/>
               </div>
               <h3 class="font-bold text-sm text-slate-900 dark:text-white mb-1.5">
                 On-the-Fly Transposition
@@ -237,15 +258,33 @@ export default function About() {
               </p>
             </div>
 
-            <div class="p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-xs flex flex-col">
-              <div class="w-9 h-9 rounded-lg bg-emerald-100 dark:bg-emerald-950 text-emerald-600 dark:text-emerald-400 flex items-center justify-center mb-3 shrink-0">
-                <span class="i-lucide-book-open w-5 h-5" aria-hidden="true" />
+            <div
+              class="p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-xs flex flex-col">
+              <div
+                class="w-9 h-9 rounded-lg bg-emerald-100 dark:bg-emerald-950 text-emerald-600 dark:text-emerald-400 flex items-center justify-center mb-3 shrink-0">
+                <span class="i-lucide-book-open w-5 h-5" aria-hidden="true"/>
               </div>
               <h3 class="font-bold text-sm text-slate-900 dark:text-white mb-1.5">
                 Multiple Songs per Template
               </h3>
               <p class="text-xs text-slate-600 dark:text-slate-400 leading-normal">
-                Bundle a whole setlist in one file. <code class="font-mono">@page_break</code> and <code class="font-mono">@column_break</code> decide where each song and section lands.
+                Bundle a whole setlist in one file. <code class="font-mono">@page_break</code> and <code
+                class="font-mono">@column_break</code> decide where each song and section lands.
+              </p>
+            </div>
+
+            <div
+              class="p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-xs flex flex-col">
+              <div
+                class="w-9 h-9 rounded-lg bg-rose-100 dark:bg-rose-950 text-rose-600 dark:text-rose-400 flex items-center justify-center mb-3 shrink-0">
+                <span class="i-lucide-wand-sparkles w-5 h-5" aria-hidden="true"/>
+              </div>
+              <h3 class="font-bold text-sm text-slate-900 dark:text-white mb-1.5">
+                Monospace Sheet Conversion
+              </h3>
+              <p class="text-xs text-slate-600 dark:text-slate-400 leading-normal">
+                Paste traditional two-line chord-over-lyric sheets and convert them into inline <code
+                class="font-mono">&#123;Chord&#125;</code> templates with a single click.
               </p>
             </div>
           </div>
@@ -255,7 +294,7 @@ export default function About() {
               href={paths()}
               class="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-sky-600 hover:bg-sky-500 text-white font-semibold text-xs shadow-xs transition-colors no-underline"
             >
-              <span class="i-lucide-arrow-left w-3.5 h-3.5" aria-hidden="true" />
+              <span class="i-lucide-arrow-left w-3.5 h-3.5" aria-hidden="true"/>
               <span>Open Editor</span>
             </a>
             <a
@@ -264,7 +303,7 @@ export default function About() {
               class="inline-flex items-center gap-2 px-4 py-2 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-200 font-semibold text-xs transition-colors no-underline"
             >
               <span>View Syntax Guide</span>
-              <span class="i-lucide-arrow-down w-3.5 h-3.5" aria-hidden="true" />
+              <span class="i-lucide-arrow-down w-3.5 h-3.5" aria-hidden="true"/>
             </a>
           </div>
         </section>
@@ -273,20 +312,26 @@ export default function About() {
         <section
           ref={(el) => (syntaxGuideRef = el)}
           id="syntax-guide"
-          class="mb-10 scroll-mt-20"
+          class="mb-10 border-b border-slate-200 dark:border-slate-800 pb-10 scroll-mt-20"
         >
           <h2 class="text-2xl font-bold text-slate-900 dark:text-white mb-2 flex items-center gap-2">
-            Template Syntax Guide
+            <span class="i-lucide-code w-5 h-5 text-sky-600 dark:text-sky-400" aria-hidden="true"/>
+            <span>Template Syntax Guide</span>
           </h2>
           <p class="text-sm text-slate-600 dark:text-slate-400 mb-6">
-            The <code class="px-1.5 py-0.5 rounded bg-slate-200 dark:bg-slate-800 font-mono text-xs">.lcct.txt</code> format is a simple, human-readable plain-text template syntax for creating clean, printable multi-column lyric-chord sheets.
+            The <code
+            class="px-1.5 py-0.5 rounded bg-slate-200 dark:bg-slate-800 font-mono text-xs">.lcct.txt</code> format is a
+            simple, human-readable plain-text template syntax for creating clean, printable multi-column lyric-chord
+            sheets.
           </p>
 
           <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
             {/* @title: */}
-            <div class="p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm">
+            <div
+              class="p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm">
               <div class="flex items-center justify-between mb-2">
-                <span class="font-mono text-sm font-bold text-amber-700 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/60 px-2 py-0.5 rounded border border-amber-200 dark:border-amber-900/50">
+                <span
+                  class="font-mono text-sm font-bold text-amber-700 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/60 px-2 py-0.5 rounded border border-amber-200 dark:border-amber-900/50">
                   @title: &lt;Song Title&gt;
                 </span>
                 <span class="text-xs text-slate-500">Metadata</span>
@@ -295,14 +340,16 @@ export default function About() {
                 Sets the song title. Rendered as bold, underlined text.
               </p>
               <div class="bg-slate-100 dark:bg-slate-950 p-2.5 rounded-lg font-mono text-xs whitespace-pre-wrap">
-                <TemplateSyntaxHighlighter code="@title: I Know" />
+                <TemplateSyntaxHighlighter code="@title: I Know"/>
               </div>
             </div>
 
             {/* @artist: */}
-            <div class="p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm">
+            <div
+              class="p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm">
               <div class="flex items-center justify-between mb-2">
-                <span class="font-mono text-sm font-bold text-amber-700 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/60 px-2 py-0.5 rounded border border-amber-200 dark:border-amber-900/50">
+                <span
+                  class="font-mono text-sm font-bold text-amber-700 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/60 px-2 py-0.5 rounded border border-amber-200 dark:border-amber-900/50">
                   @artist: &lt;Artist Name&gt;
                 </span>
                 <span class="text-xs text-slate-500">Metadata</span>
@@ -311,14 +358,16 @@ export default function About() {
                 Sets the artist / author name. Rendered as bold text.
               </p>
               <div class="bg-slate-100 dark:bg-slate-950 p-2.5 rounded-lg font-mono text-xs whitespace-pre-wrap">
-                <TemplateSyntaxHighlighter code="@artist: Liveloud" />
+                <TemplateSyntaxHighlighter code="@artist: Liveloud"/>
               </div>
             </div>
 
             {/* [Section] */}
-            <div class="p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm">
+            <div
+              class="p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm">
               <div class="flex items-center justify-between mb-2">
-                <span class="font-mono text-sm font-bold text-indigo-700 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-950/60 px-2 py-0.5 rounded border border-indigo-200 dark:border-indigo-900/50">
+                <span
+                  class="font-mono text-sm font-bold text-indigo-700 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-950/60 px-2 py-0.5 rounded border border-indigo-200 dark:border-indigo-900/50">
                   [&lt;Section Name&gt;]
                 </span>
                 <span class="text-xs text-slate-500">Structure</span>
@@ -329,14 +378,16 @@ export default function About() {
                 strands at the foot of a column.
               </p>
               <div class="bg-slate-100 dark:bg-slate-950 p-2.5 rounded-lg font-mono text-xs whitespace-pre-wrap">
-                <TemplateSyntaxHighlighter code="[Chorus x2]" />
+                <TemplateSyntaxHighlighter code="[Chorus x2]"/>
               </div>
             </div>
 
             {/* @chord_sequence: */}
-            <div class="p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm">
+            <div
+              class="p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm">
               <div class="flex items-center justify-between mb-2">
-                <span class="font-mono text-sm font-bold text-amber-700 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/60 px-2 py-0.5 rounded border border-amber-200 dark:border-amber-900/50">
+                <span
+                  class="font-mono text-sm font-bold text-amber-700 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/60 px-2 py-0.5 rounded border border-amber-200 dark:border-amber-900/50">
                   @chord_sequence: &lt;Chords...&gt;
                 </span>
                 <span class="text-xs text-slate-500">Chords</span>
@@ -346,14 +397,16 @@ export default function About() {
                 instrumental intros/solos.
               </p>
               <div class="bg-slate-100 dark:bg-slate-950 p-2.5 rounded-lg font-mono text-xs whitespace-pre-wrap">
-                <TemplateSyntaxHighlighter code="@chord_sequence: E   A   C#m   A - B" />
+                <TemplateSyntaxHighlighter code="@chord_sequence: E   A   C#m   A - B"/>
               </div>
             </div>
 
             {/* {Chord} */}
-            <div class="p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm">
+            <div
+              class="p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm">
               <div class="flex items-center justify-between mb-2">
-                <span class="font-mono text-sm font-bold text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/60 px-2 py-0.5 rounded border border-emerald-200 dark:border-emerald-900/50">
+                <span
+                  class="font-mono text-sm font-bold text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/60 px-2 py-0.5 rounded border border-emerald-200 dark:border-emerald-900/50">
                   &#123;&lt;Chord&gt;&#125;
                 </span>
                 <span class="text-xs text-slate-500">Lyrics Chord</span>
@@ -363,14 +416,16 @@ export default function About() {
                 placed directly above the text.
               </p>
               <div class="bg-slate-100 dark:bg-slate-950 p-2.5 rounded-lg font-mono text-xs whitespace-pre-wrap">
-                <TemplateSyntaxHighlighter code="{E}I {Esus4}know You’ve given all I need" />
+                <TemplateSyntaxHighlighter code="{E}I {Esus4}know You’ve given all I need"/>
               </div>
             </div>
 
             {/* @empty_line */}
-            <div class="p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm">
+            <div
+              class="p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm">
               <div class="flex items-center justify-between mb-2">
-                <span class="font-mono text-sm font-bold text-rose-700 dark:text-rose-400 bg-rose-50 dark:bg-rose-950/60 px-2 py-0.5 rounded border border-rose-200 dark:border-rose-900/50">
+                <span
+                  class="font-mono text-sm font-bold text-rose-700 dark:text-rose-400 bg-rose-50 dark:bg-rose-950/60 px-2 py-0.5 rounded border border-rose-200 dark:border-rose-900/50">
                   @empty_line
                 </span>
                 <span class="text-xs text-slate-500">Spacing</span>
@@ -380,14 +435,17 @@ export default function About() {
                 the only way to add vertical space.
               </p>
               <div class="bg-slate-100 dark:bg-slate-950 p-2.5 rounded-lg font-mono text-xs whitespace-pre-wrap">
-                <TemplateSyntaxHighlighter code={'[Verse 1]\n\n@empty_line\n\n{E}I {Esus4}know You’ve given all I need  {A}'}/>
+                <TemplateSyntaxHighlighter
+                  code={'[Verse 1]\n\n@empty_line\n\n{E}I {Esus4}know You’ve given all I need  {A}'}/>
               </div>
             </div>
 
             {/* @column_break */}
-            <div class="p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm">
+            <div
+              class="p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm">
               <div class="flex items-center justify-between mb-2">
-                <span class="font-mono text-sm font-bold text-rose-700 dark:text-rose-400 bg-rose-50 dark:bg-rose-950/60 px-2 py-0.5 rounded border border-rose-200 dark:border-rose-900/50">
+                <span
+                  class="font-mono text-sm font-bold text-rose-700 dark:text-rose-400 bg-rose-50 dark:bg-rose-950/60 px-2 py-0.5 rounded border border-rose-200 dark:border-rose-900/50">
                   @column_break
                 </span>
                 <span class="text-xs text-slate-500">Layout Flow</span>
@@ -396,14 +454,17 @@ export default function About() {
                 Forces content after this directive to continue at the top of the next column, at any column count.
               </p>
               <div class="bg-slate-100 dark:bg-slate-950 p-2.5 rounded-lg font-mono text-xs whitespace-pre-wrap">
-                <TemplateSyntaxHighlighter code={'I know that Your love is for{A}e---{B}ver\n\n@column_break\n\n[Chorus x2]'}/>
+                <TemplateSyntaxHighlighter
+                  code={'I know that Your love is for{A}e---{B}ver\n\n@column_break\n\n[Chorus x2]'}/>
               </div>
             </div>
 
             {/* @page_break */}
-            <div class="p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm">
+            <div
+              class="p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm">
               <div class="flex items-center justify-between mb-2">
-                <span class="font-mono text-sm font-bold text-rose-700 dark:text-rose-400 bg-rose-50 dark:bg-rose-950/60 px-2 py-0.5 rounded border border-rose-200 dark:border-rose-900/50">
+                <span
+                  class="font-mono text-sm font-bold text-rose-700 dark:text-rose-400 bg-rose-50 dark:bg-rose-950/60 px-2 py-0.5 rounded border border-rose-200 dark:border-rose-900/50">
                   @page_break
                 </span>
                 <span class="text-xs text-slate-500">Layout Flow</span>
@@ -412,8 +473,89 @@ export default function About() {
                 Splits the chord guide into a new paper page, creating multi-page sheets or separate songs.
               </p>
               <div class="bg-slate-100 dark:bg-slate-950 p-2.5 rounded-lg font-mono text-xs whitespace-pre-wrap">
-                <TemplateSyntaxHighlighter code={'I will raise my hands and wors{A}hip, wo{B}rship You\n\n@page_break\n\n@title: Mighty to Save'}/>
+                <TemplateSyntaxHighlighter
+                  code={'I will raise my hands and wors{A}hip, wo{B}rship You\n\n@page_break\n\n@title: Mighty to Save'}/>
               </div>
+            </div>
+          </div>
+        </section>
+
+        {/* Monospace to Template Conversion Guide */}
+        <section class="mb-10 border-b border-slate-200 dark:border-slate-800 pb-10">
+          <h2 class="text-2xl font-bold text-slate-900 dark:text-white mb-2 flex items-center gap-2">
+            <span class="i-lucide-wand-sparkles w-5 h-5 text-sky-600 dark:text-sky-400" aria-hidden="true"/>
+            <span>Converting Monospace Chord Sheets</span>
+          </h2>
+          <p class="text-sm text-slate-600 dark:text-slate-400 mb-6">
+            Paste a traditional two-line chord-over-lyric sheet and convert it into inline{' '}
+            <code
+              class="px-1.5 py-0.5 rounded bg-slate-200 dark:bg-slate-800 font-mono text-xs">&#123;Chord&#125;</code>{' '}
+            template syntax with one click using the{' '}
+            <strong class="font-semibold text-slate-800 dark:text-slate-200">Mono to Template</strong> button in the
+            editor toolbar.
+          </p>
+
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+            <div
+              class="p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-xs">
+              <div class="text-xs font-bold uppercase tracking-wider text-sky-600 dark:text-sky-400 mb-1">
+                1. Paste Monospace Text
+              </div>
+              <p class="text-xs text-slate-600 dark:text-slate-400 leading-relaxed">
+                Paste a song where chords sit on their own space-aligned line directly above each lyric line. The{' '}
+                <strong class="text-slate-800 dark:text-slate-200">Mono to Template</strong> button enables
+                automatically when no{' '}
+                <code class="font-mono">&#123;...&#125;</code> chords are present.
+              </p>
+            </div>
+
+            <div
+              class="p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-xs">
+              <div class="text-xs font-bold uppercase tracking-wider text-sky-600 dark:text-sky-400 mb-1">
+                2. Pair &amp; Keep Headers
+              </div>
+              <p class="text-xs text-slate-600 dark:text-slate-400 leading-relaxed">
+                Each chord line is paired with the lyric line immediately below it. Blank lines,{' '}
+                <code class="font-mono">[Section]</code> headers, and <code class="font-mono">@key:</code> metadata
+                lines are skipped during pairing and preserved as-is.
+              </p>
+            </div>
+
+            <div
+              class="p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-xs">
+              <div class="text-xs font-bold uppercase tracking-wider text-sky-600 dark:text-sky-400 mb-1">
+                3. Click Mono to Template
+              </div>
+              <p class="text-xs text-slate-600 dark:text-slate-400 leading-relaxed">
+                Chords are embedded as <code class="font-mono">&#123;Chord&#125;</code> at their exact column positions
+                in the lyric line. Use{' '}
+                <kbd
+                  class="px-1.5 py-0.5 rounded bg-slate-100 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 font-mono text-[11px]">Ctrl/Cmd+Z</kbd>{' '}
+                in the editor to undo if you need to adjust line pairing first.
+              </p>
+            </div>
+          </div>
+
+          <div
+            class="grid grid-cols-1 lg:grid-cols-2 divide-y lg:divide-y-0 lg:divide-x divide-slate-200 dark:divide-slate-800 border border-slate-200 dark:border-slate-800 rounded-xl overflow-hidden shadow-sm">
+            <div class="p-4 bg-slate-50 dark:bg-slate-900 font-mono text-xs">
+              <div class="text-[10px] uppercase font-bold text-slate-500 dark:text-slate-400 mb-2 select-none">
+                Before — Monospace Input (Chord Line Above Lyric Line)
+              </div>
+              <pre class="whitespace-pre-wrap leading-relaxed select-text font-mono text-slate-800 dark:text-slate-200">{
+                monospaceSourceSample
+              }</pre>
+            </div>
+
+            <div class="p-4 bg-white dark:bg-slate-950 font-mono text-xs">
+              <div class="text-[10px] uppercase font-bold text-slate-500 dark:text-slate-400 mb-2 select-none">
+                After — Converted Template Output
+              </div>
+              <pre class="whitespace-pre-wrap leading-relaxed select-text font-mono">
+                <TemplateSyntaxHighlighter
+                  code={monospaceToTemplate(monospaceSourceSample)}
+                />
+              </pre>
             </div>
           </div>
         </section>
@@ -421,16 +563,18 @@ export default function About() {
         {/* Examples Section */}
         <section class="mb-10 border-b border-slate-200 dark:border-slate-800 pb-10">
           <h2 class="text-xl font-bold text-slate-900 dark:text-white mb-4 flex items-center gap-2">
-            <span class="i-lucide-lightbulb w-5 h-5 text-amber-500" aria-hidden="true" />
+            <span class="i-lucide-lightbulb w-5 h-5 text-amber-500" aria-hidden="true"/>
             <span>Example Templates</span>
           </h2>
 
           <div class="flex flex-col gap-6">
             <For each={EXAMPLES}>
               {(example, index) => (
-                <div class="border border-slate-200 dark:border-slate-800 rounded-xl bg-white dark:bg-slate-900 overflow-hidden shadow-sm">
+                <div
+                  class="border border-slate-200 dark:border-slate-800 rounded-xl bg-white dark:bg-slate-900 overflow-hidden shadow-sm">
                   {/* Example Header */}
-                  <div class="flex flex-wrap items-center justify-between gap-2 px-4 py-3 bg-slate-50 dark:bg-slate-800/60 border-b border-slate-200 dark:border-slate-800">
+                  <div
+                    class="flex flex-wrap items-center justify-between gap-2 px-4 py-3 bg-slate-50 dark:bg-slate-800/60 border-b border-slate-200 dark:border-slate-800">
                     <div>
                       <h3 class="font-bold text-sm text-slate-900 dark:text-white">
                         {example.title}
@@ -448,12 +592,13 @@ export default function About() {
                       >
                         {copiedIndex() === index() ? (
                           <>
-                            <span class="i-lucide-check w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" aria-hidden="true" />
+                            <span class="i-lucide-check w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400"
+                                  aria-hidden="true"/>
                             <span>Copied!</span>
                           </>
                         ) : (
                           <>
-                            <span class="i-lucide-copy w-3.5 h-3.5" aria-hidden="true" />
+                            <span class="i-lucide-copy w-3.5 h-3.5" aria-hidden="true"/>
                             <span>Copy</span>
                           </>
                         )}
@@ -463,21 +608,24 @@ export default function About() {
                         onClick={() => loadExampleIntoEditor(example.code)}
                         class="inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-semibold rounded-md bg-sky-600 hover:bg-sky-500 text-white shadow-sm transition-colors"
                       >
-                        <span class="i-lucide-play w-3.5 h-3.5" aria-hidden="true" />
+                        <span class="i-lucide-play w-3.5 h-3.5" aria-hidden="true"/>
                         <span>Load in Editor</span>
                       </button>
                     </div>
                   </div>
 
                   {/* Split Preview of Code vs Rendered Output */}
-                  <div class="grid grid-cols-1 lg:grid-cols-2 divide-y lg:divide-y-0 lg:divide-x divide-slate-200 dark:divide-slate-800">
+                  <div
+                    class="grid grid-cols-1 lg:grid-cols-2 divide-y lg:divide-y-0 lg:divide-x divide-slate-200 dark:divide-slate-800">
                     {/* Source Code */}
-                    <div class="p-4 bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-slate-100 font-mono text-xs overflow-hidden flex flex-col transition-colors">
+                    <div
+                      class="p-4 bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-slate-100 font-mono text-xs overflow-hidden flex flex-col transition-colors">
                       <div class="text-[10px] uppercase font-bold text-slate-500 dark:text-slate-400 mb-2 select-none">
                         Template Source (*.lcct.txt)
                       </div>
-                      <pre class="whitespace-pre-wrap leading-relaxed select-text font-mono overflow-y-auto h-72 sm:h-80 pr-2">
-                        <TemplateSyntaxHighlighter code={example.code} />
+                      <pre
+                        class="whitespace-pre-wrap leading-relaxed select-text font-mono overflow-y-auto h-72 sm:h-80 pr-2">
+                        <TemplateSyntaxHighlighter code={example.code}/>
                       </pre>
                     </div>
 
@@ -495,7 +643,7 @@ export default function About() {
                             : 'overflow-hidden',
                         ]}
                       >
-                        <ChordGuidePages template={example.code} />
+                        <ChordGuidePages template={example.code}/>
                       </div>
                     </div>
                   </div>
@@ -508,54 +656,57 @@ export default function About() {
         {/* Sheet Settings Section */}
         <section class="mb-10">
           <h2 class="text-2xl font-bold text-slate-900 dark:text-white mb-2 flex items-center gap-2">
-            <span class="i-lucide-settings w-5 h-5 text-sky-600 dark:text-sky-400" aria-hidden="true" />
+            <span class="i-lucide-settings w-5 h-5 text-sky-600 dark:text-sky-400" aria-hidden="true"/>
             <span>Sheet Settings</span>
           </h2>
           <p class="text-sm text-slate-600 dark:text-slate-400 mb-4">
             Page layout and transposition controls live in the preview toolbar, independent of template text.
           </p>
 
-          <div class="overflow-x-auto rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm">
+          <div
+            class="overflow-x-auto rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm">
             <table class="w-full text-left text-xs sm:text-sm text-slate-700 dark:text-slate-300">
-              <thead class="bg-slate-50 dark:bg-slate-800/60 border-b border-slate-200 dark:border-slate-800 text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
-                <tr>
-                  <th scope="col" class="py-3 px-4 sm:px-6 w-48 sm:w-56">Setting</th>
-                  <th scope="col" class="py-3 px-4 sm:px-6">Description</th>
-                </tr>
+              <thead
+                class="bg-slate-50 dark:bg-slate-800/60 border-b border-slate-200 dark:border-slate-800 text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+              <tr>
+                <th scope="col" class="py-3 px-4 sm:px-6 w-48 sm:w-56">Setting</th>
+                <th scope="col" class="py-3 px-4 sm:px-6">Description</th>
+              </tr>
               </thead>
               <tbody class="divide-y divide-slate-200 dark:divide-slate-800">
-                <tr>
-                  <td class="py-3 px-4 sm:px-6 font-semibold text-slate-900 dark:text-white whitespace-nowrap">
-                    Key Transposition
-                  </td>
-                  <td class="py-3 px-4 sm:px-6 leading-relaxed">
-                    Shift chords up or down (±11 semitones) for preview and print without modifying the template.
-                  </td>
-                </tr>
-                <tr>
-                  <td class="py-3 px-4 sm:px-6 font-semibold text-slate-900 dark:text-white whitespace-nowrap">
-                    Orientation & Columns
-                  </td>
-                  <td class="py-3 px-4 sm:px-6 leading-relaxed">
-                    Portrait takes 1–2 columns, landscape up to 4. Switching back to portrait clamps a wider layout down automatically.
-                  </td>
-                </tr>
-                <tr>
-                  <td class="py-3 px-4 sm:px-6 font-semibold text-slate-900 dark:text-white whitespace-nowrap">
-                    Paper Size
-                  </td>
-                  <td class="py-3 px-4 sm:px-6 leading-relaxed">
-                    Letter, Legal, A4, or a custom width and height in inches or centimeters.
-                  </td>
-                </tr>
-                <tr>
-                  <td class="py-3 px-4 sm:px-6 font-semibold text-slate-900 dark:text-white whitespace-nowrap">
-                    Type & Margins
-                  </td>
-                  <td class="py-3 px-4 sm:px-6 leading-relaxed">
-                    Font size from 6 to 20pt, with narrow, normal, or wide margins — or your own value.
-                  </td>
-                </tr>
+              <tr>
+                <td class="py-3 px-4 sm:px-6 font-semibold text-slate-900 dark:text-white whitespace-nowrap">
+                  Key Transposition
+                </td>
+                <td class="py-3 px-4 sm:px-6 leading-relaxed">
+                  Shift chords up or down (±11 semitones) for preview and print without modifying the template.
+                </td>
+              </tr>
+              <tr>
+                <td class="py-3 px-4 sm:px-6 font-semibold text-slate-900 dark:text-white whitespace-nowrap">
+                  Orientation & Columns
+                </td>
+                <td class="py-3 px-4 sm:px-6 leading-relaxed">
+                  Portrait takes 1–2 columns, landscape up to 4. Switching back to portrait clamps a wider layout down
+                  automatically.
+                </td>
+              </tr>
+              <tr>
+                <td class="py-3 px-4 sm:px-6 font-semibold text-slate-900 dark:text-white whitespace-nowrap">
+                  Paper Size
+                </td>
+                <td class="py-3 px-4 sm:px-6 leading-relaxed">
+                  Letter, Legal, A4, or a custom width and height in inches or centimeters.
+                </td>
+              </tr>
+              <tr>
+                <td class="py-3 px-4 sm:px-6 font-semibold text-slate-900 dark:text-white whitespace-nowrap">
+                  Type & Margins
+                </td>
+                <td class="py-3 px-4 sm:px-6 leading-relaxed">
+                  Font size from 6 to 20pt, with narrow, normal, or wide margins — or your own value.
+                </td>
+              </tr>
               </tbody>
             </table>
           </div>

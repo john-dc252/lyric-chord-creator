@@ -86,6 +86,21 @@ function getInitialRelativeLineNumbers(): boolean {
   return false;
 }
 
+function extractConvertibleSelection(state: EditorState) {
+  const sel = state.selection.main;
+  if (sel.empty) return null;
+
+  const startLine = state.doc.lineAt(sel.from);
+  const endLine = state.doc.lineAt(sel.to);
+  if (endLine.number <= startLine.number) return null;
+
+  return {
+    from: startLine.from,
+    to: endLine.to,
+    text: state.doc.sliceString(startLine.from, endLine.to),
+  };
+}
+
 export default function TemplateEditor(props: TemplateEditorProps) {
   let editorContainerRef: HTMLDivElement | undefined = undefined;
   let view: EditorView | undefined = undefined;
@@ -113,8 +128,14 @@ export default function TemplateEditor(props: TemplateEditorProps) {
   const [saveAsMode, setSaveAsMode] = createSignal(false, {name: 'save_as_mode'});
 
   // Mono to Template
+  const [selectedFragment, setSelectedFragment] = createSignal<{
+    from: number;
+    to: number;
+    text: string;
+  } | null>(null, {name: 'selected_fragment'});
+
   const isPotentiallyMonosource = createMemo(
-    () => detectPotentialMonospaceFormat(props.value),
+    () => detectPotentialMonospaceFormat(selectedFragment()?.text ?? props.value),
     {name: 'potentially_monosource'}
   );
 
@@ -151,14 +172,36 @@ export default function TemplateEditor(props: TemplateEditorProps) {
     }
   };
 
-  const convertMonoToTemplate = () => {
-    view?.dispatch({
+  const convertMonoToTemplate = (): boolean => {
+    if (!view || !isPotentiallyMonosource()) return false;
+
+    const fragment = selectedFragment();
+    if (!fragment) {
+      view.dispatch({
+        changes: {
+          from: 0,
+          to: view.state.doc.length,
+          insert: monospaceToTemplate(view.state.doc.toString()),
+        },
+      });
+      view.focus();
+      return true;
+    }
+
+    const converted = monospaceToTemplate(fragment.text);
+    view.dispatch({
       changes: {
-        from: 0,
-        to: view.state.doc.length,
-        insert: monospaceToTemplate(view.state.doc.toString())
-      }
+        from: fragment.from,
+        to: fragment.to,
+        insert: converted,
+      },
+      selection: {
+        anchor: fragment.from,
+        head: fragment.from + converted.length,
+      },
     });
+    view.focus();
+    return true;
   };
 
   const handleUndo = () => {
@@ -185,14 +228,17 @@ export default function TemplateEditor(props: TemplateEditorProps) {
     }
   };
 
-  const toggleRelativeLineNumbers = () => {
-    const next = !relativeLineNumbers();
-    setRelativeLineNumbersSignal(next);
+  const updateRelativeLineNumbers = (enabled: boolean) => {
+    setRelativeLineNumbersSignal(enabled);
     try {
-      localStorage.setItem(RELATIVE_LINE_NUMBERS_KEY, String(next));
+      localStorage.setItem(RELATIVE_LINE_NUMBERS_KEY, String(enabled));
     } catch (e) {
       console.error('Failed to save relative line numbers preference:', e);
     }
+  };
+
+  const toggleRelativeLineNumbers = () => {
+    updateRelativeLineNumbers(!relativeLineNumbers());
   };
 
   // Quick Save handler
@@ -257,40 +303,17 @@ export default function TemplateEditor(props: TemplateEditorProps) {
   };
 
   // Register custom Vim Ex commands
-  Vim.defineEx('write', 'w', () => {
-    untrack(() => handleQuickSave());
-  });
-  Vim.defineEx('update', 'up', () => {
-    untrack(() => handleQuickSave());
-  });
-  Vim.defineEx('rnu', 'rnu', () => {
-    setRelativeLineNumbersSignal(true);
-    try {
-      localStorage.setItem(RELATIVE_LINE_NUMBERS_KEY, 'true');
-    } catch {
-    }
-  });
-  Vim.defineEx('nornu', 'nornu', () => {
-    setRelativeLineNumbersSignal(false);
-    try {
-      localStorage.setItem(RELATIVE_LINE_NUMBERS_KEY, 'false');
-    } catch {
-    }
-  });
-  Vim.defineEx('relativenumber', 'relativenumber', () => {
-    setRelativeLineNumbersSignal(true);
-    try {
-      localStorage.setItem(RELATIVE_LINE_NUMBERS_KEY, 'true');
-    } catch {
-    }
-  });
-  Vim.defineEx('norelativenumber', 'norelativenumber', () => {
-    setRelativeLineNumbersSignal(false);
-    try {
-      localStorage.setItem(RELATIVE_LINE_NUMBERS_KEY, 'false');
-    } catch {
-    }
-  });
+  const exSave = () => untrack(() => handleQuickSave());
+  const exEnableRelNum = () => updateRelativeLineNumbers(true);
+  const exDisableRelNum = () => updateRelativeLineNumbers(false);
+
+  Vim.defineEx('write', 'w', exSave);
+  Vim.defineEx('update', 'up', exSave);
+  Vim.defineEx('rnu', 'rnu', exEnableRelNum);
+  Vim.defineEx('relativenumber', 'relativenumber', exEnableRelNum);
+  Vim.defineEx('nornu', 'nornu', exDisableRelNum);
+  Vim.defineEx('norelativenumber', 'norelativenumber', exDisableRelNum);
+  Vim.defineEx('totemplate', 'totemplate', () => untrack(() => convertMonoToTemplate()));
 
   const lineCount = createMemo(() => {
     return props.value.split('\n').length;
@@ -376,6 +399,14 @@ export default function TemplateEditor(props: TemplateEditorProps) {
               return true;
             },
           },
+          {
+            key: 'Meta-Shift-t',
+            run: () => convertMonoToTemplate(),
+          },
+          {
+            key: 'Meta-Shift-T',
+            run: () => convertMonoToTemplate(),
+          },
           indentWithTab,
           ...defaultKeymap,
           ...historyKeymap,
@@ -388,6 +419,8 @@ export default function TemplateEditor(props: TemplateEditorProps) {
             untrack(() => props.onInput(currentDoc));
           }
           if (update.selectionSet || update.docChanged) {
+            setSelectedFragment(extractConvertibleSelection(update.state));
+
             const pos = update.state.selection.main.head;
             const line = update.state.doc.lineAt(pos);
             setCursorInfo({
@@ -822,7 +855,7 @@ export default function TemplateEditor(props: TemplateEditorProps) {
                 ? 'bg-sky-600 hover:bg-sky-500 text-white shadow-xs'
                 : 'bg-slate-200/70 dark:bg-slate-800 text-slate-600 dark:text-slate-400 border border-slate-300 dark:border-slate-700',
             ]}
-            title="Convert from monospace format to template format"
+            title="Convert from monospace format to template format (Win/Cmd+Shift+T)"
           >
             <span class="i-lucide-wand-sparkles w-3.5 h-3.5" aria-hidden="true"/>
             <span>Mono to Template</span>

@@ -29,22 +29,27 @@ export function MonospaceGuideSection(props: MonospaceGuideSectionProps) {
         <span>Converting Monospace Chord Sheets</span>
       </h2>
       <p class="text-sm text-slate-600 dark:text-slate-400 mb-6">
-        Paste a traditional two-line chord-over-lyric sheet and convert it into inline{' '}
+        Paste a traditional two-line chord-over-lyric sheet and convert either the entire document or a selected
+        multi-line fragment into inline{' '}
         <code class="px-1.5 py-0.5 rounded bg-slate-200 dark:bg-slate-800 font-mono text-xs">&#123;Chord&#125;</code>{' '}
-        template syntax with one click using the{' '}
+        template syntax using the{' '}
         <strong class="font-semibold text-slate-800 dark:text-slate-200">Mono to Template</strong> button in the editor
-        toolbar.
+        toolbar (
+        <kbd class="px-1.5 py-0.5 rounded bg-slate-100 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 font-mono text-[11px]">
+          Win/Cmd+Shift+T
+        </kbd>
+        ).
       </p>
 
       <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
         <div class="p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-xs">
           <div class="text-xs font-bold uppercase tracking-wider text-sky-600 dark:text-sky-400 mb-1">
-            1. Paste Monospace Text
+            1. Paste or Select Monospace Lines
           </div>
           <p class="text-xs text-slate-600 dark:text-slate-400 leading-relaxed">
-            Paste a song where chords sit on their own space-aligned line directly above each lyric line. The{' '}
-            <strong class="text-slate-800 dark:text-slate-200">Mono to Template</strong> button enables automatically
-            when no <code class="font-mono">&#123;...&#125;</code> chords are present.
+            Paste a full song (when no <code class="font-mono">&#123;...&#125;</code> chords exist in the document), or
+            select across <strong>two or more lines</strong> to convert only that fragment — ideal when adding a new
+            section or song to an already-converted template.
           </p>
         </div>
 
@@ -65,13 +70,18 @@ export function MonospaceGuideSection(props: MonospaceGuideSectionProps) {
             3. Click Mono to Template
           </div>
           <p class="text-xs text-slate-600 dark:text-slate-400 leading-relaxed">
-            Chords are embedded as <code class="font-mono">&#123;Chord&#125;</code> at their exact column positions in
-            the lyric line. Use{' '}
+            Click <strong class="text-slate-800 dark:text-slate-200">Mono to Template</strong> (or press{' '}
+            <kbd class="px-1.5 py-0.5 rounded bg-slate-100 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 font-mono text-[11px]">
+              Win/Cmd+Shift+T
+            </kbd>{' '}
+            /{' '}
+            <code class="font-mono">:totemplate</code> in Vim). Chords are embedded as{' '}
+            <code class="font-mono">&#123;Chord&#125;</code> at their exact column positions. Use{' '}
             <strong class="text-slate-800 dark:text-slate-200">Undo</strong> (
             <kbd class="px-1.5 py-0.5 rounded bg-slate-100 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 font-mono text-[11px]">
               Ctrl/Cmd+Z
             </kbd>
-            ) to revert if any line pairing needs adjustment.
+            ) to revert if needed.
           </p>
         </div>
       </div>

@@ -1,7 +1,8 @@
 import { useNavigate } from '@solidjs/router';
 import { createSignal, For } from 'solid-js';
+import type { TemplateStyle } from '../../components/TemplateEditor';
 import { TemplateSyntaxHighlighter } from '../../components/TemplateSyntaxHighlighter';
-import { ChordGuidePages } from '../../lib/template-processor';
+import { ChordGuidePages, monospaceToTemplate } from '../../lib/template-processor';
 import { setActiveTemplateId } from '../../lib/templates-store';
 import { paths } from '../../router';
 
@@ -9,11 +10,44 @@ interface ExampleSnippet {
   title: string;
   description: string;
   code: string;
+  style?: TemplateStyle;
 }
 
 const EXAMPLES: ExampleSnippet[] = [
   {
-    title: 'Basic Song with Artist & Columns',
+    title: 'Monospace Style (Chords Above Lyrics)',
+    description:
+      'Two-line chord-over-lyric format where chords are aligned with spaces directly above each lyric line.',
+    style: 'monospace',
+    code: `@title: Amazing Grace
+@artist: John Newton
+
+[Verse 1]
+
+ G                 C         G
+Amazing grace, how sweet the sound
+             D7
+That saved a wretch like me
+  G                    C      G
+I once was lost, but now am found
+              D7    G
+Was blind, but now I see
+
+@column_break
+
+[Verse 2]
+
+      G                        C        G
+'Twas grace that taught my heart to fear
+             D7
+And grace my fears relieved
+    G                  C        G
+How precious did that grace appear
+             D7       G
+The hour I first believed`,
+  },
+  {
+    title: 'Basic Song with Artist & Columns (Embedded Style)',
     description:
       'A standard song format showing title, artist, section header, and chords positioned within lyrics.',
     code: `@title: Amazing Grace
@@ -183,7 +217,7 @@ export function ExamplesSection(props: ExamplesSectionProps) {
                     Template Source (*.lcct.txt)
                   </div>
                   <pre class="whitespace-pre-wrap leading-relaxed select-text font-mono overflow-y-auto h-72 sm:h-80 pr-2">
-                    <TemplateSyntaxHighlighter code={example.code} />
+                    <TemplateSyntaxHighlighter code={example.code} templateStyle={example.style} />
                   </pre>
                 </div>
 
@@ -201,7 +235,13 @@ export function ExamplesSection(props: ExamplesSectionProps) {
                         : 'overflow-hidden',
                     ]}
                   >
-                    <ChordGuidePages template={example.code} />
+                    <ChordGuidePages
+                      template={
+                        example.style === 'monospace'
+                          ? monospaceToTemplate(example.code)
+                          : example.code
+                      }
+                    />
                   </div>
                 </div>
               </div>

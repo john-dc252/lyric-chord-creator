@@ -1,13 +1,24 @@
+export type TemplateStyle = 'monospace' | 'embedded'
+
 type LyricChordPair = string[] | [string, undefined] | [string, string]
 
+const directiveOrSectionPattern = /^\s*@\w+|^\s*\[/
+const blankLinePattern = /^\s*$/
+
 /** pattern for lines that should not be processed for chord embedding */
-const unpairableLinePattern = /^\s*$|^\s*@\w+:|^\s*\[/
+const unpairableLinePattern = /^\s*$|^\s*@|^\s*\[/
 
 export function detectPotentialMonospaceFormat(sourceTxt: string) {
   return !/{/gm.test(sourceTxt)
 }
 
+export function detectTemplateStyle(sourceTxt: string): TemplateStyle {
+  return detectPotentialMonospaceFormat(sourceTxt) ? 'monospace' : 'embedded'
+}
+
 export function monospaceToTemplate(sourceTxt: string) {
+  if (!sourceTxt) return ''
+
   const sourceLines = sourceTxt.split('\n')
   const linePairs = pairLines(sourceLines)
   const rendered: string[] = []
@@ -19,23 +30,64 @@ export function monospaceToTemplate(sourceTxt: string) {
   return rendered.join('\n')
 }
 
-function pairLines(lines: string[]): LyricChordPair[] {
-  const pairableLineCount = lines.values()
-    .filter(l => !unpairableLinePattern.test(l))
-    .reduce((a) => a + 1, 0);
-  if (pairableLineCount % 2 != 0) {
-    console.warn('Unexpected odd number of lines', lines.length)
+export function templateToMonospace(sourceTxt: string) {
+  if (!sourceTxt) return ''
+
+  const sourceLines = sourceTxt.split('\n')
+  const rendered: string[] = []
+
+  for (const rawLine of sourceLines) {
+    const trimmed = rawLine.trim()
+
+    if (trimmed === '') {
+      continue
+    }
+
+    if (/^@empty_line\b/.test(trimmed)) {
+      rendered.push('')
+      continue
+    }
+
+    if (directiveOrSectionPattern.test(rawLine)) {
+      rendered.push(rawLine.trimEnd())
+      continue
+    }
+
+    const [chordLine, lyricsLine] = extractChordsAndLyrics(rawLine.trimEnd())
+    rendered.push(chordLine, lyricsLine)
   }
 
+  return rendered.join('\n')
+}
+
+function countContiguousPairableLines(lines: string[], startIndex: number): number {
+  let count = 0
+  for (let j = startIndex; j < lines.length; j++) {
+    if (unpairableLinePattern.test(lines[j])) {
+      break
+    }
+    count++
+  }
+  return count
+}
+
+function pairLines(lines: string[]): LyricChordPair[] {
   const groups: LyricChordPair[] = []
   let currentGroup: LyricChordPair | undefined
   let pairableLinesCounter = 0
 
-  for (const currentLine of lines) {
+  for (let i = 0; i < lines.length; i++) {
+    const currentLine = lines[i]
     const currentLineTrimmedEnd = currentLine.trimEnd()
-    const isUnpairable = unpairableLinePattern.test(currentLine)
+    const isBlank = blankLinePattern.test(currentLine)
+    const isDirectiveOrSection = directiveOrSectionPattern.test(currentLine)
 
-    if (isUnpairable) {
+    const isEmptyChordLine =
+      isBlank &&
+      pairableLinesCounter % 2 === 0 &&
+      countContiguousPairableLines(lines, i + 1) % 2 === 1
+
+    if (isDirectiveOrSection || (isBlank && !isEmptyChordLine)) {
       groups.push([currentLineTrimmedEnd])
       currentGroup = []
       continue
@@ -51,11 +103,41 @@ function pairLines(lines: string[]): LyricChordPair[] {
     pairableLinesCounter++
   }
 
+  if (pairableLinesCounter % 2 !== 0) {
+    console.warn('Unexpected odd number of lines', lines.length)
+  }
+
   return groups
 }
 
+function extractChordsAndLyrics(line: string): [string, string] {
+  const positionedChords: [number, string][] = []
+  let lyrics = ''
+  const tokenPattern = /\{([^}]*)\}|([^{]+|\{)/g
+
+  for (let match = tokenPattern.exec(line); match !== null; match = tokenPattern.exec(line)) {
+    const chord = match[1]
+    const text = match[2]
+    if (chord !== undefined) {
+      if (chord.length > 0) {
+        positionedChords.push([lyrics.length, chord])
+      }
+    } else if (text !== undefined) {
+      lyrics += text
+    }
+  }
+
+  let chordLine = ''
+  for (const [offset, chord] of positionedChords) {
+    const targetOffset = chordLine.length === 0 ? offset : Math.max(offset, chordLine.length + 1)
+    chordLine = chordLine.padEnd(targetOffset, ' ') + chord
+  }
+
+  return [chordLine.trimEnd(), lyrics.trimEnd()]
+}
+
 function embedChords([chordLine, lyricsLine]: LyricChordPair): string {
-  if (!lyricsLine) {
+  if (lyricsLine === undefined) {
     return !chordLine?.trim() ? '@empty_line' : chordLine
   }
 

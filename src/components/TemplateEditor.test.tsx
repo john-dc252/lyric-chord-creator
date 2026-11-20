@@ -19,6 +19,7 @@ function getEditorView(container: HTMLElement): EditorView {
 describe('<TemplateEditor /> Mono to Template modes', () => {
   afterEach(() => {
     cleanup();
+    localStorage.clear();
   });
 
   test('full document conversion mode converts entire document when no text is selected', () => {
@@ -31,7 +32,7 @@ describe('<TemplateEditor /> Mono to Template modes', () => {
 
     const [doc, setDoc] = createSignal(initialDoc);
     const { container, getByTitle } = render(() => (
-      <TemplateEditor value={doc()} onInput={setDoc} />
+      <TemplateEditor value={doc()} onInput={setDoc} templateStyle="embedded" />
     ));
     flush();
 
@@ -67,7 +68,7 @@ describe('<TemplateEditor /> Mono to Template modes', () => {
 
     const [doc, setDoc] = createSignal(initialDoc);
     const { container, getByTitle } = render(() => (
-      <TemplateEditor value={doc()} onInput={setDoc} />
+      <TemplateEditor value={doc()} onInput={setDoc} templateStyle="embedded" />
     ));
     flush();
 
@@ -128,7 +129,7 @@ describe('<TemplateEditor /> Mono to Template modes', () => {
 
     const [doc, setDoc] = createSignal(initialDoc);
     const { container, getByTitle } = render(() => (
-      <TemplateEditor value={doc()} onInput={setDoc} />
+      <TemplateEditor value={doc()} onInput={setDoc} templateStyle="embedded" />
     ));
     flush();
 
@@ -179,7 +180,7 @@ describe('<TemplateEditor /> Mono to Template modes', () => {
 
     const [doc, setDoc] = createSignal(initialDoc);
     const { container, getByTitle } = render(() => (
-      <TemplateEditor value={doc()} onInput={setDoc} />
+      <TemplateEditor value={doc()} onInput={setDoc} templateStyle="embedded" />
     ));
     flush();
 
@@ -210,7 +211,7 @@ describe('<TemplateEditor /> Mono to Template modes', () => {
 
     const [doc, setDoc] = createSignal(initialDoc);
     const { container, getByTitle } = render(() => (
-      <TemplateEditor value={doc()} onInput={setDoc} />
+      <TemplateEditor value={doc()} onInput={setDoc} templateStyle="embedded" />
     ));
     flush();
 
@@ -234,5 +235,147 @@ describe('<TemplateEditor /> Mono to Template modes', () => {
         'A{G}mazing grace, how {C}sweet the {G}sound',
       ].join('\n'),
     );
+  });
+
+  test('renders template style dropdown with Monospace and Embedded options, shows wand button only in Embedded style, and converts source when switching styles', () => {
+    const initialEmbedded = [
+      '@title: Amazing Grace',
+      '@empty_line',
+      '[Verse 1]',
+      'A{G}mazing grace, how {C}sweet the {G}sound',
+    ].join('\n');
+
+    const expectedMonospace = [
+      '@title: Amazing Grace',
+      '',
+      '[Verse 1]',
+      ' G                 C         G',
+      'Amazing grace, how sweet the sound',
+    ].join('\n');
+
+    const [doc, setDoc] = createSignal(initialEmbedded);
+    const { getByLabelText, queryByTitle } = render(() => (
+      <TemplateEditor value={doc()} onInput={setDoc} />
+    ));
+    flush();
+
+    const styleSelect = getByLabelText('Template style') as HTMLSelectElement;
+    const optionTexts = Array.from(styleSelect.options).map((o) => o.textContent?.trim());
+    expect(optionTexts).toEqual(['Monospace', 'Embedded']);
+    expect(styleSelect.value).toBe('embedded');
+
+    const monoBtnTitle = 'Convert from monospace format to template format (Win/Cmd+Shift+T)';
+
+    // Wand button is visible when Embedded is selected and has no text label
+    const monoBtn = queryByTitle(monoBtnTitle);
+    expect(monoBtn).not.toBeNull();
+    expect(monoBtn?.textContent).toBe('');
+
+    // Switch style to Monospace -> converts source to monospace and hides wand button
+    fireEvent.change(styleSelect, { target: { value: 'monospace' } });
+    flush();
+
+    expect(styleSelect.value).toBe('monospace');
+    expect(queryByTitle(monoBtnTitle)).toBeNull();
+    expect(untrack(doc)).toBe(expectedMonospace);
+
+    // Switch style back to Embedded -> converts source back to embedded and shows wand button
+    fireEvent.change(styleSelect, { target: { value: 'embedded' } });
+    flush();
+
+    expect(styleSelect.value).toBe('embedded');
+    expect(queryByTitle(monoBtnTitle)).not.toBeNull();
+    expect(untrack(doc)).toBe(initialEmbedded);
+  });
+
+  test('highlights chords on chord lines in monospace mode and after @chord_sequence: with the same color scheme as embedded mode', () => {
+    const initialEmbedded = [
+      '@title: Amazing Grace',
+      '[Intro]',
+      '@chord_sequence: G C D7',
+      '[Verse 1]',
+      'A{G}mazing grace, how {C}sweet the {G}sound',
+    ].join('\n');
+
+    const [doc, setDoc] = createSignal(initialEmbedded);
+    const { container, getByLabelText } = render(() => (
+      <TemplateEditor value={doc()} onInput={setDoc} />
+    ));
+    flush();
+
+    // Capture the highlight class applied to {G} in embedded mode
+    const embeddedLines = container.querySelectorAll('.cm-line');
+    const embeddedChordSpan = Array.from(embeddedLines[4].querySelectorAll('span')).find(
+      (el) => el.textContent === '{G}',
+    );
+    expect(embeddedChordSpan).toBeDefined();
+    const chordHighlightClass = embeddedChordSpan!.className;
+    expect(chordHighlightClass.length).toBeGreaterThan(0);
+
+    // Chords after @chord_sequence: in embedded mode use the chord highlight class
+    const embeddedSeqSpans = Array.from(embeddedLines[2].querySelectorAll('span'));
+    expect(embeddedSeqSpans.map((s) => s.textContent)).toEqual(['@chord_sequence:', 'G', 'C', 'D7']);
+    for (const span of embeddedSeqSpans.slice(1)) {
+      expect(span.className).toBe(chordHighlightClass);
+    }
+
+    // Switch to monospace mode
+    const styleSelect = getByLabelText('Template style') as HTMLSelectElement;
+    fireEvent.change(styleSelect, { target: { value: 'monospace' } });
+    flush();
+
+    const monoLines = container.querySelectorAll('.cm-line');
+    // Chords after @chord_sequence: in monospace mode also use the chord highlight class
+    const monoSeqSpans = Array.from(monoLines[2].querySelectorAll('span'));
+    expect(monoSeqSpans.map((s) => s.textContent)).toEqual(['@chord_sequence:', 'G', 'C', 'D7']);
+    for (const span of monoSeqSpans.slice(1)) {
+      expect(span.className).toBe(chordHighlightClass);
+    }
+
+    // In monospace mode, line 5 is the chord line (" G                 C         G")
+    // and line 6 is the lyric line ("Amazing grace, how sweet the sound")
+    const chordSpans = Array.from(monoLines[4].querySelectorAll('span'));
+    expect(chordSpans.map((s) => s.textContent)).toEqual(['G', 'C', 'G']);
+    for (const span of chordSpans) {
+      expect(span.className).toBe(chordHighlightClass);
+    }
+
+    // Lyric line should not highlight words as chords
+    expect(monoLines[5].querySelectorAll('span').length).toBe(0);
+  });
+
+  test('automatically detects template style based on presence or absence of "{" when a template is loaded', () => {
+    const monospaceDoc = [
+      '@title: Amazing Grace',
+      '[Verse 1]',
+      ' G                 C         G',
+      'Amazing grace, how sweet the sound',
+    ].join('\n');
+
+    const embeddedDoc = [
+      '@title: Amazing Grace',
+      '[Verse 1]',
+      'A{G}mazing grace, how {C}sweet the {G}sound',
+    ].join('\n');
+
+    const [doc, setDoc] = createSignal(monospaceDoc);
+    const { getByLabelText } = render(() => (
+      <TemplateEditor value={doc()} onInput={setDoc} />
+    ));
+    flush();
+
+    const styleSelect = getByLabelText('Template style') as HTMLSelectElement;
+    // Initial load without '{' detects monospace
+    expect(styleSelect.value).toBe('monospace');
+
+    // Loading a template containing '{' detects embedded
+    setDoc(embeddedDoc);
+    flush();
+    expect(styleSelect.value).toBe('embedded');
+
+    // Loading a template without '{' again detects monospace
+    setDoc(monospaceDoc);
+    flush();
+    expect(styleSelect.value).toBe('monospace');
   });
 });

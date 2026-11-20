@@ -26,62 +26,48 @@ export function MonospaceGuideSection(props: MonospaceGuideSectionProps) {
     >
       <h2 class="text-2xl font-bold text-slate-900 dark:text-white mb-2 flex items-center gap-2">
         <span class="i-lucide-wand-sparkles w-5 h-5 text-sky-600 dark:text-sky-400" aria-hidden="true" />
-        <span>Converting Monospace Chord Sheets</span>
+        <span>Template Styles & Monospace Conversion</span>
       </h2>
       <p class="text-sm text-slate-600 dark:text-slate-400 mb-6">
-        Paste a traditional two-line chord-over-lyric sheet and convert either the entire document or a selected
-        multi-line fragment into inline{' '}
-        <code class="px-1.5 py-0.5 rounded bg-slate-200 dark:bg-slate-800 font-mono text-xs">&#123;Chord&#125;</code>{' '}
-        template syntax using the{' '}
-        <strong class="font-semibold text-slate-800 dark:text-slate-200">Mono to Template</strong> button in the editor
-        toolbar (
-        <kbd class="px-1.5 py-0.5 rounded bg-slate-100 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 font-mono text-[11px]">
-          Win/Cmd+Shift+T
-        </kbd>
-        ).
+        Edit sheets in either <strong>Embedded</strong> (<code class="font-mono text-xs">&#123;Chord&#125;</code> inline)
+        or <strong>Monospace</strong> (chords spaced above lyrics) style. Behind the scenes, the sheet is always
+        generated from template syntax.
       </p>
 
       <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
         <div class="p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-xs">
           <div class="text-xs font-bold uppercase tracking-wider text-sky-600 dark:text-sky-400 mb-1">
-            1. Paste or Select Monospace Lines
+            1. Style Dropdown
           </div>
           <p class="text-xs text-slate-600 dark:text-slate-400 leading-relaxed">
-            Paste a full song (when no <code class="font-mono">&#123;...&#125;</code> chords exist in the document), or
-            select across <strong>two or more lines</strong> to convert only that fragment — ideal when adding a new
-            section or song to an already-converted template.
+            Switch between <strong>Embedded</strong> and <strong>Monospace</strong> in the editor toolbar at any time.
+            Changing the style automatically converts the current document between the two formats.
           </p>
         </div>
 
         <div class="p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-xs">
           <div class="text-xs font-bold uppercase tracking-wider text-sky-600 dark:text-sky-400 mb-1">
-            2. Format Non-Pair Lines First
+            2. Quick-Convert Wand
           </div>
           <p class="text-xs text-slate-600 dark:text-slate-400 leading-relaxed">
-            Before converting, manually tag any line that is <strong>not</strong> part of a chord-over-lyric pair using{' '}
-            <code class="font-mono">@title:</code>, <code class="font-mono">@artist:</code>,{' '}
-            <code class="font-mono">@chord_sequence:</code>, or <code class="font-mono">[Section]</code> syntax so line
-            pairing stays aligned.
-          </p>
-        </div>
-
-        <div class="p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-xs">
-          <div class="text-xs font-bold uppercase tracking-wider text-sky-600 dark:text-sky-400 mb-1">
-            3. Click Mono to Template
-          </div>
-          <p class="text-xs text-slate-600 dark:text-slate-400 leading-relaxed">
-            Click <strong class="text-slate-800 dark:text-slate-200">Mono to Template</strong> (or press{' '}
-            <kbd class="px-1.5 py-0.5 rounded bg-slate-100 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 font-mono text-[11px]">
+            While in <strong>Embedded</strong> style, click the wand button (
+            <span class="i-lucide-wand-sparkles w-3 h-3 inline-block align-text-bottom text-sky-600 dark:text-sky-400" aria-hidden="true" />
+            ,{' '}
+            <kbd class="px-1 py-0.5 rounded bg-slate-100 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 font-mono text-[10px]">
               Win/Cmd+Shift+T
-            </kbd>{' '}
-            /{' '}
-            <code class="font-mono">:totemplate</code> in Vim). Chords are embedded as{' '}
-            <code class="font-mono">&#123;Chord&#125;</code> at their exact column positions. Use{' '}
-            <strong class="text-slate-800 dark:text-slate-200">Undo</strong> (
-            <kbd class="px-1.5 py-0.5 rounded bg-slate-100 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 font-mono text-[11px]">
-              Ctrl/Cmd+Z
             </kbd>
-            ) to revert if needed.
+            ) to convert a pasted monospace sheet—or just a multi-line selection—into{' '}
+            <code class="font-mono">&#123;Chord&#125;</code> syntax.
+          </p>
+        </div>
+
+        <div class="p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-xs">
+          <div class="text-xs font-bold uppercase tracking-wider text-sky-600 dark:text-sky-400 mb-1">
+            3. Blank & Chordless Lines
+          </div>
+          <p class="text-xs text-slate-600 dark:text-slate-400 leading-relaxed">
+            In <strong>Monospace</strong> style, blank lines act as <code class="font-mono">@empty_line</code>, and
+            chordless lyric lines keep an empty chord line above them so line pairing stays intact.
           </p>
         </div>
       </div>
@@ -95,18 +81,18 @@ export function MonospaceGuideSection(props: MonospaceGuideSectionProps) {
           />
           <div class="space-y-1">
             <div class="font-bold text-amber-900 dark:text-amber-300">
-              Important: Update non-lyric/chord lines to template syntax before converting
+              Tag non-pair lines in Monospace sheets
             </div>
             <p class="leading-relaxed">
-              The converter pairs every consecutive line unless it is a blank line, a{' '}
+              Monospace parsing pairs every two consecutive lines unless a line is blank, a{' '}
               <code class="px-1 py-0.5 rounded bg-indigo-100/80 dark:bg-indigo-950 font-mono font-bold text-indigo-700 dark:text-indigo-300">
                 [Section]
               </code>{' '}
               header, or an{' '}
               <code class="px-1 py-0.5 rounded bg-amber-100/80 dark:bg-amber-950 font-mono font-bold text-amber-800 dark:text-amber-300">
-                @directive:
-              </code>{' '}
-              line. Leaving plain-text lines unformatted will shift the pairing and merge the wrong lines together:
+                @directive
+              </code>
+              . Tag standalone lines so chord/lyric pairs stay aligned:
             </p>
           </div>
         </div>
@@ -172,16 +158,16 @@ export function MonospaceGuideSection(props: MonospaceGuideSectionProps) {
       <div class="grid grid-cols-1 lg:grid-cols-2 divide-y lg:divide-y-0 lg:divide-x divide-slate-200 dark:divide-slate-800 border border-slate-200 dark:border-slate-800 rounded-xl overflow-hidden shadow-sm">
         <div class="p-4 bg-slate-50 dark:bg-slate-900 font-mono text-xs">
           <div class="text-[10px] uppercase font-bold text-slate-500 dark:text-slate-400 mb-2 select-none">
-            Before — Prepared Monospace Input (Chord Line Above Lyric Line)
+            Monospace Style (Chord Line Above Lyric Line)
           </div>
           <pre class="whitespace-pre-wrap leading-relaxed select-text font-mono text-slate-800 dark:text-slate-200">
-            <TemplateSyntaxHighlighter code={MONOSPACE_SOURCE_SAMPLE} />
+            <TemplateSyntaxHighlighter code={MONOSPACE_SOURCE_SAMPLE} templateStyle="monospace" />
           </pre>
         </div>
 
         <div class="p-4 bg-white dark:bg-slate-950 font-mono text-xs">
           <div class="text-[10px] uppercase font-bold text-slate-500 dark:text-slate-400 mb-2 select-none">
-            After — Converted Template Output
+            Embedded Style (Inline &#123;Chord&#125; Syntax)
           </div>
           <pre class="whitespace-pre-wrap leading-relaxed select-text font-mono">
             <TemplateSyntaxHighlighter code={monospaceToTemplate(MONOSPACE_SOURCE_SAMPLE)} />

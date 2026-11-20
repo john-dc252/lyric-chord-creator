@@ -21,7 +21,7 @@ export default function About() {
   const scrollToSection = (id: SectionId, e?: MouseEvent) => {
     e?.preventDefault();
     setActiveSection(id);
-    sectionRefs[id]?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    sectionRefs[id]?.scrollIntoView({ behavior: 'instant', block: 'start' });
   };
 
   const handleScroll = () => {

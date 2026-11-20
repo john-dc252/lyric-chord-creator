@@ -74,7 +74,9 @@ async function waitForServer(url, server, timeoutMs = 30_000) {
   while (Date.now() < deadline) {
     if (server.exitCode !== null) throw new Error(`vite dev server exited (${server.exitCode})`);
     try {
-      if ((await fetch(url, {headers: {accept: 'text/html'}})).ok) return;
+      const res = await fetch(url, {headers: {accept: 'text/html'}});
+      await res.body?.cancel();
+      if (res.ok) return;
     } catch {}
     await sleep(250);
   }
@@ -103,54 +105,134 @@ function launchChrome(chromePath, userDataDir) {
   return {proc, wsUrl};
 }
 
-function connectCdp(wsUrl) {
+function connectCdp(wsUrl, defaultTimeoutMs = 30_000) {
   const ws = new WebSocket(wsUrl);
   let nextId = 0;
+  let closedReason = null;
   const pending = new Map();
   const listeners = new Set();
+
+  const abortAll = (reason) => {
+    if (closedReason) return;
+    closedReason = reason;
+    for (const {reject, timer} of pending.values()) {
+      clearTimeout(timer);
+      reject(reason);
+    }
+    pending.clear();
+    for (const entry of listeners) {
+      clearTimeout(entry.timer);
+      entry.reject(reason);
+    }
+    listeners.clear();
+  };
 
   ws.addEventListener('message', ({data}) => {
     const msg = JSON.parse(data);
     if (msg.id !== undefined) {
-      const {resolve: res, reject} = pending.get(msg.id);
+      const entry = pending.get(msg.id);
+      if (!entry) return;
       pending.delete(msg.id);
-      msg.error ? reject(new Error(msg.error.message)) : res(msg.result);
+      clearTimeout(entry.timer);
+      msg.error ? entry.reject(new Error(msg.error.message)) : entry.resolve(msg.result);
     } else {
-      for (const fn of listeners) fn(msg);
+      for (const entry of listeners) entry.fn(msg);
     }
   });
 
-  const send = (method, params = {}, sessionId) =>
+  ws.addEventListener('close', () => abortAll(new Error('CDP WebSocket closed unexpectedly')));
+  ws.addEventListener('error', () => abortAll(new Error('CDP WebSocket error')));
+
+  const send = (method, params = {}, sessionId, timeoutMs = defaultTimeoutMs) =>
     new Promise((res, reject) => {
+      if (closedReason) return reject(closedReason);
       const id = ++nextId;
-      pending.set(id, {resolve: res, reject});
+      const timer = setTimeout(() => {
+        pending.delete(id);
+        reject(new Error(`CDP request timed out after ${timeoutMs}ms: ${method}`));
+      }, timeoutMs);
+      pending.set(id, {resolve: res, reject, timer});
       ws.send(JSON.stringify({id, method, params, sessionId}));
     });
 
-  const once = (method, sessionId) =>
-    new Promise((res) => {
-      const fn = (msg) => {
-        if (msg.method === method && msg.sessionId === sessionId) {
-          listeners.delete(fn);
-          res(msg.params);
-        }
+  const once = (method, sessionId, timeoutMs = defaultTimeoutMs) =>
+    new Promise((res, reject) => {
+      if (closedReason) return reject(closedReason);
+      const entry = {
+        fn: (msg) => {
+          if (msg.method === method && msg.sessionId === sessionId) {
+            clearTimeout(entry.timer);
+            listeners.delete(entry);
+            res(msg.params);
+          }
+        },
+        reject,
+        timer: setTimeout(() => {
+          listeners.delete(entry);
+          reject(new Error(`CDP event timed out after ${timeoutMs}ms: ${method}`));
+        }, timeoutMs),
       };
-      listeners.add(fn);
+      listeners.add(entry);
     });
 
   const opened = new Promise((res, reject) => {
     ws.addEventListener('open', res, {once: true});
-    ws.addEventListener('error', reject, {once: true});
+    ws.addEventListener('error', () => reject(new Error('Failed to open CDP WebSocket')), {
+      once: true,
+    });
   });
 
   return {opened, send, once, close: () => ws.close()};
+}
+
+async function evaluateWhenReady(send, shot, timeoutMs = 20_000) {
+  const deadline = Date.now() + timeoutMs;
+  while (true) {
+    const remaining = deadline - Date.now();
+    if (remaining <= 0) throw new Error('Timed out waiting for page to settle');
+    try {
+      const {exceptionDetails} = await send(
+        'Runtime.evaluate',
+        {
+          awaitPromise: true,
+          expression: `(async () => {
+            const deadline = Date.now() + ${Math.min(remaining, 15_000)};
+            while (!document.querySelector('.cm-content')) {
+              if (Date.now() > deadline) throw new Error('Editor did not render');
+              await new Promise((r) => setTimeout(r, 100));
+            }
+            ${shot.prepare ?? ''}
+            await Promise.race([
+              document.fonts.ready,
+              new Promise((r) => setTimeout(r, 5000)),
+            ]);
+            await new Promise((r) => setTimeout(r, 500));
+          })()`,
+        },
+        remaining + 2_000,
+      );
+      if (exceptionDetails) {
+        throw new Error(exceptionDetails.exception?.description ?? exceptionDetails.text);
+      }
+      return;
+    } catch (error) {
+      // Vite's dependency optimizer or asset retry can trigger a full-page
+      // reload mid-evaluation on cold starts; retry in the new context.
+      const transient =
+        /Execution context was destroyed|Cannot find context|Inspected target navigated/i.test(
+          error.message,
+        );
+      if (!transient || Date.now() >= deadline) throw error;
+      await sleep(250);
+    }
+  }
 }
 
 async function capture(cdp, shot, appUrl) {
   const {browserContextId} = await cdp.send('Target.createBrowserContext');
   const {targetId} = await cdp.send('Target.createTarget', {url: 'about:blank', browserContextId});
   const {sessionId} = await cdp.send('Target.attachToTarget', {targetId, flatten: true});
-  const send = (method, params) => cdp.send(method, params, sessionId);
+  const send = (method, params, timeoutMs) => cdp.send(method, params, sessionId, timeoutMs);
 
   try {
     await send('Page.enable');
@@ -163,29 +245,14 @@ async function capture(cdp, shot, appUrl) {
     await send('Page.navigate', {url: appUrl});
     await loaded;
 
-    const {exceptionDetails} = await send('Runtime.evaluate', {
-      awaitPromise: true,
-      expression: `(async () => {
-        const deadline = Date.now() + 15000;
-        while (!document.querySelector('.cm-content')) {
-          if (Date.now() > deadline) throw new Error('Editor did not render');
-          await new Promise((r) => setTimeout(r, 100));
-        }
-        ${shot.prepare ?? ''}
-        await document.fonts.ready;
-        await new Promise((r) => setTimeout(r, 500));
-      })()`,
-    });
-    if (exceptionDetails) {
-      throw new Error(exceptionDetails.exception?.description ?? exceptionDetails.text);
-    }
+    await evaluateWhenReady(send, shot);
 
     const {data} = await send('Page.captureScreenshot', {format: 'png'});
     const out = join(ROOT, 'public', shot.file);
     writeFileSync(out, Buffer.from(data, 'base64'));
     console.log(`✓ public/${shot.file} (${shot.viewport.width}x${shot.viewport.height})`);
   } finally {
-    await cdp.send('Target.disposeBrowserContext', {browserContextId});
+    await cdp.send('Target.disposeBrowserContext', {browserContextId}).catch(() => {});
   }
 }
 

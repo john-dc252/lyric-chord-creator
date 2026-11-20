@@ -44,6 +44,10 @@ body {
     break-inside: avoid-page;
 }
 
+.line:not(:has(.chord)) {
+    line-height: 1rem;
+}
+
 .chord {
     font-weight: bold;
     position: absolute;

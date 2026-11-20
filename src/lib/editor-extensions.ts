@@ -2,20 +2,47 @@ import { StreamLanguage, HighlightStyle, syntaxHighlighting } from '@codemirror/
 import { tags as t } from '@lezer/highlight';
 import { EditorView, lineNumbers } from '@codemirror/view';
 import { Extension } from '@codemirror/state';
+import type { TemplateStyle } from './template-processor/monospace-converter';
+
+interface EmbeddedStreamState {
+  inChordSequence: boolean;
+}
+
+interface MonospaceStreamState {
+  expectChordLine: boolean;
+  lineType: 'chord' | 'lyric' | 'directive';
+}
 
 /**
- * Custom StreamLanguage definition for Lyric-Chord template syntax
+ * Custom StreamLanguage definition for Embedded Lyric-Chord template syntax ({Chord})
  */
-export const lyricChordLanguage = StreamLanguage.define({
-  token(stream) {
+export const lyricChordEmbeddedLanguage = StreamLanguage.define<EmbeddedStreamState>({
+  startState(): EmbeddedStreamState {
+    return { inChordSequence: false };
+  },
+  copyState(state): EmbeddedStreamState {
+    return { inChordSequence: state.inChordSequence };
+  },
+  blankLine(state) {
+    state.inChordSequence = false;
+  },
+  token(stream, state) {
     if (stream.sol()) {
+      state.inChordSequence = false;
       if (stream.match(/^@title:?/)) return 'meta';
       if (stream.match(/^@artist:?/)) return 'meta';
       if (stream.match(/^@column_break\b/)) return 'keyword';
       if (stream.match(/^@page_break\b/)) return 'keyword';
       if (stream.match(/^@empty_line\b/)) return 'keyword';
-      if (stream.match(/^@chord_sequence:?/)) return 'meta';
+      if (stream.match(/^@chord_sequence:?/)) {
+        state.inChordSequence = true;
+        return 'meta';
+      }
       if (stream.match(/^\[[^\]]*\]/)) return 'heading';
+    }
+    if (state.inChordSequence) {
+      if (stream.eatSpace()) return null;
+      if (stream.match(/^\S+/)) return 'atom';
     }
     if (stream.match(/^\{[^}]*\}/)) {
       return 'atom';
@@ -24,6 +51,104 @@ export const lyricChordLanguage = StreamLanguage.define({
     return null;
   },
 });
+
+/**
+ * Custom StreamLanguage definition for Monospace Lyric-Chord syntax (chord line over lyric line)
+ */
+export const lyricChordMonospaceLanguage = StreamLanguage.define<MonospaceStreamState>({
+  startState(): MonospaceStreamState {
+    return {
+      expectChordLine: true,
+      lineType: 'lyric',
+    };
+  },
+  copyState(state): MonospaceStreamState {
+    return {
+      expectChordLine: state.expectChordLine,
+      lineType: state.lineType,
+    };
+  },
+  blankLine(state) {
+    state.expectChordLine = true;
+    state.lineType = 'lyric';
+  },
+  token(stream, state) {
+    if (stream.sol()) {
+      if (stream.match(/^\s*$/)) {
+        state.expectChordLine = true;
+        state.lineType = 'lyric';
+        return null;
+      }
+      if (stream.match(/^\s*@title:?/)) {
+        state.lineType = 'directive';
+        state.expectChordLine = true;
+        return 'meta';
+      }
+      if (stream.match(/^\s*@artist:?/)) {
+        state.lineType = 'directive';
+        state.expectChordLine = true;
+        return 'meta';
+      }
+      if (stream.match(/^\s*@column_break\b/)) {
+        state.lineType = 'directive';
+        state.expectChordLine = true;
+        return 'keyword';
+      }
+      if (stream.match(/^\s*@page_break\b/)) {
+        state.lineType = 'directive';
+        state.expectChordLine = true;
+        return 'keyword';
+      }
+      if (stream.match(/^\s*@empty_line\b/)) {
+        state.lineType = 'directive';
+        state.expectChordLine = true;
+        return 'keyword';
+      }
+      if (stream.match(/^\s*@chord_sequence:?/)) {
+        state.lineType = 'chord';
+        state.expectChordLine = true;
+        return 'meta';
+      }
+      if (stream.match(/^\s*@\w+/)) {
+        state.lineType = 'directive';
+        state.expectChordLine = true;
+        return null;
+      }
+      if (stream.match(/^\s*\[[^\]]*\]/)) {
+        state.lineType = 'directive';
+        state.expectChordLine = true;
+        return 'heading';
+      }
+      if (stream.match(/^\s*\[/)) {
+        state.lineType = 'directive';
+        state.expectChordLine = true;
+        return null;
+      }
+
+      if (state.expectChordLine) {
+        state.lineType = 'chord';
+        state.expectChordLine = false;
+      } else {
+        state.lineType = 'lyric';
+        state.expectChordLine = true;
+      }
+    }
+
+    if (state.lineType === 'chord') {
+      if (stream.eatSpace()) return null;
+      if (stream.match(/^\S+/)) return 'atom';
+    }
+
+    stream.skipToEnd();
+    return null;
+  },
+});
+
+export const lyricChordLanguage = lyricChordEmbeddedLanguage;
+
+export function getLyricChordLanguage(style: TemplateStyle = 'embedded') {
+  return style === 'monospace' ? lyricChordMonospaceLanguage : lyricChordEmbeddedLanguage;
+}
 
 /**
  * Syntax highlighting styles for light mode

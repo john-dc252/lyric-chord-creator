@@ -14,9 +14,9 @@
   },
   "license": "MIT",
   "devDependencies": {
-    "@solidjs/diagnostics": "^2.0.0",
+    "@solidjs/diagnostics": "^2.0.3",
     "@solidjs/testing-library": "^1.0.0-rc.2",
-    "@solidjs/vite-plugin": "^3.0.0",
+    "@solidjs/vite-plugin": "^3.0.1",
     "@testing-library/jest-dom": "^6.9.1",
     "@unocss/preset-wind4": "^66.13.0",
     "@unocss/reset": "^66.13.0",
@@ -39,9 +39,9 @@
     "@replit/codemirror-vim": "^6.4.0",
     "@solidjs/meta": "^1.0.0-next.2",
     "@solidjs/router": "^2.0.0",
-    "@solidjs/web": "^2.0.0",
+    "@solidjs/web": "^2.0.3",
     "codemirror": "^6.0.2",
-    "solid-js": "^2.0.0",
+    "solid-js": "^2.0.3",
     "workbox-window": "^7.4.1"
   }
 }

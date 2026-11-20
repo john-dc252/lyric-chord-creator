@@ -26,17 +26,27 @@ import {theme} from '../lib/theme';
 import {
   createEditorTheme,
   createLineNumbersGutter,
+  getLyricChordLanguage,
   lyricChordDarkHighlight,
-  lyricChordLanguage,
   lyricChordLightHighlight,
 } from '../lib/editor-extensions';
 import {activeTemplateId, exportTemplateAsFile, savedTemplates, saveTemplate,} from '../lib/templates-store';
 import SaveTemplateModal from './SaveTemplateModal';
-import {detectPotentialMonospaceFormat, monospaceToTemplate} from "../lib/template-processor/monospace-converter";
+import {
+  detectPotentialMonospaceFormat,
+  detectTemplateStyle,
+  monospaceToTemplate,
+  templateToMonospace,
+  type TemplateStyle,
+} from "../lib/template-processor/monospace-converter";
+
+export { detectTemplateStyle, type TemplateStyle };
 
 interface TemplateEditorProps {
   value: string;
   onInput: (val: string) => void;
+  templateStyle?: TemplateStyle;
+  onTemplateStyleChange?: (style: TemplateStyle) => void;
   onCursorLineChange?: (line: number) => void;
   onFileDrop?: (content: string, filename: string) => void;
   onResetToDefault?: () => void;
@@ -113,6 +123,12 @@ export default function TemplateEditor(props: TemplateEditorProps) {
     getInitialRelativeLineNumbers(),
     {name: 'relative_line_numbers'},
   );
+  const [internalStyle, setInternalStyle] = createSignal<TemplateStyle>(
+    untrack(() => detectTemplateStyle(props.value)),
+    {name: 'template_style'},
+  );
+
+  const templateStyle = () => props.templateStyle ?? internalStyle();
 
   const [vimModeName, setVimModeName] = createSignal<'NORMAL' | 'INSERT' | 'VISUAL' | 'VISUAL LINE' | 'VISUAL BLOCK' | 'REPLACE'>('NORMAL', {
     name: 'vim_mode_name',
@@ -161,6 +177,7 @@ export default function TemplateEditor(props: TemplateEditorProps) {
   const wordWrapCompartment = new Compartment();
   const themeCompartment = new Compartment();
   const highlightCompartment = new Compartment();
+  const languageCompartment = new Compartment();
 
   const toggleWordWrap = () => {
     const next = !wordWrap();
@@ -172,8 +189,42 @@ export default function TemplateEditor(props: TemplateEditorProps) {
     }
   };
 
+  const applyDetectedStyle = (content: string) => {
+    const detected = detectTemplateStyle(content);
+    setInternalStyle(detected);
+    props.onTemplateStyleChange?.(detected);
+    return detected;
+  };
+
+  const handleTemplateStyleChange = (nextStyle: TemplateStyle) => {
+    const current = templateStyle();
+    if (nextStyle === current) return;
+
+    setInternalStyle(nextStyle);
+    props.onTemplateStyleChange?.(nextStyle);
+
+    const currentDoc = view ? view.state.doc.toString() : props.value;
+    const converted =
+      nextStyle === 'monospace'
+        ? templateToMonospace(currentDoc)
+        : monospaceToTemplate(currentDoc);
+
+    if (view) {
+      view.dispatch({
+        changes: {
+          from: 0,
+          to: view.state.doc.length,
+          insert: converted,
+        },
+        effects: languageCompartment.reconfigure(getLyricChordLanguage(nextStyle)),
+      });
+    } else if (converted !== props.value) {
+      props.onInput(converted);
+    }
+  };
+
   const convertMonoToTemplate = (): boolean => {
-    if (!view || !isPotentiallyMonosource()) return false;
+    if (!view || templateStyle() !== 'embedded' || !isPotentiallyMonosource()) return false;
 
     const fragment = selectedFragment();
     if (!fragment) {
@@ -285,10 +336,12 @@ export default function TemplateEditor(props: TemplateEditorProps) {
       reader.onload = (event) => {
         const text = event.target?.result as string;
         if (text) {
+          const detected = applyDetectedStyle(text);
           props.onInput(text);
           if (view) {
             view.dispatch({
               changes: {from: 0, to: view.state.doc.length, insert: text},
+              effects: languageCompartment.reconfigure(getLyricChordLanguage(detected)),
             });
           }
           if (props.onFileDrop) {
@@ -321,7 +374,11 @@ export default function TemplateEditor(props: TemplateEditorProps) {
 
   const stats = createMemo(() => {
     const text = props.value;
-    const chords = (text.match(/\{[^}]+\}/g) || []).length;
+    const processedText =
+      templateStyle() === 'monospace' && detectPotentialMonospaceFormat(text)
+        ? monospaceToTemplate(text)
+        : text;
+    const chords = (processedText.match(/\{[^}]+\}/g) || []).length;
     const sections = (text.match(/^\[.*?\]/gm) || []).length;
     const columnBreaks = (text.match(/@column_break\b/g) || []).length;
     const pageBreaks = (text.match(/@page_break\b/g) || []).length;
@@ -347,10 +404,12 @@ export default function TemplateEditor(props: TemplateEditorProps) {
       reader.onload = (event) => {
         const content = event.target?.result as string;
         if (content) {
+          const detected = applyDetectedStyle(content);
           props.onInput(content);
           if (view) {
             view.dispatch({
               changes: {from: 0, to: view.state.doc.length, insert: content},
+              effects: languageCompartment.reconfigure(getLyricChordLanguage(detected)),
             });
           }
           if (props.onFileDrop) {
@@ -384,7 +443,7 @@ export default function TemplateEditor(props: TemplateEditorProps) {
         wordWrapCompartment.of(getWordWrapExtension(wordWrap())),
         themeCompartment.of(createEditorTheme(isDark)),
         highlightCompartment.of(isDark ? lyricChordDarkHighlight : lyricChordLightHighlight),
-        lyricChordLanguage,
+        languageCompartment.of(getLyricChordLanguage(templateStyle())),
         bracketMatching(),
         drawSelection(),
         dropCursor(),
@@ -493,13 +552,15 @@ export default function TemplateEditor(props: TemplateEditorProps) {
     }
   });
 
-  // Keep editor content in sync if changed externally
+  // Keep editor content and detected style in sync if a template is loaded externally
   createEffect(
     () => props.value,
     (val) => {
       if (view && view.state.doc.toString() !== val) {
+        const detected = applyDetectedStyle(val);
         view.dispatch({
           changes: {from: 0, to: view.state.doc.length, insert: val},
+          effects: languageCompartment.reconfigure(getLyricChordLanguage(detected)),
         });
         const pos = view.state.selection.main.head;
         const line = view.state.doc.lineAt(pos);
@@ -584,6 +645,18 @@ export default function TemplateEditor(props: TemplateEditorProps) {
       if (view) {
         view.dispatch({
           effects: wordWrapCompartment.reconfigure(wrap ? [EditorView.lineWrapping] : []),
+        });
+      }
+    },
+  );
+
+  // Reconfigure syntax highlighting language when template style changes
+  createEffect(
+    () => templateStyle(),
+    (style) => {
+      if (view) {
+        view.dispatch({
+          effects: languageCompartment.reconfigure(getLyricChordLanguage(style)),
         });
       }
     },
@@ -842,24 +915,42 @@ export default function TemplateEditor(props: TemplateEditorProps) {
             </Show>
           </div>
 
-          {/* Monospace to Template */}
-          <button
-            type="button"
-            disabled={!isPotentiallyMonosource()}
-            onClick={() => {
-              convertMonoToTemplate()
-            }}
-            class={[
-              'inline-flex items-center gap-1.5 px-2.5 py-1 rounded text-xs font-semibold transition-colors',
-              isPotentiallyMonosource()
-                ? 'bg-sky-600 hover:bg-sky-500 text-white shadow-xs'
-                : 'bg-slate-200/70 dark:bg-slate-800 text-slate-600 dark:text-slate-400 border border-slate-300 dark:border-slate-700',
-            ]}
-            title="Convert from monospace format to template format (Win/Cmd+Shift+T)"
+          {/* Template Style Dropdown */}
+          <select
+            aria-label="Template style"
+            title="Select template style"
+            value={templateStyle()}
+            onChange={(e) => handleTemplateStyleChange(e.currentTarget.value as TemplateStyle)}
+            class="px-2 py-1 rounded text-xs font-semibold bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700 shadow-xs transition-colors focus:outline-none focus:ring-1 focus:ring-sky-500 cursor-pointer"
           >
-            <span class="i-lucide-wand-sparkles w-3.5 h-3.5" aria-hidden="true"/>
-            <span>Mono to Template</span>
-          </button>
+            <option value="monospace" selected={templateStyle() === 'monospace'}>
+              Monospace
+            </option>
+            <option value="embedded" selected={templateStyle() === 'embedded'}>
+              Embedded
+            </option>
+          </select>
+
+          {/* Monospace to Embedded */}
+          <Show when={templateStyle() === 'embedded'}>
+            <button
+              type="button"
+              disabled={!isPotentiallyMonosource()}
+              onClick={() => {
+                convertMonoToTemplate()
+              }}
+              class={[
+                'inline-flex items-center justify-center px-2 py-1 rounded text-xs font-semibold transition-colors',
+                isPotentiallyMonosource()
+                  ? 'bg-sky-600 hover:bg-sky-500 text-white shadow-xs'
+                  : 'bg-slate-200/70 dark:bg-slate-800 text-slate-600 dark:text-slate-400 border border-slate-300 dark:border-slate-700',
+              ]}
+              title="Convert from monospace format to template format (Win/Cmd+Shift+T)"
+              aria-label="Convert from monospace format to template format"
+            >
+              <span class="i-lucide-wand-sparkles w-3.5 h-3.5" aria-hidden="true"/>
+            </button>
+          </Show>
 
           <span class="text-slate-300 dark:text-slate-600">|</span>
 

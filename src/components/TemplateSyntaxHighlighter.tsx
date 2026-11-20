@@ -1,8 +1,10 @@
 import { createMemo, For, Show } from 'solid-js';
 import type { JSX } from '@solidjs/web';
+import type { TemplateStyle } from '../lib/template-processor/monospace-converter';
 
 export interface TemplateSyntaxHighlighterProps {
   code: string;
+  templateStyle?: TemplateStyle;
 }
 
 interface LyricPart {
@@ -126,14 +128,35 @@ export const SYNTAX_LYRIC_LINE = new SyntaxLineParser(
   },
 );
 
-export const syntaxLineParsers: SyntaxLineParser[] = [
+const directiveSyntaxParsers: SyntaxLineParser[] = [
   SYNTAX_TITLE,
   SYNTAX_ARTIST,
   SYNTAX_INLINE_CHORDS,
   SYNTAX_LAYOUT_BREAKS,
   SYNTAX_SECTION_LABEL,
+];
+
+export const syntaxLineParsers: SyntaxLineParser[] = [
+  ...directiveSyntaxParsers,
   SYNTAX_LYRIC_LINE,
 ];
+
+function renderMonospaceChordLine(line: string): JSX.Element {
+  const tokens = line.split(/(\s+)/);
+  return (
+    <For each={tokens}>
+      {(token) =>
+        /^\S+$/.test(token) ? (
+          <span class="text-emerald-600 dark:text-emerald-400 font-bold bg-emerald-100 dark:bg-emerald-500/15">
+            {token}
+          </span>
+        ) : (
+          token
+        )
+      }
+    </For>
+  );
+}
 
 /**
  * Renders a single template line into styled JSX syntax elements.
@@ -150,15 +173,45 @@ export function renderSyntaxLine(line: string): JSX.Element {
  * SolidJS JSX Component for syntax highlighting Lyric-Chord Creator Templates (*.lcct.txt).
  */
 export function TemplateSyntaxHighlighter(props: TemplateSyntaxHighlighterProps) {
-  const lines = createMemo(() => props.code.split('\n'), { name: 'syntax_lines' });
+  const renderedLines = createMemo(() => {
+    const rawLines = props.code.split('\n');
+    if (props.templateStyle !== 'monospace') {
+      return rawLines.map((line) => renderSyntaxLine(line));
+    }
+
+    let expectChordLine = true;
+    return rawLines.map((line) => {
+      if (/^\s*$/.test(line)) {
+        expectChordLine = true;
+        return line;
+      }
+
+      const directiveEl = Iterator.from(directiveSyntaxParsers)
+        .map((parser) => parser.tryRender(line))
+        .find((element) => element != null);
+
+      if (directiveEl != null) {
+        expectChordLine = true;
+        return directiveEl;
+      }
+
+      if (expectChordLine) {
+        expectChordLine = false;
+        return renderMonospaceChordLine(line);
+      }
+
+      expectChordLine = true;
+      return <span class="text-slate-800 dark:text-slate-200">{line}</span>;
+    });
+  }, { name: 'syntax_lines' });
 
   return (
     <>
-      <For each={lines()}>
-        {(line, index) => (
+      <For each={renderedLines()}>
+        {(lineEl, index) => (
           <>
             {index() > 0 ? '\n' : ''}
-            {renderSyntaxLine(line)}
+            {lineEl}
           </>
         )}
       </For>

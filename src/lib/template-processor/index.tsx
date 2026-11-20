@@ -8,8 +8,23 @@ import {createMemo, For, Show} from 'solid-js';
 import type {JSX} from '@solidjs/web';
 import BASE_CHORD_GUIDE_CSS from './chord-guide.css?raw';
 import DEFAULT_TEMPLATE from './sample-template.lcct.txt?raw';
+import {
+  detectPotentialMonospaceFormat,
+  detectTemplateStyle,
+  monospaceToTemplate,
+  type TemplateStyle,
+  templateToMonospace,
+} from './monospace-converter';
 
-export {BASE_CHORD_GUIDE_CSS, DEFAULT_TEMPLATE};
+export {
+  BASE_CHORD_GUIDE_CSS,
+  DEFAULT_TEMPLATE,
+  detectPotentialMonospaceFormat,
+  detectTemplateStyle,
+  monospaceToTemplate,
+  templateToMonospace,
+  type TemplateStyle,
+};
 
 export class LineParser {
   readonly regexp: RegExp;
@@ -148,7 +163,7 @@ export function extractSongsMetadata(template: string): SongMetadata[] {
     const line = rawLine.trim();
     if (line.startsWith('@title:')) {
       if (currentTitle) {
-        songs.push({ title: currentTitle, artist: currentArtist });
+        songs.push({title: currentTitle, artist: currentArtist});
         currentArtist = undefined;
       }
       currentTitle = line.replace(/^@title:\s*/, '').trim() || 'Untitled Song';
@@ -158,7 +173,7 @@ export function extractSongsMetadata(template: string): SongMetadata[] {
   }
 
   if (currentTitle) {
-    songs.push({ title: currentTitle, artist: currentArtist });
+    songs.push({title: currentTitle, artist: currentArtist});
   }
 
   return songs;
@@ -197,7 +212,7 @@ export function extractSongArtist(template: string): string | undefined {
 export function extractSongAtLine(template: string, lineNumber = 1): SongMetadata {
   const lines = template.split('\n');
   if (lines.length === 0) {
-    return { title: 'Untitled Song', artist: undefined };
+    return {title: 'Untitled Song', artist: undefined};
   }
 
   const titleIndices: number[] = [];
@@ -260,7 +275,7 @@ export interface TemplatePageData {
  */
 export function parseTemplatePages(template: string): TemplatePageData[] {
   if (!template || template.trim().length === 0) {
-    return [{ lines: [] }];
+    return [{lines: []}];
   }
 
   return template.split(PAGE_BREAK_TOKEN).map((pageStr) => ({
@@ -317,7 +332,7 @@ export function ChordGuidePages(props: ChordGuidePagesProps) {
       {(page) => {
         const pageElements = createMemo(
           () => renderPageLines(page.lines, columns()),
-          { name: 'page_elements' },
+          {name: 'page_elements'},
         );
 
         return (

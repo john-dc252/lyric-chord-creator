@@ -16,7 +16,7 @@ export interface JumpSection {
 export const JUMP_SECTIONS: JumpSection[] = [
   { id: 'overview', label: 'Overview', icon: 'i-lucide-layout' },
   { id: 'syntax-guide', label: 'Template Syntax Guide', icon: 'i-lucide-code' },
-  { id: 'monospace-guide', label: 'Monospace Conversion', icon: 'i-lucide-wand-sparkles' },
+  { id: 'monospace-guide', label: 'Template Styles & Monospace', icon: 'i-lucide-wand-sparkles' },
   { id: 'examples', label: 'Example Templates', icon: 'i-lucide-lightbulb' },
   { id: 'sheet-settings', label: 'Sheet Settings', icon: 'i-lucide-settings' },
 ];

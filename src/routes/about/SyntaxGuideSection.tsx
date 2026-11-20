@@ -96,8 +96,8 @@ export function SyntaxGuideSection(props: SyntaxGuideSectionProps) {
             <span class="text-xs text-slate-500">Lyrics Chord</span>
           </div>
           <p class="text-xs text-slate-600 dark:text-slate-400 mb-2">
-            Embeds a chord directly before or inside a syllable in the lyric line. The chord is placed directly above
-            the text.
+            In <strong>Embedded</strong> style, places a chord directly above the following syllable. In{' '}
+            <strong>Monospace</strong> style, chords sit on their own space-aligned line above the lyric line instead.
           </p>
           <div class="bg-slate-100 dark:bg-slate-950 p-2.5 rounded-lg font-mono text-xs whitespace-pre-wrap">
             <TemplateSyntaxHighlighter code="{E}I {Esus4}know You’ve given all I need" />
@@ -113,8 +113,8 @@ export function SyntaxGuideSection(props: SyntaxGuideSectionProps) {
             <span class="text-xs text-slate-500">Spacing</span>
           </div>
           <p class="text-xs text-slate-600 dark:text-slate-400 mb-2">
-            Inserts a blank line. Plain blank lines in your source are stripped out, so this is the only way to add
-            vertical space.
+            Inserts a vertical blank line in <strong>Embedded</strong> style (where raw blank lines are ignored). Converts
+            to a standard blank line in <strong>Monospace</strong> style.
           </p>
           <div class="bg-slate-100 dark:bg-slate-950 p-2.5 rounded-lg font-mono text-xs whitespace-pre-wrap">
             <TemplateSyntaxHighlighter

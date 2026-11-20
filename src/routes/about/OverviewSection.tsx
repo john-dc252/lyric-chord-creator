@@ -135,11 +135,11 @@ export function OverviewSection(props: OverviewSectionProps) {
             <span class="i-lucide-wand-sparkles w-5 h-5" aria-hidden="true" />
           </div>
           <h3 class="font-bold text-sm text-slate-900 dark:text-white mb-1.5">
-            Monospace Sheet Conversion
+            Embedded & Monospace Styles
           </h3>
           <p class="text-xs text-slate-600 dark:text-slate-400 leading-normal">
-            Paste traditional two-line chord-over-lyric sheets and convert them into inline{' '}
-            <code class="font-mono">&#123;Chord&#125;</code> templates with a single click.
+            Switch freely between inline <code class="font-mono">&#123;Chord&#125;</code> syntax and two-line
+            chord-over-lyric monospace format, or convert pasted sheets with one click.
           </p>
         </div>
       </div>

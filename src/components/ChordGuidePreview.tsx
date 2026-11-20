@@ -252,6 +252,9 @@ export default function ChordGuidePreview(props: ChordGuidePreviewProps) {
         line-height: 3.6em;
         break-inside: avoid-page;
       }
+      .line:not(:has(.chord)) {
+        line-height: 1.6em;
+      }
       .chord {
         font-weight: bold;
         position: absolute;
@@ -418,6 +421,10 @@ export default function ChordGuidePreview(props: ChordGuidePreviewProps) {
           position: relative;
           line-height: 3.6em;
           break-inside: avoid-page;
+        }
+
+        #chord-guide-paper-container .line:not(:has(.chord)) {
+          line-height: 1.6em;
         }
 
         #chord-guide-paper-container .chord {

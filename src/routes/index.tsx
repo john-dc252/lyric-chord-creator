@@ -2,9 +2,16 @@ import { Title } from '@solidjs/meta';
 import { createEffect, createMemo, createSignal, onSettled, Show } from 'solid-js';
 import ChordGuidePreview from '../components/ChordGuidePreview';
 import Header from '../components/Header';
-import TemplateEditor from '../components/TemplateEditor';
+import TemplateEditor, {
+  detectTemplateStyle,
+  type TemplateStyle,
+} from '../components/TemplateEditor';
 import { clampColumns, DEFAULT_PAPER_SIZE, type PaperSizeConfig } from '../lib/paperSize';
-import { DEFAULT_TEMPLATE, extractSongAtLine } from '../lib/template-processor';
+import {
+  DEFAULT_TEMPLATE,
+  extractSongAtLine,
+  monospaceToTemplate,
+} from '../lib/template-processor';
 import { activeTemplateId, savedTemplates, createNewTemplate } from '../lib/templates-store';
 
 type BooleanString = 'true' | 'false';
@@ -50,9 +57,23 @@ function getInitialPaperConfig(): PaperSizeConfig {
 }
 
 export default function Home() {
-  const [template, setTemplate] = createSignal<string>(getInitialTemplate(), {
+  const initialTemplate = getInitialTemplate();
+
+  const [template, setTemplate] = createSignal<string>(initialTemplate, {
     name: 'editor_template',
   });
+
+  const [templateStyle, setTemplateStyle] = createSignal<TemplateStyle>(
+    detectTemplateStyle(initialTemplate),
+    {
+      name: 'editor_template_style',
+    },
+  );
+
+  const generatedTemplate = createMemo(
+    () => (templateStyle() === 'monospace' ? monospaceToTemplate(template()) : template()),
+    { name: 'home_generated_template' },
+  );
 
   const [paperConfig, setPaperConfig] = createSignal<PaperSizeConfig>(getInitialPaperConfig(), {
     name: 'app_paper_config',
@@ -79,11 +100,12 @@ export default function Home() {
     }, 3000);
   };
 
-  // Sync if template in localStorage was updated externally (e.g. from Gallery)
+  // Sync if template in localStorage was updated externally (e.g. from Gallery or About)
   onSettled(() => {
     const current = getInitialTemplate();
     if (current !== template()) {
       setTemplate(current);
+      setTemplateStyle(detectTemplateStyle(current));
     }
   });
 
@@ -117,12 +139,14 @@ export default function Home() {
 
   const handleFileImport = (content: string, filename: string) => {
     setTemplate(content);
+    setTemplateStyle(detectTemplateStyle(content));
     showToast(`Loaded "${filename}" successfully!`);
   };
 
   const handleResetToDefault = () => {
     if (confirm('Reset template back to default sample? Any unsaved edits will be lost.')) {
       setTemplate(DEFAULT_TEMPLATE);
+      setTemplateStyle(detectTemplateStyle(DEFAULT_TEMPLATE));
       showToast('Reset to default sample template.');
     }
   };
@@ -227,6 +251,8 @@ export default function Home() {
           <TemplateEditor
             value={template()}
             onInput={handleTemplateInput}
+            templateStyle={templateStyle()}
+            onTemplateStyleChange={setTemplateStyle}
             onCursorLineChange={setCursorLine}
             onFileDrop={handleFileImport}
             onResetToDefault={handleResetToDefault}
@@ -255,7 +281,7 @@ export default function Home() {
           ]}
         >
           <ChordGuidePreview
-            template={template()}
+            template={generatedTemplate()}
             paperConfig={paperConfig()}
             onPaperConfigChange={setPaperConfig}
           />

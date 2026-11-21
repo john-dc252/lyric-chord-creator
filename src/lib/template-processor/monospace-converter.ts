@@ -2,11 +2,11 @@ export type TemplateStyle = 'monospace' | 'embedded'
 
 type LyricChordPair = string[] | [string, undefined] | [string, string]
 
-const directiveOrSectionPattern = /^\s*@\w+|^\s*\[/
-const blankLinePattern = /^\s*$/
+export const directiveOrSectionLabelStartPattern = /^\s*@|^\s*\[/
+export const blankLinePattern = /^\s*$/
 
 /** pattern for lines that should not be processed for chord embedding */
-const unpairableLinePattern = /^\s*$|^\s*@|^\s*\[/
+export const unpairableMonospaceLinePattern = /^\s*$|^\s*@|^\s*\[/
 
 export function detectPotentialMonospaceFormat(sourceTxt: string) {
   return !/{/gm.test(sourceTxt)
@@ -39,16 +39,12 @@ export function templateToMonospace(sourceTxt: string) {
   for (const rawLine of sourceLines) {
     const trimmed = rawLine.trim()
 
-    if (trimmed === '') {
+    if (!trimmed) {
+      rendered.push(rawLine)
       continue
     }
 
-    if (/^@empty_line\b/.test(trimmed)) {
-      rendered.push('')
-      continue
-    }
-
-    if (directiveOrSectionPattern.test(rawLine)) {
+    if (directiveOrSectionLabelStartPattern.test(rawLine)) {
       rendered.push(rawLine.trimEnd())
       continue
     }
@@ -63,7 +59,7 @@ export function templateToMonospace(sourceTxt: string) {
 function countContiguousPairableLines(lines: string[], startIndex: number): number {
   let count = 0
   for (let j = startIndex; j < lines.length; j++) {
-    if (unpairableLinePattern.test(lines[j])) {
+    if (unpairableMonospaceLinePattern.test(lines[j])) {
       break
     }
     count++
@@ -80,7 +76,7 @@ function pairLines(lines: string[]): LyricChordPair[] {
     const currentLine = lines[i]
     const currentLineTrimmedEnd = currentLine.trimEnd()
     const isBlank = blankLinePattern.test(currentLine)
-    const isDirectiveOrSection = directiveOrSectionPattern.test(currentLine)
+    const isDirectiveOrSection = directiveOrSectionLabelStartPattern.test(currentLine)
 
     const isEmptyChordLine =
       isBlank &&
@@ -88,7 +84,7 @@ function pairLines(lines: string[]): LyricChordPair[] {
       countContiguousPairableLines(lines, i + 1) % 2 === 1
 
     if (isDirectiveOrSection || (isBlank && !isEmptyChordLine)) {
-      groups.push([currentLineTrimmedEnd])
+      groups.push([isBlank ? currentLine : currentLineTrimmedEnd])
       currentGroup = []
       continue
     }
@@ -138,7 +134,7 @@ function extractChordsAndLyrics(line: string): [string, string] {
 
 function embedChords([chordLine, lyricsLine]: LyricChordPair): string {
   if (lyricsLine === undefined) {
-    return !chordLine?.trim() ? '@empty_line' : chordLine
+    return chordLine ?? ''
   }
 
   const chordLineLen = chordLine.length

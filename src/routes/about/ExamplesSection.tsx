@@ -21,9 +21,10 @@ const EXAMPLES: ExampleSnippet[] = [
     style: 'monospace',
     code: `@title: Amazing Grace
 @artist: John Newton
+@empty_line
 
 [Verse 1]
-
+@empty_line
  G                 C         G
 Amazing grace, how sweet the sound
              D7
@@ -36,7 +37,7 @@ Was blind, but now I see
 @column_break
 
 [Verse 2]
-
+@empty_line
       G                        C        G
 'Twas grace that taught my heart to fear
              D7

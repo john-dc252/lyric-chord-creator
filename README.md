@@ -18,14 +18,15 @@ Chords are anchored directly to lyrics in plain text (`{G}`) and automatically r
 ## ✨ Features
 
 - **Exact Chord Anchoring**: Embed `{Chord}` directly into lyrics or use `@chord_sequence` for standalone progressions.
+- **Template Styles & Conversion**: Edit in **Embedded** (`{Chord}`) or **Monospace** (chords spaced above lyrics) style, or quick-convert pasted sheets/selections (`Win/Cmd+Shift+T`).
 - **On-the-Fly Transposition**: Shift keys (±11 semitones) in preview and print without modifying source templates.
 - **Adaptive Sheet Layout**: Letter, A4, Legal, or custom sizes; portrait (1–2 cols) or landscape (1–4 cols); adjustable font sizes (6–20pt) and margins.
 - **Live Preview & Print**: Real-time rendering, zoom presets (**Fit**, **75%**, **100%**), fullscreen preview, and lyric-chord sheet printing.
-- **CodeMirror 6 Editor**: Syntax highlighting, soft wrap, scroll-past-end, hybrid relative line numbers, and live song header tracking synced to cursor position.
-- **Vim Mode**: Modal editing with custom Ex commands (`:w` / `:up` to quick-save; `:rnu`, `:nornu`, `:relativenumber`, `:norelativenumber` for line numbers).
-- **File I/O**: Drag-and-drop any text file into the editor, import (`.lcct.txt`, `.scgt.txt`, `.txt`), and export (`.lcct.txt`).
-- **Template Gallery**: Save, duplicate, rename, search (by all, template name, title, artist, or lyrics), and manage templates locally.
-- **PWA & Offline**: Installable PWA with offline caching and light/dark theme toggle.
+- **CodeMirror 6 Editor**: Syntax highlighting for both styles, undo/redo, soft wrap, scroll-past-end, hybrid relative line numbers, and live song header tracking synced to cursor position.
+- **Vim Mode**: Modal editing with custom Ex commands (`:w` / `:up` to quick-save; `:totemplate` to convert monospace; `:rnu`, `:nornu`, `:relativenumber`, `:norelativenumber` for line numbers).
+- **File I/O**: Drag-and-drop any text file into the editor, import (`.lcct.txt`, `.scgt`, `.txt`), and export (`.lcct.txt`).
+- **Local Library**: Save, duplicate, rename, search (by all, template name, title, artist, or lyrics), and manage templates locally.
+- **PWA & Offline**: Installable PWA with offline caching, manual update checks, and light/dark theme toggle.
 
 ---
 

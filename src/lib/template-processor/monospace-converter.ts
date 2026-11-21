@@ -39,12 +39,8 @@ export function templateToMonospace(sourceTxt: string) {
   for (const rawLine of sourceLines) {
     const trimmed = rawLine.trim()
 
-    if (trimmed === '') {
-      continue
-    }
-
-    if (/^@empty_line\b/.test(trimmed)) {
-      rendered.push('')
+    if (!trimmed) {
+      rendered.push(rawLine)
       continue
     }
 
@@ -88,7 +84,7 @@ function pairLines(lines: string[]): LyricChordPair[] {
       countContiguousPairableLines(lines, i + 1) % 2 === 1
 
     if (isDirectiveOrSection || (isBlank && !isEmptyChordLine)) {
-      groups.push([currentLineTrimmedEnd])
+      groups.push([isBlank ? currentLine : currentLineTrimmedEnd])
       currentGroup = []
       continue
     }
@@ -138,7 +134,7 @@ function extractChordsAndLyrics(line: string): [string, string] {
 
 function embedChords([chordLine, lyricsLine]: LyricChordPair): string {
   if (lyricsLine === undefined) {
-    return !chordLine?.trim() ? '@empty_line' : chordLine
+    return chordLine ?? ''
   }
 
   const chordLineLen = chordLine.length

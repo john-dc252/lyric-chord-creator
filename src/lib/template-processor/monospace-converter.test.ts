@@ -74,7 +74,7 @@ describe('monospaceToTemplate', () => {
     );
   });
 
-  test('preserves @directive: metadata and [Section] headers and converts blank lines to @empty_line', () => {
+  test('preserves @directive: metadata, [Section] headers, and blank/space-only lines', () => {
     const input = [
       '@title: Amazing Grace',
       '@artist: John Newton',
@@ -91,10 +91,10 @@ describe('monospaceToTemplate', () => {
       [
         '@title: Amazing Grace',
         '@artist: John Newton',
-        '@empty_line',
+        '',
         '[Verse 1]',
         'A{G}mazing grace, how {C}sweet the {G}sound',
-        '@empty_line',
+        '   ',
         '[Chorus]',
         '@chord_sequence: G C G D7',
       ].join('\n'),
@@ -148,7 +148,7 @@ describe('templateToMonospace', () => {
     );
   });
 
-  test('converts @empty_line to blank lines, ignores raw blank lines, and preserves directives and section headers', () => {
+  test('preserves @empty_line, blank/space-only lines, directives, and section headers', () => {
     const input = [
       '@title: Amazing Grace',
       '@artist: John Newton',
@@ -157,7 +157,7 @@ describe('templateToMonospace', () => {
       '[Verse 1]',
       'A{G}mazing grace, how {C}sweet the {G}sound',
       '@empty_line',
-      '',
+      '   ',
       '@column_break',
       '[Chorus]',
       '@chord_sequence: G C G D7',
@@ -169,11 +169,13 @@ describe('templateToMonospace', () => {
       [
         '@title: Amazing Grace',
         '@artist: John Newton',
+        '@empty_line',
         '',
         '[Verse 1]',
         ' G                 C         G',
         'Amazing grace, how sweet the sound',
-        '',
+        '@empty_line',
+        '   ',
         '@column_break',
         '[Chorus]',
         '@chord_sequence: G C G D7',
@@ -182,20 +184,7 @@ describe('templateToMonospace', () => {
     );
 
     // Round-trip back to template syntax
-    expect(monospaceToTemplate(mono)).toBe(
-      [
-        '@title: Amazing Grace',
-        '@artist: John Newton',
-        '@empty_line',
-        '[Verse 1]',
-        'A{G}mazing grace, how {C}sweet the {G}sound',
-        '@empty_line',
-        '@column_break',
-        '[Chorus]',
-        '@chord_sequence: G C G D7',
-        '@page_break',
-      ].join('\n'),
-    );
+    expect(monospaceToTemplate(mono)).toBe(input);
   });
 
   test('inserts empty chord line above chordless lyric lines and preserves pairing on round-trip', () => {
@@ -211,7 +200,7 @@ describe('templateToMonospace', () => {
     expect(mono).toBe(
       [
         '[Verse 1]',
-        '',
+        '@empty_line',
         ' G                 C         G',
         'Amazing grace, how sweet the sound',
         '',

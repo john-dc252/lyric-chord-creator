@@ -240,7 +240,7 @@ describe('<TemplateEditor /> Mono to Template modes', () => {
   test('renders template style dropdown with Monospace and Embedded options, shows wand button only in Embedded style, and converts source when switching styles', () => {
     const initialEmbedded = [
       '@title: Amazing Grace',
-      '@empty_line',
+      '',
       '[Verse 1]',
       'A{G}mazing grace, how {C}sweet the {G}sound',
     ].join('\n');

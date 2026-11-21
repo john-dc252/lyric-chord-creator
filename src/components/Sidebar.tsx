@@ -137,9 +137,9 @@ export default function Sidebar() {
                     ]}
                   >
                     <span class="truncate">{item.label}</span>
-                    <Show when={item.badge && item.badge() !== undefined}>
+                    <Show when={item.badge?.() !== undefined}>
                       <span class="ml-2 px-1.5 py-0.5 text-[10px] font-bold rounded-full bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300">
-                        {item.badge!()}
+                        {item.badge?.()}
                       </span>
                     </Show>
                   </div>

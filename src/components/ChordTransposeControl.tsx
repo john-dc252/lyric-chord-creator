@@ -4,17 +4,11 @@ export interface ChordTransposeControlProps {
 }
 
 export default function ChordTransposeControl(props: ChordTransposeControlProps) {
-  const handleDecrement = () => {
-    props.onChange(props.value <= -11 ? 11 : props.value - 1);
-  };
+  const handleDecrement = () => props.onChange(props.value <= -11 ? 11 : props.value - 1);
 
-  const handleIncrement = () => {
-    props.onChange(props.value >= 11 ? -11 : props.value + 1);
-  };
+  const handleIncrement = () => props.onChange(props.value >= 11 ? -11 : props.value + 1);
 
-  const handleReset = () => {
-    props.onChange(0);
-  };
+  const handleReset = () => props.onChange(0);
 
   return (
     <div class="shrink-0 flex items-center bg-white dark:bg-slate-700 rounded-md border border-slate-300 dark:border-slate-600 px-1.5 py-0.5 shadow-sm">

@@ -42,17 +42,18 @@ export default function PaperSizeSelector(props: PaperSizeSelectorProps) {
         height,
         columns: clampedCols,
       });
-    } else {
-      const { width, height, unit } = getPresetDimensions(props.value.preset, orientation);
-      props.onChange({
-        ...props.value,
-        orientation,
-        width,
-        height,
-        unit,
-        columns: clampedCols,
-      });
+      return;
     }
+
+    const { width, height, unit } = getPresetDimensions(props.value.preset, orientation);
+    props.onChange({
+      ...props.value,
+      orientation,
+      width,
+      height,
+      unit,
+      columns: clampedCols,
+    });
   };
 
   const handlePresetSelect = (preset: PaperPreset) => {
@@ -61,16 +62,17 @@ export default function PaperSizeSelector(props: PaperSizeSelectorProps) {
         ...props.value,
         preset: 'custom',
       });
-    } else {
-      const { width, height, unit } = getPresetDimensions(preset, currentOrientation());
-      props.onChange({
-        ...props.value,
-        preset,
-        width,
-        height,
-        unit,
-      });
+      return;
     }
+
+    const { width, height, unit } = getPresetDimensions(preset, currentOrientation());
+    props.onChange({
+      ...props.value,
+      preset,
+      width,
+      height,
+      unit,
+    });
   };
 
   const handleUnitChange = (unit: PaperUnit) => {
@@ -140,9 +142,7 @@ export default function PaperSizeSelector(props: PaperSizeSelectorProps) {
     });
   };
 
-  const handleResetDefaults = () => {
-    props.onChange({ ...DEFAULT_PAPER_SIZE });
-  };
+  const handleResetDefaults = () => props.onChange({ ...DEFAULT_PAPER_SIZE });
 
   const getPresetLabel = () => {
     const isLandscape = currentOrientation() === 'landscape';

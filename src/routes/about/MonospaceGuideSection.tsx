@@ -66,8 +66,9 @@ export function MonospaceGuideSection(props: MonospaceGuideSectionProps) {
             3. Blank & Chordless Lines
           </div>
           <p class="text-xs text-slate-600 dark:text-slate-400 leading-relaxed">
-            In <strong>Monospace</strong> style, blank lines act as <code class="font-mono">@empty_line</code>, and
-            chordless lyric lines keep an empty chord line above them so line pairing stays intact.
+            In <strong>Monospace</strong> style, blank lines separate pairs in the editor without adding rendered
+            spacing (use <code class="font-mono">@empty_line</code> for that), and chordless lyric lines keep an empty
+            chord line above them so pairing stays intact.
           </p>
         </div>
       </div>

@@ -113,8 +113,7 @@ export function SyntaxGuideSection(props: SyntaxGuideSectionProps) {
             <span class="text-xs text-slate-500">Spacing</span>
           </div>
           <p class="text-xs text-slate-600 dark:text-slate-400 mb-2">
-            Inserts a vertical blank line in <strong>Embedded</strong> style (where raw blank lines are ignored). Converts
-            to a standard blank line in <strong>Monospace</strong> style.
+            Inserts a vertical blank line in both styles (raw blank lines are ignored when rendering).
           </p>
           <div class="bg-slate-100 dark:bg-slate-950 p-2.5 rounded-lg font-mono text-xs whitespace-pre-wrap">
             <TemplateSyntaxHighlighter

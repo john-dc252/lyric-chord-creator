@@ -5,10 +5,7 @@ import {
   getEffectiveDimensions,
   type PaperSizeConfig,
 } from '../lib/paperSize';
-import {
-  ChordGuidePages,
-  extractSongTitle,
-} from '../lib/template-processor';
+import { ChordGuidePages, extractSongTitle } from '../lib/template-processor';
 import { transposeTemplate } from '../lib/transposer';
 import ChordTransposeControl from './ChordTransposeControl';
 import PaperSizeSelector from './PaperSizeSelector';
@@ -55,12 +52,32 @@ export default function ChordGuidePreview(props: ChordGuidePreviewProps) {
       return;
     }
 
-    if (currentZoom === 'fit') {
-      const padding = window.innerWidth < 640 ? 16 : 32;
-      const availableWidth = containerRef.clientWidth - padding;
-      if (rawWidth > 0 && availableWidth > 0) {
-        const factor = Math.min(1.0, Math.max(0.15, availableWidth / rawWidth));
-        setScaleFactor(Number(factor.toFixed(3)));
+    if (currentZoom !== 'fit') return;
+
+    const padding = window.innerWidth < 640 ? 16 : 32;
+    const availableWidth = containerRef.clientWidth - padding;
+    if (rawWidth > 0 && availableWidth > 0) {
+      const factor = Math.min(1.0, Math.max(0.15, availableWidth / rawWidth));
+      setScaleFactor(Number(factor.toFixed(3)));
+    }
+  };
+
+  const tryExitFullscreen = async () => {
+    if (document.fullscreenElement && document.exitFullscreen) {
+      try {
+        await document.exitFullscreen();
+      } catch {
+        // DO NOTHING
+      }
+    }
+  };
+
+  const tryRequestFullscreen = async (previewRootRef: HTMLElement) => {
+    if (document.fullscreenEnabled && previewRootRef.requestFullscreen) {
+      try {
+        await previewRootRef.requestFullscreen();
+      } catch {
+        // DO NOTHING
       }
     }
   };
@@ -68,34 +85,22 @@ export default function ChordGuidePreview(props: ChordGuidePreviewProps) {
   const toggleFullscreen = async () => {
     if (!previewRootRef) return;
 
-    if (!isFullscreen()) {
-      if (document.fullscreenEnabled && previewRootRef.requestFullscreen) {
-        try {
-          await previewRootRef.requestFullscreen();
-          setIsFullscreen(true);
-        } catch {
-          setIsFullscreen(true);
-        }
-      } else {
-        setIsFullscreen(true);
-      }
-    } else {
-      if (document.fullscreenElement && document.exitFullscreen) {
-        try {
-          await document.exitFullscreen();
-        } catch {}
-      }
+    if (isFullscreen()) {
+      await tryExitFullscreen();
       setIsFullscreen(false);
+      setTimeout(() => updateScaling(zoom()), 60);
+      return;
     }
+
+    await tryRequestFullscreen(previewRootRef);
+    setIsFullscreen(true);
     setTimeout(() => updateScaling(zoom()), 60);
   };
 
   onSettled(() => {
     updateScaling(zoom());
 
-    const resizeObserver = new ResizeObserver(() => {
-      updateScaling(zoom());
-    });
+    const resizeObserver = new ResizeObserver(() => updateScaling(zoom()));
 
     if (containerRef) {
       resizeObserver.observe(containerRef);
@@ -104,9 +109,7 @@ export default function ChordGuidePreview(props: ChordGuidePreviewProps) {
       resizeObserver.observe(sheetRef);
     }
 
-    const handleWindowResize = () => {
-      updateScaling(zoom());
-    };
+    const handleWindowResize = () => updateScaling(zoom());
 
     const handleFullscreenChange = () => {
       const active = !!document.fullscreenElement && document.fullscreenElement === previewRootRef;
@@ -115,13 +118,11 @@ export default function ChordGuidePreview(props: ChordGuidePreviewProps) {
     };
 
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape' && isFullscreen()) {
-        if (document.fullscreenElement && document.exitFullscreen) {
-          document.exitFullscreen().catch(() => {});
-        }
-        setIsFullscreen(false);
-        setTimeout(() => updateScaling(zoom()), 60);
-      }
+      if (e.key !== 'Escape' || !isFullscreen()) return;
+
+      void tryExitFullscreen();
+      setIsFullscreen(false);
+      setTimeout(() => updateScaling(zoom()), 60);
     };
 
     window.addEventListener('resize', handleWindowResize);
@@ -152,17 +153,20 @@ export default function ChordGuidePreview(props: ChordGuidePreviewProps) {
     },
   );
 
-  const effectiveDimensions = createMemo(() => {
-    return getEffectiveDimensions(props.paperConfig);
-  }, { name: 'effective_dimensions' });
+  const effectiveDimensions = createMemo(
+    () => getEffectiveDimensions(props.paperConfig),
+    { name: 'effective_dimensions' },
+  );
 
-  const paperWidthCss = createMemo(() => {
-    return formatCssDimension(effectiveDimensions().width, props.paperConfig.unit);
-  }, { name: 'paper_width_css' });
+  const paperWidthCss = createMemo(
+    () => formatCssDimension(effectiveDimensions().width, props.paperConfig.unit),
+    { name: 'paper_width_css' },
+  );
 
-  const paperMinHeightCss = createMemo(() => {
-    return formatCssDimension(effectiveDimensions().height, props.paperConfig.unit);
-  }, { name: 'paper_height_css' });
+  const paperMinHeightCss = createMemo(
+    () => formatCssDimension(effectiveDimensions().height, props.paperConfig.unit),
+    { name: 'paper_height_css' },
+  );
 
   const paperMarginCss = createMemo(() => {
     const val = props.paperConfig.margin ?? (props.paperConfig.unit === 'cm' ? 1.27 : 0.5);
@@ -174,9 +178,10 @@ export default function ChordGuidePreview(props: ChordGuidePreviewProps) {
     return `${size}pt`;
   }, { name: 'paper_font_size_css' });
 
-  const paperColumns = createMemo(() => {
-    return clampColumns(props.paperConfig.columns, props.paperConfig.orientation);
-  }, { name: 'paper_columns' });
+  const paperColumns = createMemo(
+    () => clampColumns(props.paperConfig.columns, props.paperConfig.orientation),
+    { name: 'paper_columns' },
+  );
 
   const handlePrint = () => {
     if (!sheetRef) {

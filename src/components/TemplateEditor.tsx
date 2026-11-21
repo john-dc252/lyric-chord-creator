@@ -1,5 +1,5 @@
-import {createEffect, createMemo, createSignal, onCleanup, onSettled, Show, untrack} from 'solid-js';
-import {Compartment, EditorState, Extension} from '@codemirror/state';
+import { createEffect, createMemo, createSignal, onCleanup, onSettled, Show, untrack } from 'solid-js';
+import { Compartment, EditorState, Extension } from '@codemirror/state';
 import {
   drawSelection,
   dropCursor,
@@ -19,10 +19,10 @@ import {
   undo,
   undoDepth,
 } from '@codemirror/commands';
-import {bracketMatching} from '@codemirror/language';
-import {getCM, vim, Vim} from '@replit/codemirror-vim';
+import { bracketMatching } from '@codemirror/language';
+import { getCM, vim, Vim } from '@replit/codemirror-vim';
 
-import {theme} from '../lib/theme';
+import { theme } from '../lib/theme';
 import {
   createEditorTheme,
   createLineNumbersGutter,
@@ -30,15 +30,20 @@ import {
   lyricChordDarkHighlight,
   lyricChordLightHighlight,
 } from '../lib/editor-extensions';
-import {activeTemplateId, exportTemplateAsFile, savedTemplates, saveTemplate,} from '../lib/templates-store';
+import {
+  activeTemplateId,
+  exportTemplateAsFile,
+  savedTemplates,
+  saveTemplate,
+} from '../lib/templates-store';
 import SaveTemplateModal from './SaveTemplateModal';
 import {
   detectPotentialMonospaceFormat,
   detectTemplateStyle,
   monospaceToTemplate,
-  templateToMonospace,
   type TemplateStyle,
-} from "../lib/template-processor/monospace-converter";
+  templateToMonospace,
+} from '../lib/template-processor';
 
 export { detectTemplateStyle, type TemplateStyle };
 
@@ -55,45 +60,109 @@ interface TemplateEditorProps {
 }
 
 type VimEditorMode = 'NORMAL' | 'INSERT' | 'VISUAL' | 'VISUAL LINE' | 'VISUAL BLOCK' | 'REPLACE';
+type VimModeInfo = readonly [modeName: VimEditorMode, attrMode: string];
+
+interface VimExHandlers {
+  save: () => void;
+  enableRelativeLineNumbers: () => void;
+  disableRelativeLineNumbers: () => void;
+  convertMonoToTemplate: () => void;
+}
+
+const vimExHandlersByView = new WeakMap<EditorView, VimExHandlers>();
+
+function withVimExHandlers(cm: { cm6?: EditorView }, fn: (handlers: VimExHandlers) => void) {
+  const editorView = cm.cm6;
+  if (!editorView) return;
+  const handlers = vimExHandlersByView.get(editorView);
+  if (handlers) {
+    untrack(() => fn(handlers));
+  }
+}
+
+const exSave = (cm: { cm6?: EditorView }) => withVimExHandlers(cm, (h) => h.save());
+const exEnableRelNum = (cm: { cm6?: EditorView }) =>
+  withVimExHandlers(cm, (h) => h.enableRelativeLineNumbers());
+const exDisableRelNum = (cm: { cm6?: EditorView }) =>
+  withVimExHandlers(cm, (h) => h.disableRelativeLineNumbers());
+const exToTemplate = (cm: { cm6?: EditorView }) =>
+  withVimExHandlers(cm, (h) => h.convertMonoToTemplate());
+
+Vim.defineEx('write', 'w', exSave);
+Vim.defineEx('update', 'up', exSave);
+Vim.defineEx('rnu', 'rnu', exEnableRelNum);
+Vim.defineEx('relativenumber', 'relativenumber', exEnableRelNum);
+Vim.defineEx('nornu', 'nornu', exDisableRelNum);
+Vim.defineEx('norelativenumber', 'norelativenumber', exDisableRelNum);
+Vim.defineEx('totemplate', 'totemplate', exToTemplate);
+
+const VIM_MODE_NORMAL: VimModeInfo = ['NORMAL', 'normal'];
+const VIM_MODE_INSERT: VimModeInfo = ['INSERT', 'insert'];
+const VIM_MODE_REPLACE: VimModeInfo = ['REPLACE', 'replace'];
+const VIM_MODE_VISUAL: VimModeInfo = ['VISUAL', 'visual'];
+const VIM_MODE_VISUAL_LINE: VimModeInfo = ['VISUAL LINE', 'visual-line'];
+const VIM_MODE_VISUAL_BLOCK: VimModeInfo = ['VISUAL BLOCK', 'visual-block'];
 
 const WORD_WRAP_KEY = 'scgt_word_wrap';
 const VIM_MODE_KEY = 'scgt_vim_mode';
 const RELATIVE_LINE_NUMBERS_KEY = 'scgt_relative_line_numbers';
 
 function getInitialWordWrap(): boolean {
-  if (typeof window !== 'undefined') {
-    try {
-      const saved = localStorage.getItem(WORD_WRAP_KEY);
-      if (saved !== null) return saved === 'true';
-    } catch (e) {
-      console.error('Failed to read word wrap preference:', e);
-    }
+  if (typeof window === 'undefined') return true;
+  try {
+    const saved = localStorage.getItem(WORD_WRAP_KEY);
+    return saved !== null ? saved === 'true' : true;
+  } catch (e) {
+    console.error('Failed to read word wrap preference:', e);
+    return true;
   }
-  return true;
 }
 
 function getInitialVimMode(): boolean {
-  if (typeof window !== 'undefined') {
-    try {
-      const saved = localStorage.getItem(VIM_MODE_KEY);
-      if (saved !== null) return saved === 'true';
-    } catch (e) {
-      console.error('Failed to read vim mode preference:', e);
-    }
+  if (typeof window === 'undefined') return false;
+  try {
+    const saved = localStorage.getItem(VIM_MODE_KEY);
+    return saved === 'true';
+  } catch (e) {
+    console.error('Failed to read vim mode preference:', e);
+    return false;
   }
-  return false;
 }
 
 function getInitialRelativeLineNumbers(): boolean {
-  if (typeof window !== 'undefined') {
-    try {
-      const saved = localStorage.getItem(RELATIVE_LINE_NUMBERS_KEY);
-      if (saved !== null) return saved === 'true';
-    } catch (e) {
-      console.error('Failed to read relative line numbers preference:', e);
+  if (typeof window === 'undefined') return false;
+  try {
+    const saved = localStorage.getItem(RELATIVE_LINE_NUMBERS_KEY);
+    return saved === 'true';
+  } catch (e) {
+    console.error('Failed to read relative line numbers preference:', e);
+    return false;
+  }
+}
+
+function resolveVimMode(mode: string, subMode?: string): VimModeInfo {
+  switch (mode) {
+    case 'insert':
+      return VIM_MODE_INSERT;
+    case 'replace':
+      return VIM_MODE_REPLACE;
+    case 'visual':
+      return resolveVisualMode(subMode);
+    case 'normal':
+    default:
+      return VIM_MODE_NORMAL;
+  }
+
+  function resolveVisualMode(subMode?: string): VimModeInfo {
+    switch (subMode) {
+      case 'linewise':
+        return VIM_MODE_VISUAL_LINE;
+      case 'blockwise':
+        return VIM_MODE_VISUAL_BLOCK;
+      default:
+        return VIM_MODE_VISUAL;
     }
   }
-  return false;
 }
 
 function extractConvertibleSelection(state: EditorState) {
@@ -117,42 +186,42 @@ export default function TemplateEditor(props: TemplateEditorProps) {
   let fileInputRef: HTMLInputElement | undefined = undefined;
   let lastReportedLine = 1;
 
-  const [wordWrap, setWordWrapSignal] = createSignal(getInitialWordWrap(), {name: 'word_wrap'});
-  const [vimMode, setVimModeSignal] = createSignal(getInitialVimMode(), {name: 'vim_mode'});
+  const [wordWrap, setWordWrapSignal] = createSignal(getInitialWordWrap(), { name: 'word_wrap' });
+  const [vimMode, setVimModeSignal] = createSignal(getInitialVimMode(), { name: 'vim_mode' });
   const [relativeLineNumbers, setRelativeLineNumbersSignal] = createSignal(
     getInitialRelativeLineNumbers(),
-    {name: 'relative_line_numbers'},
+    { name: 'relative_line_numbers' },
   );
   const [internalStyle, setInternalStyle] = createSignal<TemplateStyle>(
     untrack(() => detectTemplateStyle(props.value)),
-    {name: 'template_style'},
+    { name: 'template_style' },
   );
 
   const templateStyle = () => props.templateStyle ?? internalStyle();
 
-  const [vimModeName, setVimModeName] = createSignal<'NORMAL' | 'INSERT' | 'VISUAL' | 'VISUAL LINE' | 'VISUAL BLOCK' | 'REPLACE'>('NORMAL', {
+  const [vimModeName, setVimModeName] = createSignal<VimEditorMode>('NORMAL', {
     name: 'vim_mode_name',
   });
-  const [isDraggingOver, setIsDraggingOver] = createSignal(false, {name: 'drag_over'});
-  const [cursorInfo, setCursorInfo] = createSignal({line: 1, col: 1}, {name: 'cursor_info'});
-  const [canUndo, setCanUndo] = createSignal(false, {name: 'can_undo'});
-  const [canRedo, setCanRedo] = createSignal(false, {name: 'can_redo'});
+  const [isDraggingOver, setIsDraggingOver] = createSignal(false, { name: 'drag_over' });
+  const [cursorInfo, setCursorInfo] = createSignal({ line: 1, col: 1 }, { name: 'cursor_info' });
+  const [canUndo, setCanUndo] = createSignal(false, { name: 'can_undo' });
+  const [canRedo, setCanRedo] = createSignal(false, { name: 'can_redo' });
 
   // Menu and Save Modal states
-  const [isFileMenuOpen, setIsFileMenuOpen] = createSignal(false, {name: 'file_menu_open'});
-  const [isSaveModalOpen, setIsSaveModalOpen] = createSignal(false, {name: 'save_modal_open'});
-  const [saveAsMode, setSaveAsMode] = createSignal(false, {name: 'save_as_mode'});
+  const [isFileMenuOpen, setIsFileMenuOpen] = createSignal(false, { name: 'file_menu_open' });
+  const [isSaveModalOpen, setIsSaveModalOpen] = createSignal(false, { name: 'save_modal_open' });
+  const [saveAsMode, setSaveAsMode] = createSignal(false, { name: 'save_as_mode' });
 
   // Mono to Template
   const [selectedFragment, setSelectedFragment] = createSignal<{
     from: number;
     to: number;
     text: string;
-  } | null>(null, {name: 'selected_fragment'});
+  } | null>(null, { name: 'selected_fragment' });
 
   const isPotentiallyMonosource = createMemo(
     () => detectPotentialMonospaceFormat(selectedFragment()?.text ?? props.value),
-    {name: 'potentially_monosource'}
+    { name: 'potentially_monosource' },
   );
 
   // Active saved template object if currently linked
@@ -160,7 +229,7 @@ export default function TemplateEditor(props: TemplateEditorProps) {
     const id = activeTemplateId();
     if (!id) return null;
     return savedTemplates().find((t) => t.id === id) || null;
-  }, {name: 'active_saved_template'});
+  }, { name: 'active_saved_template' });
 
   // Detects if current content has unsaved modifications
   const isDirty = createMemo(() => {
@@ -169,7 +238,7 @@ export default function TemplateEditor(props: TemplateEditorProps) {
       return props.value !== existing.content;
     }
     return props.value.trim().length > 0;
-  }, {name: 'editor_is_dirty'});
+  }, { name: 'editor_is_dirty' });
 
   // CodeMirror Extension Compartments for fine-grained dynamic updates
   const vimCompartment = new Compartment();
@@ -288,24 +357,24 @@ export default function TemplateEditor(props: TemplateEditorProps) {
     }
   };
 
-  const toggleRelativeLineNumbers = () => {
+  const toggleRelativeLineNumbers = () =>
     updateRelativeLineNumbers(!relativeLineNumbers());
-  };
 
   // Quick Save handler
   const handleQuickSave = () => {
     setIsFileMenuOpen(false);
     const existing = activeSavedTemplate();
-    if (existing) {
-      const res = saveTemplate(existing.name, props.value, existing.id);
-      if (res.success) {
-        props.onToast?.(`Saved "${existing.name}" successfully!`);
-      } else {
-        props.onToast?.(res.error || 'Failed to save.');
-      }
-    } else {
+    if (!existing) {
       setSaveAsMode(false);
       setIsSaveModalOpen(true);
+      return;
+    }
+
+    const res = saveTemplate(existing.name, props.value, existing.id);
+    if (res.success) {
+      props.onToast?.(`Saved "${existing.name}" successfully!`);
+    } else {
+      props.onToast?.(res.error || 'Failed to save.');
     }
   };
 
@@ -328,49 +397,38 @@ export default function TemplateEditor(props: TemplateEditorProps) {
     fileInputRef?.click();
   };
 
+  const loadTemplateFile = (file: File, showToast = false) => {
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const content = event.target?.result as string;
+      if (!content) return;
+
+      const detected = applyDetectedStyle(content);
+      props.onInput(content);
+      if (view) {
+        view.dispatch({
+          changes: { from: 0, to: view.state.doc.length, insert: content },
+          effects: languageCompartment.reconfigure(getLyricChordLanguage(detected)),
+        });
+      }
+      props.onFileDrop?.(content, file.name);
+      if (showToast) {
+        props.onToast?.(`Imported "${file.name}" successfully!`);
+      }
+    };
+    reader.readAsText(file);
+  };
+
   const handleFileChange = (e: Event) => {
     const target = e.target as HTMLInputElement;
     const file = target.files?.[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onload = (event) => {
-        const text = event.target?.result as string;
-        if (text) {
-          const detected = applyDetectedStyle(text);
-          props.onInput(text);
-          if (view) {
-            view.dispatch({
-              changes: {from: 0, to: view.state.doc.length, insert: text},
-              effects: languageCompartment.reconfigure(getLyricChordLanguage(detected)),
-            });
-          }
-          if (props.onFileDrop) {
-            props.onFileDrop(text, file.name);
-          }
-          props.onToast?.(`Imported "${file.name}" successfully!`);
-        }
-      };
-      reader.readAsText(file);
-      target.value = '';
-    }
+    if (!file) return;
+
+    loadTemplateFile(file, true);
+    target.value = '';
   };
 
-  // Register custom Vim Ex commands
-  const exSave = () => untrack(() => handleQuickSave());
-  const exEnableRelNum = () => updateRelativeLineNumbers(true);
-  const exDisableRelNum = () => updateRelativeLineNumbers(false);
-
-  Vim.defineEx('write', 'w', exSave);
-  Vim.defineEx('update', 'up', exSave);
-  Vim.defineEx('rnu', 'rnu', exEnableRelNum);
-  Vim.defineEx('relativenumber', 'relativenumber', exEnableRelNum);
-  Vim.defineEx('nornu', 'nornu', exDisableRelNum);
-  Vim.defineEx('norelativenumber', 'norelativenumber', exDisableRelNum);
-  Vim.defineEx('totemplate', 'totemplate', () => untrack(() => convertMonoToTemplate()));
-
-  const lineCount = createMemo(() => {
-    return props.value.split('\n').length;
-  }, {name: 'line_count'});
+  const lineCount = createMemo(() => props.value.split('\n').length, { name: 'line_count' });
 
   const stats = createMemo(() => {
     const text = props.value;
@@ -378,12 +436,12 @@ export default function TemplateEditor(props: TemplateEditorProps) {
       templateStyle() === 'monospace' && detectPotentialMonospaceFormat(text)
         ? monospaceToTemplate(text)
         : text;
-    const chords = (processedText.match(/\{[^}]+\}/g) || []).length;
-    const sections = (text.match(/^\[.*?\]/gm) || []).length;
+    const chords = (processedText.match(/\{[^}]+}/g) || []).length;
+    const sections = (text.match(/^\[.*?]/gm) || []).length;
     const columnBreaks = (text.match(/@column_break\b/g) || []).length;
     const pageBreaks = (text.match(/@page_break\b/g) || []).length;
-    return {chords, sections, columnBreaks, pageBreaks, chars: text.length};
-  }, {name: 'editor_stats'});
+    return { chords, sections, columnBreaks, pageBreaks, chars: text.length };
+  }, { name: 'editor_stats' });
 
   const handleDragOver = (e: DragEvent) => {
     e.preventDefault();
@@ -399,26 +457,35 @@ export default function TemplateEditor(props: TemplateEditorProps) {
     e.preventDefault();
     setIsDraggingOver(false);
     const file = e.dataTransfer?.files[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onload = (event) => {
-        const content = event.target?.result as string;
-        if (content) {
-          const detected = applyDetectedStyle(content);
-          props.onInput(content);
-          if (view) {
-            view.dispatch({
-              changes: {from: 0, to: view.state.doc.length, insert: content},
-              effects: languageCompartment.reconfigure(getLyricChordLanguage(detected)),
-            });
-          }
-          if (props.onFileDrop) {
-            props.onFileDrop(content, file.name);
-          }
-        }
-      };
-      reader.readAsText(file);
+    if (!file) return;
+
+    loadTemplateFile(file);
+  };
+
+  const applyVimMode = (mode: string, subMode?: string) => {
+    const [modeName, attrMode] = resolveVimMode(mode, subMode);
+    setVimModeName(modeName);
+    view?.dom.setAttribute('data-vim-mode', attrMode);
+  };
+
+  const handleVimModeChange = (data: { mode: string; subMode?: string }) =>
+    applyVimMode(data.mode, data.subMode);
+
+  const syncCodeMirrorVimModeListener = (enabled: boolean) => {
+    if (!view) return;
+    const cm = getCM(view);
+
+    if (!enabled) {
+      cm?.off('vim-mode-change', handleVimModeChange);
+      view.dom.removeAttribute('data-vim-mode');
+      return;
     }
+
+    applyVimMode('normal');
+    if (!cm) return;
+
+    cm.off('vim-mode-change', handleVimModeChange);
+    cm.on('vim-mode-change', handleVimModeChange);
   };
 
   onSettled(() => {
@@ -426,13 +493,10 @@ export default function TemplateEditor(props: TemplateEditorProps) {
 
     const isDark = theme() === 'dark';
 
-    const getVimExtension = (enabled: boolean): Extension => {
-      return enabled ? [vim()] : [];
-    };
+    const getVimExtension = (enabled: boolean): Extension => (enabled ? [vim()] : []);
 
-    const getWordWrapExtension = (enabled: boolean): Extension => {
-      return enabled ? [EditorView.lineWrapping] : [];
-    };
+    const getWordWrapExtension = (enabled: boolean): Extension =>
+      enabled ? [EditorView.lineWrapping] : [];
 
     const startState = EditorState.create({
       doc: props.value,
@@ -477,19 +541,19 @@ export default function TemplateEditor(props: TemplateEditorProps) {
             const currentDoc = update.state.doc.toString();
             untrack(() => props.onInput(currentDoc));
           }
-          if (update.selectionSet || update.docChanged) {
-            setSelectedFragment(extractConvertibleSelection(update.state));
+          if (!update.selectionSet && !update.docChanged) return;
 
-            const pos = update.state.selection.main.head;
-            const line = update.state.doc.lineAt(pos);
-            setCursorInfo({
-              line: line.number,
-              col: pos - line.from + 1,
-            });
-            if (line.number !== lastReportedLine) {
-              lastReportedLine = line.number;
-              untrack(() => props.onCursorLineChange?.(line.number));
-            }
+          setSelectedFragment(extractConvertibleSelection(update.state));
+
+          const pos = update.state.selection.main.head;
+          const line = update.state.doc.lineAt(pos);
+          setCursorInfo({
+            line: line.number,
+            col: pos - line.from + 1,
+          });
+          if (line.number !== lastReportedLine) {
+            lastReportedLine = line.number;
+            untrack(() => props.onCursorLineChange?.(line.number));
           }
         }),
       ],
@@ -500,78 +564,39 @@ export default function TemplateEditor(props: TemplateEditorProps) {
       parent: editorContainerRef,
     });
 
+    vimExHandlersByView.set(view, {
+      save: handleQuickSave,
+      enableRelativeLineNumbers: () => updateRelativeLineNumbers(true),
+      disableRelativeLineNumbers: () => updateRelativeLineNumbers(false),
+      convertMonoToTemplate,
+    });
+
     const initialPos = view.state.selection.main.head;
     const initialLine = view.state.doc.lineAt(initialPos);
     lastReportedLine = initialLine.number;
     props.onCursorLineChange?.(initialLine.number);
-
-    const applyVimMode = (mode: string, subMode?: string) => {
-      let modeName: VimEditorMode = 'NORMAL';
-      let attrMode = 'normal';
-      switch (mode) {
-        case 'normal':
-          modeName = 'NORMAL';
-          attrMode = 'normal';
-          break;
-        case 'insert':
-          modeName = 'INSERT';
-          attrMode = 'insert';
-          break;
-        case 'visual':
-          if (subMode === 'linewise') {
-            modeName = 'VISUAL LINE';
-            attrMode = 'visual-line';
-          } else if (subMode === 'blockwise') {
-            modeName = 'VISUAL BLOCK';
-            attrMode = 'visual-block';
-          } else {
-            modeName = 'VISUAL';
-            attrMode = 'visual';
-          }
-          break;
-        case 'replace':
-          modeName = 'REPLACE';
-          attrMode = 'replace';
-          break;
-      }
-      setVimModeName(modeName);
-      if (view) {
-        view.dom.setAttribute('data-vim-mode', attrMode);
-      }
-    };
-
-    // Attach Vim mode listener if available
-    const cm = getCM(view);
-    if (cm) {
-      if (vimMode()) {
-        applyVimMode('normal');
-      }
-      cm.on('vim-mode-change', (data: { mode: string; subMode?: string }) => {
-        applyVimMode(data.mode, data.subMode);
-      });
-    }
   });
 
   // Keep editor content and detected style in sync if a template is loaded externally
   createEffect(
     () => props.value,
     (val) => {
-      if (view && view.state.doc.toString() !== val) {
-        const detected = applyDetectedStyle(val);
-        view.dispatch({
-          changes: {from: 0, to: view.state.doc.length, insert: val},
-          effects: languageCompartment.reconfigure(getLyricChordLanguage(detected)),
-        });
-        const pos = view.state.selection.main.head;
-        const line = view.state.doc.lineAt(pos);
-        setCursorInfo({
-          line: line.number,
-          col: pos - line.from + 1,
-        });
-        if (line.number !== lastReportedLine) {
-          lastReportedLine = line.number;
-          props.onCursorLineChange?.(line.number);
-        }
+      if (!view || view.state.doc.toString() === val) return;
+
+      const detected = applyDetectedStyle(val);
+      view.dispatch({
+        changes: { from: 0, to: view.state.doc.length, insert: val },
+        effects: languageCompartment.reconfigure(getLyricChordLanguage(detected)),
+      });
+      const pos = view.state.selection.main.head;
+      const line = view.state.doc.lineAt(pos);
+      setCursorInfo({
+        line: line.number,
+        col: pos - line.from + 1,
+      });
+      if (line.number !== lastReportedLine) {
+        lastReportedLine = line.number;
+        props.onCursorLineChange?.(line.number);
       }
     },
   );
@@ -580,86 +605,37 @@ export default function TemplateEditor(props: TemplateEditorProps) {
   createEffect(
     () => vimMode(),
     (enabled) => {
-      if (view) {
-        view.dispatch({
-          effects: vimCompartment.reconfigure(enabled ? [vim()] : []),
-        });
-        if (enabled) {
-          view.dom.setAttribute('data-vim-mode', 'normal');
-          setVimModeName('NORMAL');
-          const cm = getCM(view);
-          if (cm) {
-            cm.on('vim-mode-change', (data: { mode: string; subMode?: string }) => {
-              let modeName: 'NORMAL' | 'INSERT' | 'VISUAL' | 'VISUAL LINE' | 'VISUAL BLOCK' | 'REPLACE' = 'NORMAL';
-              let attrMode = 'normal';
-              if (data.mode === 'normal') {
-                modeName = 'NORMAL';
-                attrMode = 'normal';
-              } else if (data.mode === 'insert') {
-                modeName = 'INSERT';
-                attrMode = 'insert';
-              } else if (data.mode === 'visual') {
-                if (data.subMode === 'linewise') {
-                  modeName = 'VISUAL LINE';
-                  attrMode = 'visual-line';
-                } else if (data.subMode === 'blockwise') {
-                  modeName = 'VISUAL BLOCK';
-                  attrMode = 'visual-block';
-                } else {
-                  modeName = 'VISUAL';
-                  attrMode = 'visual';
-                }
-              } else if (data.mode === 'replace') {
-                modeName = 'REPLACE';
-                attrMode = 'replace';
-              }
-              setVimModeName(modeName);
-              if (view) {
-                view.dom.setAttribute('data-vim-mode', attrMode);
-              }
-            });
-          }
-        } else {
-          view.dom.removeAttribute('data-vim-mode');
-        }
-      }
+      if (!view) return;
+
+      view.dispatch({
+        effects: vimCompartment.reconfigure(enabled ? [vim()] : []),
+      });
+      syncCodeMirrorVimModeListener(enabled);
     },
   );
 
   // Reconfigure Relative Line Numbers dynamically
   createEffect(
     () => relativeLineNumbers(),
-    (isRel) => {
-      if (view) {
-        view.dispatch({
-          effects: lineNumbersCompartment.reconfigure(createLineNumbersGutter(isRel)),
-        });
-      }
-    },
+    (isRel) => view?.dispatch({
+      effects: lineNumbersCompartment.reconfigure(createLineNumbersGutter(isRel)),
+    }),
   );
 
   // Reconfigure Word Wrap dynamically
   createEffect(
     () => wordWrap(),
-    (wrap) => {
-      if (view) {
-        view.dispatch({
-          effects: wordWrapCompartment.reconfigure(wrap ? [EditorView.lineWrapping] : []),
-        });
-      }
-    },
+    (wrap) => view?.dispatch({
+      effects: wordWrapCompartment.reconfigure(wrap ? [EditorView.lineWrapping] : []),
+    }),
   );
 
   // Reconfigure syntax highlighting language when template style changes
   createEffect(
     () => templateStyle(),
-    (style) => {
-      if (view) {
-        view.dispatch({
-          effects: languageCompartment.reconfigure(getLyricChordLanguage(style)),
-        });
-      }
-    },
+    (style) => view?.dispatch({
+      effects: languageCompartment.reconfigure(getLyricChordLanguage(style)),
+    }),
   );
 
   // Reconfigure Light/Dark Theme dynamically
@@ -667,21 +643,21 @@ export default function TemplateEditor(props: TemplateEditorProps) {
     () => theme(),
     (currTheme) => {
       const isDark = currTheme === 'dark';
-      if (view) {
-        view.dispatch({
-          effects: [
-            themeCompartment.reconfigure(createEditorTheme(isDark)),
-            highlightCompartment.reconfigure(
-              isDark ? lyricChordDarkHighlight : lyricChordLightHighlight,
-            ),
-          ],
-        });
-      }
+      view?.dispatch({
+        effects: [
+          themeCompartment.reconfigure(createEditorTheme(isDark)),
+          highlightCompartment.reconfigure(
+            isDark ? lyricChordDarkHighlight : lyricChordLightHighlight,
+          ),
+        ],
+      });
     },
   );
 
   onCleanup(() => {
     if (view) {
+      syncCodeMirrorVimModeListener(false);
+      vimExHandlersByView.delete(view);
       view.destroy();
     }
   });
@@ -936,9 +912,7 @@ export default function TemplateEditor(props: TemplateEditorProps) {
             <button
               type="button"
               disabled={!isPotentiallyMonosource()}
-              onClick={() => {
-                convertMonoToTemplate()
-              }}
+              onClick={() => convertMonoToTemplate()}
               class={[
                 'inline-flex items-center justify-center px-2 py-1 rounded text-xs font-semibold transition-colors',
                 isPotentiallyMonosource()

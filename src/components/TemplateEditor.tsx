@@ -874,21 +874,22 @@ export default function TemplateEditor(props: TemplateEditorProps) {
                   : 'No unsaved changes.'
             }
           >
-            <Show
-              when={isDirty()}
-              fallback={<span class="i-lucide-check w-3.5 h-3.5 text-emerald-500 dark:text-emerald-400 shrink-0"
-                              aria-hidden="true"/>}
-            >
-              <span class="w-2 h-2 rounded-full bg-amber-500 dark:bg-amber-400 animate-pulse shrink-0"/>
-            </Show>
+            <span class="inline-flex items-center justify-center w-3.5 h-3.5 shrink-0">
+              <Show
+                when={isDirty()}
+                fallback={
+                  <span
+                    class="i-lucide-check w-3.5 h-3.5 text-emerald-500 dark:text-emerald-400"
+                    aria-hidden="true"
+                  />
+                }
+              >
+                <span class="w-2 h-2 rounded-full bg-amber-500 dark:bg-amber-400 animate-pulse" />
+              </Show>
+            </span>
             <span class="truncate">
               {activeSavedTemplate() ? activeSavedTemplate()?.name : 'Draft'}
             </span>
-            <Show when={isDirty()}>
-              <span class="text-[10px] font-bold text-amber-600 dark:text-amber-400 shrink-0">
-                (unsaved)
-              </span>
-            </Show>
           </div>
 
           {/* Template Style Dropdown */}
@@ -941,7 +942,7 @@ export default function TemplateEditor(props: TemplateEditorProps) {
             title="Toggle Vim Modal Editing Mode"
           >
             <span>Vim:</span>
-            <strong>{vimMode() ? 'ON' : 'OFF'}</strong>
+            <strong class="inline-block w-[3ch] text-center">{vimMode() ? 'ON' : 'OFF'}</strong>
           </button>
 
           {/* Relative Line Numbers Toggle Button */}
@@ -957,7 +958,7 @@ export default function TemplateEditor(props: TemplateEditorProps) {
             title="Toggle Relative Line Numbers (relativenumber)"
           >
             <span>Rel Nums:</span>
-            <strong>{relativeLineNumbers() ? 'ON' : 'OFF'}</strong>
+            <strong class="inline-block w-[3ch] text-center">{relativeLineNumbers() ? 'ON' : 'OFF'}</strong>
           </button>
 
           {/* Word Wrap Toggle Button */}
@@ -965,14 +966,15 @@ export default function TemplateEditor(props: TemplateEditorProps) {
             type="button"
             onClick={toggleWordWrap}
             class={[
-              'px-2 py-0.5 rounded text-[11px] font-semibold transition-colors border',
+              'px-2 py-0.5 rounded text-[11px] font-semibold transition-colors border flex items-center gap-1',
               wordWrap()
                 ? 'bg-sky-100 dark:bg-sky-950/70 border-sky-300 dark:border-sky-800 text-sky-700 dark:text-sky-300'
                 : 'bg-white dark:bg-slate-800 border-slate-300 dark:border-slate-700 text-slate-600 dark:text-slate-400 hover:bg-slate-50',
             ]}
             title="Toggle Soft Word Wrapping"
           >
-            Wrap: {wordWrap() ? 'ON' : 'OFF'}
+            <span>Wrap:</span>
+            <strong class="inline-block w-[3ch] text-center">{wordWrap() ? 'ON' : 'OFF'}</strong>
           </button>
         </div>
 

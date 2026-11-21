@@ -288,7 +288,7 @@ describe('<TemplateEditor /> Mono to Template modes', () => {
     expect(untrack(doc)).toBe(initialEmbedded);
   });
 
-  test('highlights chords on chord lines in monospace mode and after @chord_sequence: with the same color scheme as embedded mode', () => {
+  test('highlights chords on chord lines in monospace mode and after @chord_sequence: with the same color scheme as embedded mode, while styling unpaired non-directive lines as lyrics', () => {
     const initialEmbedded = [
       '@title: Amazing Grace',
       '[Intro]',
@@ -342,6 +342,36 @@ describe('<TemplateEditor /> Mono to Template modes', () => {
 
     // Lyric line should not highlight words as chords
     expect(monoLines[5].querySelectorAll('span').length).toBe(0);
+
+    // Unpaired non-directive lines (followed by blank line, directive/section, or EOF) should be styled as lyrics (no chord spans)
+    setDoc(
+      [
+        '@title: Amazing Grace',
+        'Standalone unpaired line before blank',
+        '',
+        '[Verse 1]',
+        ' G                 C         G',
+        'Amazing grace, how sweet the sound',
+        'Unpaired line before section',
+        '[Outro]',
+        'Trailing unpaired line at EOF',
+      ].join('\n'),
+    );
+    flush();
+
+    const updatedMonoLines = container.querySelectorAll('.cm-line');
+    // Line 2: unpaired line before blank line -> styled as lyric (no chord spans)
+    expect(updatedMonoLines[1].querySelectorAll('span').length).toBe(0);
+    // Line 5: paired chord line -> highlighted as chords
+    expect(
+      Array.from(updatedMonoLines[4].querySelectorAll('span')).map((s) => s.textContent),
+    ).toEqual(['G', 'C', 'G']);
+    // Line 6: paired lyric line -> styled as lyric
+    expect(updatedMonoLines[5].querySelectorAll('span').length).toBe(0);
+    // Line 7: unpaired line before [Outro] -> styled as lyric
+    expect(updatedMonoLines[6].querySelectorAll('span').length).toBe(0);
+    // Line 9: unpaired line at EOF -> styled as lyric
+    expect(updatedMonoLines[8].querySelectorAll('span').length).toBe(0);
   });
 
   test('automatically detects template style based on presence or absence of "{" when a template is loaded', () => {

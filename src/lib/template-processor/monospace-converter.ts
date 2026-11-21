@@ -2,11 +2,11 @@ export type TemplateStyle = 'monospace' | 'embedded'
 
 type LyricChordPair = string[] | [string, undefined] | [string, string]
 
-const directiveOrSectionPattern = /^\s*@\w+|^\s*\[/
-const blankLinePattern = /^\s*$/
+export const directiveOrSectionLabelStartPattern = /^\s*@|^\s*\[/
+export const blankLinePattern = /^\s*$/
 
 /** pattern for lines that should not be processed for chord embedding */
-const unpairableLinePattern = /^\s*$|^\s*@|^\s*\[/
+export const unpairableMonospaceLinePattern = /^\s*$|^\s*@|^\s*\[/
 
 export function detectPotentialMonospaceFormat(sourceTxt: string) {
   return !/{/gm.test(sourceTxt)
@@ -44,7 +44,7 @@ export function templateToMonospace(sourceTxt: string) {
       continue
     }
 
-    if (directiveOrSectionPattern.test(rawLine)) {
+    if (directiveOrSectionLabelStartPattern.test(rawLine)) {
       rendered.push(rawLine.trimEnd())
       continue
     }
@@ -59,7 +59,7 @@ export function templateToMonospace(sourceTxt: string) {
 function countContiguousPairableLines(lines: string[], startIndex: number): number {
   let count = 0
   for (let j = startIndex; j < lines.length; j++) {
-    if (unpairableLinePattern.test(lines[j])) {
+    if (unpairableMonospaceLinePattern.test(lines[j])) {
       break
     }
     count++
@@ -76,7 +76,7 @@ function pairLines(lines: string[]): LyricChordPair[] {
     const currentLine = lines[i]
     const currentLineTrimmedEnd = currentLine.trimEnd()
     const isBlank = blankLinePattern.test(currentLine)
-    const isDirectiveOrSection = directiveOrSectionPattern.test(currentLine)
+    const isDirectiveOrSection = directiveOrSectionLabelStartPattern.test(currentLine)
 
     const isEmptyChordLine =
       isBlank &&

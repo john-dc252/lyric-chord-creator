@@ -1,6 +1,7 @@
 import { createMemo, For, Show } from 'solid-js';
 import type { JSX } from '@solidjs/web';
-import type { TemplateStyle } from '../lib/template-processor/monospace-converter';
+import type { TemplateStyle } from '../lib/template-processor';
+import { unpairableMonospaceLinePattern } from "../lib/template-processor/monospace-converter";
 
 export interface TemplateSyntaxHighlighterProps {
   code: string;
@@ -37,20 +38,20 @@ export class SyntaxLineParser {
 
 function parseLyricParts(line: string): LyricPart[] {
   const parts: LyricPart[] = [];
-  const regex = /\{([^}]+)\}/g;
+  const regex = /\{([^}]+)}/g;
   let lastIndex = 0;
   let match: RegExpExecArray | null;
 
   while ((match = regex.exec(line)) !== null) {
     if (match.index > lastIndex) {
-      parts.push({ isChord: false, text: line.substring(lastIndex, match.index) });
+      parts.push({isChord: false, text: line.substring(lastIndex, match.index)});
     }
-    parts.push({ isChord: true, text: match[1] });
+    parts.push({isChord: true, text: match[1]});
     lastIndex = regex.lastIndex;
   }
 
   if (lastIndex < line.length) {
-    parts.push({ isChord: false, text: line.substring(lastIndex) });
+    parts.push({isChord: false, text: line.substring(lastIndex)});
   }
 
   return parts;
@@ -96,7 +97,7 @@ export const SYNTAX_LAYOUT_BREAKS = new SyntaxLineParser(
 );
 
 export const SYNTAX_SECTION_LABEL = new SyntaxLineParser(
-  /^\[(.*?)\]$/,
+  /^\[(.*?)]$/,
   (line) => (
     <span class="text-indigo-600 dark:text-indigo-400 font-bold bg-indigo-100 dark:bg-indigo-500/15">
       {line}
@@ -180,7 +181,7 @@ export function TemplateSyntaxHighlighter(props: TemplateSyntaxHighlighterProps)
     }
 
     let expectChordLine = true;
-    return rawLines.map((line) => {
+    return rawLines.map((line, idx) => {
       if (/^\s*$/.test(line)) {
         expectChordLine = true;
         return line;
@@ -196,14 +197,19 @@ export function TemplateSyntaxHighlighter(props: TemplateSyntaxHighlighterProps)
       }
 
       if (expectChordLine) {
-        expectChordLine = false;
-        return renderMonospaceChordLine(line);
+        const nextLine = rawLines[idx + 1];
+        const hasPairedNextLine =
+          nextLine !== undefined && !unpairableMonospaceLinePattern.test(nextLine);
+        if (hasPairedNextLine) {
+          expectChordLine = false;
+          return renderMonospaceChordLine(line);
+        }
       }
 
       expectChordLine = true;
       return <span class="text-slate-800 dark:text-slate-200">{line}</span>;
     });
-  }, { name: 'syntax_lines' });
+  }, {name: 'syntax_lines'});
 
   return (
     <>

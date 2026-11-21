@@ -1,8 +1,9 @@
-import { StreamLanguage, HighlightStyle, syntaxHighlighting } from '@codemirror/language';
+import { StreamLanguage, HighlightStyle, ParseContext, syntaxHighlighting } from '@codemirror/language';
 import { tags as t } from '@lezer/highlight';
 import { EditorView, lineNumbers } from '@codemirror/view';
-import { Extension } from '@codemirror/state';
-import type { TemplateStyle } from './template-processor/monospace-converter';
+import { Extension, Text } from '@codemirror/state';
+import type { TemplateStyle } from './template-processor';
+import { unpairableMonospaceLinePattern } from "./template-processor/monospace-converter";
 
 interface EmbeddedStreamState {
   inChordSequence: boolean;
@@ -11,6 +12,13 @@ interface EmbeddedStreamState {
 interface MonospaceStreamState {
   expectChordLine: boolean;
   lineType: 'chord' | 'lyric' | 'directive';
+  lineNumber: number;
+}
+
+function hasFollowingPairableLine(doc: Text | undefined, currentLineNumber: number): boolean {
+  if (!doc || currentLineNumber >= doc.lines) return false;
+  const nextLine = doc.line(currentLineNumber + 1).text;
+  return !unpairableMonospaceLinePattern.test(nextLine);
 }
 
 /**
@@ -60,20 +68,24 @@ export const lyricChordMonospaceLanguage = StreamLanguage.define<MonospaceStream
     return {
       expectChordLine: true,
       lineType: 'lyric',
+      lineNumber: 0,
     };
   },
   copyState(state): MonospaceStreamState {
     return {
       expectChordLine: state.expectChordLine,
       lineType: state.lineType,
+      lineNumber: state.lineNumber,
     };
   },
   blankLine(state) {
+    state.lineNumber++;
     state.expectChordLine = true;
     state.lineType = 'lyric';
   },
   token(stream, state) {
     if (stream.sol()) {
+      state.lineNumber++;
       if (stream.match(/^\s*$/)) {
         state.expectChordLine = true;
         state.lineType = 'lyric';
@@ -126,8 +138,14 @@ export const lyricChordMonospaceLanguage = StreamLanguage.define<MonospaceStream
       }
 
       if (state.expectChordLine) {
-        state.lineType = 'chord';
-        state.expectChordLine = false;
+        const doc = ParseContext.get()?.state.doc;
+        if (hasFollowingPairableLine(doc, state.lineNumber)) {
+          state.lineType = 'chord';
+          state.expectChordLine = false;
+        } else {
+          state.lineType = 'lyric';
+          state.expectChordLine = true;
+        }
       } else {
         state.lineType = 'lyric';
         state.expectChordLine = true;
